@@ -5,6 +5,7 @@ import { getBossSystemMessage, getEmployeeSystemMessage } from '../prompts';
 import { createLLM } from '../llm/factory';
 import { getProviderBaseUrl } from '../config/settings';
 import { StreamPrinter } from '../utils/stream';
+import { OutputFormatter, type OutputFormat } from '../utils/formatter';
 import { logger } from '../utils/logger';
 import { type ProviderType } from '../config/providers';
 
@@ -15,6 +16,7 @@ export interface PromptOptions {
   role: 'boss' | 'employee';
   severity: 'mild' | 'medium' | 'extreme';
   input?: string;
+  format?: OutputFormat;
 }
 
 export async function promptCommand(options: PromptOptions): Promise<void> {
@@ -57,6 +59,8 @@ export async function promptCommand(options: PromptOptions): Promise<void> {
     options.role === 'boss' ? chalk.red : chalk.yellow
   );
 
+  const formatter = new OutputFormatter(options.format);
+
   try {
     const roleLabel = options.role === 'boss' ? '老板' : '员工';
     console.log();
@@ -67,7 +71,10 @@ export async function promptCommand(options: PromptOptions): Promise<void> {
     await llm.chatStream(messages, (chunk) => {
       if (chunk.content) {
         fullResponse += chunk.content;
-        process.stdout.write(chunk.content);
+        // 只有在文本格式时才流式输出
+        if (!options.format || options.format === 'text') {
+          process.stdout.write(chunk.content);
+        }
       }
     });
 
@@ -75,8 +82,22 @@ export async function promptCommand(options: PromptOptions): Promise<void> {
     console.log(chalk.gray('└─────────────────────────────────────'));
     console.log();
 
-    // Print just the response for piping purposes
-    console.log(fullResponse);
+    // 使用格式化器输出
+    if (options.format && options.format !== 'text') {
+      formatter.print({
+        format: options.format,
+        content: fullResponse,
+        metadata: {
+          role: options.role,
+          severity: options.severity,
+          provider: options.provider,
+          model: options.model
+        }
+      });
+    } else {
+      // Print just the response for piping purposes
+      console.log(fullResponse);
+    }
 
   } catch (error) {
     printer.printError(error instanceof Error ? error.message : String(error));

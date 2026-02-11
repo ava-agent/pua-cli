@@ -8,6 +8,7 @@ import { createLLM } from '../llm/factory';
 import { getProviderBaseUrl } from '../config/settings';
 import { StreamPrinter } from '../utils/stream';
 import { sessionManager } from '../history/session';
+import { SessionStorage, type SessionData } from '../config/session-storage';
 import { logger } from '../utils/logger';
 import { type ProviderType } from '../config/providers';
 
@@ -19,10 +20,31 @@ export interface ChatOptions {
   severity: 'mild' | 'medium' | 'extreme';
 }
 
+// 全局会话存储实例
+const sessionStorage = new SessionStorage();
+
+// 扩展 readline.Interface 类型
+interface ExtendedInterface extends readline.Interface {
+  [key: string]: string;
+}
+
+// 扩展 readline 接口以支持动态属性
+declare module 'readline' {
+  interface Interface {
+    [key: string]: any;
+  }
+}
+
 export async function chatCommand(options: ChatOptions): Promise<void> {
   // Create session
   const sessionId = `session-${Date.now()}`;
   sessionManager.createSession(sessionId);
+
+  // 保存元数据到 rl 以便在命令处理中使用
+  rl['role'] = options.role;
+  rl['severity'] = options.severity;
+  rl['provider'] = options.provider;
+  rl['model'] = options.model;
 
   // Set up system message
   const systemMessage =
@@ -163,6 +185,18 @@ async function handleCommand(
       console.log(sessionManager.getSessionInfo());
       break;
 
+    case '/save':
+      await handleSaveCommand(args, rl);
+      break;
+
+    case '/sessions':
+      await handleSessionsCommand(rl);
+      break;
+
+    case '/load':
+      await handleLoadCommand(args, rl);
+      break;
+
     default:
       logger.warning(`未知命令: ${cmd}`);
       console.log(chalk.gray('输入 /help 查看可用命令'));
@@ -177,6 +211,123 @@ function printHelp(): void {
   console.log('  /clear         清空当前会话历史');
   console.log('  /history       显示会话历史记录');
   console.log('  /info          显示会话统计信息');
+  console.log('  /save [名称]  保存当前会话');
+  console.log('  /sessions      列出所有已保存会话');
+  console.log('  /load <ID>     加载指定会话');
   console.log('  /exit          退出程序');
   console.log();
+}
+
+async function handleSaveCommand(args: string[], rl: readline.Interface): Promise<void> {
+  const sessionName = args.join(' ') || '未命名会话';
+  const currentMessages = sessionManager.getCurrentMessages();
+
+  const spinner = ora('保存会话中...').start();
+  try {
+    const savedSession = sessionStorage.saveSession({
+      name: sessionName,
+      description: `包含 ${currentMessages.length} 条消息`,
+      messages: currentMessages,
+      metadata: {
+        role: rl['role'] || 'boss',
+        severity: rl['severity'] || 'medium',
+        provider: rl['provider'] || 'zhipu',
+        model: rl['model'] || 'glm-4.7'
+      }
+    });
+
+    spinner.stop();
+    logger.success(`会话已保存: ${savedSession.name} (ID: ${savedSession.id})`);
+  } catch (error) {
+    spinner.stop();
+    logger.error(`保存失败: ${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  rl.prompt();
+}
+
+async function handleSessionsCommand(rl: readline.Interface): Promise<void> {
+  const spinner = ora('加载会话列表...').start();
+  try {
+    const sessions = sessionStorage.listSessions();
+    spinner.stop();
+
+    if (sessions.length === 0) {
+      logger.info('暂无已保存的会话');
+      rl.prompt();
+      return;
+    }
+
+    console.log();
+    console.log(chalk.bold('已保存的会话:'));
+    console.log(chalk.gray('─').repeat(60));
+
+    for (const session of sessions) {
+      const messageCount = session.messages?.length || 0;
+      const timeAgo = getTimeAgo(session.updatedAt);
+
+      console.log(`  ${chalk.cyan(session.id.padEnd(12))}  ${chalk.white(session.name.padEnd(20))}  ${chalk.gray(`(${messageCount} 条消息, ${timeAgo})`)}`);
+    }
+
+    console.log();
+    logger.info('使用 /load <ID> 加载会话');
+    rl.prompt();
+  } catch (error) {
+    spinner.stop();
+    logger.error(`加载失败: ${error instanceof Error ? error.message : String(error)}`);
+    rl.prompt();
+  }
+}
+
+async function handleLoadCommand(args: string[], rl: readline.Interface): Promise<void> {
+  const sessionId = args[0];
+
+  if (!sessionId) {
+    logger.error('请指定会话 ID');
+    console.log(chalk.gray('使用 /sessions 查看所有会话'));
+    rl.prompt();
+    return;
+  }
+
+  const spinner = ora('加载会话中...').start();
+  try {
+    const session = sessionStorage.loadSession(sessionId);
+
+    if (!session) {
+      spinner.stop();
+      logger.error(`未找到会话: ${sessionId}`);
+      rl.prompt();
+      return;
+    }
+
+    spinner.stop();
+
+    // 加载会话消息
+    sessionManager.clearCurrentSession();
+    for (const msg of session.messages || []) {
+      sessionManager.addMessage(msg.role, msg.content);
+    }
+
+    logger.success(`已加载会话: ${session.name}`);
+    console.log();
+    console.log(chalk.gray(`会话包含 ${session.messages?.length || 0} 条消息`));
+    console.log();
+
+    rl.prompt();
+  } catch (error) {
+    spinner.stop();
+    logger.error(`加载失败: ${error instanceof Error ? error.message : String(error)}`);
+    rl.prompt();
+  }
+}
+
+function getTimeAgo(timestamp: string): string {
+  const now = Date.now();
+  const past = new Date(timestamp).getTime();
+  const diff = Math.floor((now - past) / 1000);
+
+  if (diff < 60) return `${diff} 秒前`;
+  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`;
+  return `${Math.floor(diff / 86400)} 天前`;
 }

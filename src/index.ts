@@ -107,6 +107,7 @@ program
   .option('-m, --model <model>', '模型名称')
   .option('-s, --severity <mild|medium|extreme>', 'PUA 强度')
   .option('-p, --provider <zhipu|openai>', 'AI 服务提供商')
+  .option('-f, --format <text|markdown|json>', '输出格式: text (文本), markdown (Markdown), json (JSON)')
   .argument('[input...]', '输入内容（可选，也支持管道输入）')
   .action(async (inputArgs, options) => {
     await withOnboardingCheck(async () => {
@@ -120,6 +121,7 @@ program
           role: config.role,
           severity: config.severity,
           input,
+          format: options.format as any,
         };
         await promptCommand(promptOptions);
       } catch (error) {
