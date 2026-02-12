@@ -1,6 +1,6 @@
 {
   "name": "pua-cli",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A fun AI CLI tool with role-based responses (boss/employee PUA personas)",
   "main": "dist/index.js",
   "bin": {
