@@ -58,9 +58,20 @@
 
 ### 🌐 在线体验（无需安装）
 
-直接在浏览器中使用：[点击这里体验 Web 版本](https://pua-cli.vercel.app)
+**Workplace PUA CLI Web v0.4.0** - 直接在浏览器中使用，体验完整的职场角色扮演功能：
+
+| 功能 | 说明 |
+|------|------|
+| ✅ **6 种角色模式** | 老板、员工、产品经理、HR、技术主管、实习生 |
+| ✅ **3 种强度等级** | mild（温和）、medium（正常）、extreme（极限） |
+| ✅ **AI 流式输出** | 实时显示 AI 生成内容，体验更流畅 |
+| ✅ **对话记忆** | 自动记住最近 50 条对话历史 |
+| ✅ **数据统计** | 显示访问次数和消息数量 |
+| ✅ **API 安全防护** | 速率限制、输入验证、XSS 防护 |
 
 > 💡 Web 版本的 API Key 存储在服务器端，安全且无需自己配置！
+>
+> 🔗 在线体验：[Workplace PUA CLI](https://workplace-pua-cli.vercel.app)
 
 ### 一键安装（推荐）
 
@@ -69,7 +80,10 @@
 npm install -g workplace-pua-cli
 
 # 启动聊天（首次运行会自动进入配置向导）
-pua chat
+workplace-pua-cli chat
+
+# 启动聊天（首次运行会自动进入配置向导）
+workplace-pua-cli chat
 ```
 
 ### 从源码安装
@@ -95,20 +109,20 @@ npm install -g .
 
 ```bash
 # 老板模式 - PUA 别人
-pua chat --role boss --severity extreme
+workplace-pua-cli chat --role boss --severity extreme
 
 # 员工模式 - 被 PUA
-pua chat --role employee
+workplace-pua-cli chat --role employee
 ```
 
 #### 单次提示模式
 
 ```bash
 # 直接提问
-pua prompt --role boss "代码写完了"
+workplace-pua-cli prompt --role boss "代码写完了"
 
 # 管道输入（适合脚本调用）
-echo "加班" | pua prompt --role employee
+echo "加班" | workplace-pua-cli prompt --role employee
 ```
 
 ---
@@ -119,19 +133,19 @@ echo "加班" | pua prompt --role employee
 
 | 命令 | 说明 |
 |------|------|
-| `pua chat` | 启动交互模式 |
-| `pua prompt "问题"` | 单次提问 |
-| `pua config` | 重新配置 |
-| `pua config --show` | 查看配置 |
+| `workplace-pua-cli chat` | 启动交互模式 |
+| `workplace-pua-cli prompt "问题"` | 单次提问 |
+| `workplace-pua-cli config` | 重新配置 |
+| `workplace-pua-cli config --show` | 查看配置 |
 
 ### 新增趣味命令
 
 | 命令 | 说明 | 示例 |
 |------|------|------|
-| `pua jargon` | 职场黑话生成器 | `pua jargon --type meeting` |
-| `pua weekly` | 周报生成器 | `pua weekly --role pm` |
-| `pua email` | 邮件语气转换 | `pua email --from pm --to dev "你好"` |
-| `pua meeting` | 会议发言建议 | `pua meeting --role hr --scenario standup` |
+| `workplace-pua-cli jargon` | 职场黑话生成器 | `workplace-pua-cli jargon --type meeting` |
+| `workplace-pua-cli weekly` | 周报生成器 | `workplace-pua-cli weekly --role pm` |
+| `workplace-pua-cli email` | 邮件语气转换 | `workplace-pua-cli email --from pm --to dev "你好"` |
+| `workplace-pua-cli meeting` | 会议发言建议 | `workplace-pua-cli meeting --role hr --scenario standup` |
 
 ### 交互模式内命令
 
@@ -153,13 +167,13 @@ echo "加班" | pua prompt --role employee
 ### 查看当前配置
 
 ```bash
-pua config --show
+workplace-pua-cli config --show
 ```
 
 ### 重新配置
 
 ```bash
-pua config
+workplace-pua-cli config
 ```
 
 ---
@@ -193,13 +207,13 @@ pua config
 
 ```bash
 # 老板模式 - PUA 别人
-pua chat --role boss --severity extreme
+workplace-pua-cli chat --role boss --severity extreme
 
 # 产品经理模式 - 画饼大师
-pua chat --role pm
+workplace-pua-cli chat --role pm
 
 # HR 模式 - 公司就是家
-pua chat --role hr
+workplace-pua-cli chat --role hr
 ```
 
 ### 职场黑话生成
@@ -208,13 +222,13 @@ pua chat --role hr
 
 ```bash
 # 生成会议黑话
-pua jargon --type meeting --intensity heavy
+workplace-pua-cli jargon --type meeting --intensity heavy
 
 # 生成报告黑话
-pua jargon --type report
+workplace-pua-cli jargon --type report
 
 # 翻译普通文本为黑话
-pua jargon "帮我做个PPT"
+workplace-pua-cli jargon "帮我做个PPT"
 ```
 
 ### 周报生成
@@ -223,13 +237,13 @@ pua jargon "帮我做个PPT"
 
 ```bash
 # 产品经理周报
-pua weekly --role pm
+workplace-pua-cli weekly --role pm
 
 # HR 周报
-pua weekly --role hr
+workplace-pua-cli weekly --role hr
 
 # 开发人员周报
-pua weekly --role techlead
+workplace-pua-cli weekly --role techlead
 ```
 
 ### 邮件语气转换
@@ -238,13 +252,13 @@ pua weekly --role techlead
 
 ```bash
 # PM -> 开发
-pua email --from pm --to dev "请查收附件"
+workplace-pua-cli email --from pm --to dev "请查收附件"
 
 # HR -> 员工（紧急）
-pua email --from hr --to employee --tone urgent "今天加班"
+workplace-pua-cli email --from hr --to employee --tone urgent "今天加班"
 
 # 开发 -> PM
-pua email --from dev --to pm "已完成开发"
+workplace-pua-cli email --from dev --to pm "已完成开发"
 ```
 
 ### 会议发言建议
@@ -253,13 +267,13 @@ pua email --from dev --to pm "已完成开发"
 
 ```bash
 # 站会发言
-pua meeting --role pm --scenario standup
+workplace-pua-cli meeting --role pm --scenario standup
 
 # 代码评审发言
-pua meeting --role techlead --scenario review
+workplace-pua-cli meeting --role techlead --scenario review
 
 # 头脑风暴发言
-pua meeting --role intern --scenario brainstorm
+workplace-pua-cli meeting --role intern --scenario brainstorm
 ```
 
 ### AI 工作流
@@ -268,7 +282,7 @@ pua meeting --role intern --scenario brainstorm
 
 ```bash
 # 生成批评性提示
-critique=$(pua prompt --role boss "代码质量差")
+critique=$(workplace-pua-cli prompt --role boss "代码质量差")
 
 # 传递给其他工具
 echo "$critique" | your-ai-tool --prompt "{}"
