@@ -1,6 +1,86 @@
 # Workplace PUA CLI
 
-> 一个趣味性 AI CLI 工具，具有 6 种角色模式：**老板**、**员工**、**产品经理**、**HR**、**技术主管**、**实习生**。
+<div align="center">
+
+**🎭 一个趣味性 AI CLI 工具，让职场对话更有"味道"**
+
+[![npm version](https://img.shields.io/npm/v/workplace-pua-cli.svg)](https://www.npmjs.com/package/workplace-pua-cli)
+[![License](https://img.shields.io/npm/l/workplace-pua-cli.svg)](https://github.com/ava-agent/pua-cli/blob/main/LICENSE)
+[![Downloads](https://img.shields.io/npm/dm/workplace-pua-cli.svg)](https://www.npmjs.com/package/workplace-pua-cli)
+
+[![Online Demo](https://pua-cli.vercel.app)](https://pua-cli.vercel.app) •
+[Web 源码](web/) •
+[CLI 安装](#-一键安装推荐)
+
+</div>
+
+## 关于项目
+
+**Workplace PUA CLI** 是一个基于 AI 的职场角色扮演命令行工具，通过 6 种经典职场角色（老板、员工、产品经理、HR、技术主管、实习生）和 3 种强度等级（mild、medium、extreme），生成真实有趣的职场对话内容。
+
+### 核心特性
+
+| 特性 | 说明 |
+|------|------|
+| 🎭 **6 种角色模式** | 老板、员工、产品经理、HR、技术主管、实习生 |
+| 🎚 **3 种强度等级** | mild（温和）、medium（正常）、extreme（极限）|
+| 🌐 **Web 体验版** | 无需安装，浏览器即用 |
+| 💬 **AI 流式输出** | 实时显示生成内容 |
+| 🧠 **对话记忆** | 自动记住最近 50 条对话历史 |
+| 📊 **数据统计** | 访问次数、消息数量（本地持久化） |
+| 🔒 **API 安全防护** | 速率限制、输入验证、XSS 防护 |
+| 🎨 **多种使用场景** | 趣味对话、职场黑话生成、周报生成、邮件语气转换、会议发言建议 |
+| 🌍 **跨平台支持** | Windows、macOS、Linux |
+| 🎯 **多 AI 供应商** | 智谱 AI、OpenAI |
+
+### 技术栈
+
+- **运行时**: Node.js 18+
+- **开发语言**: TypeScript
+- **AI 模型**: 智谱 AI GLM-4-flash / OpenAI GPT-4
+- **部署平台**: Vercel（Web 版本）
+- **CLI 框架**: Commander.js
+- **用户交互**: Inquirer.js
+- **样式风格**: ASCII Art + 终端风格 UI
+
+### 项目结构
+
+```
+pua-cli/
+├── src/              # 源码目录
+│   ├── commands/     # 命令实现
+│   ├── prompts/      # Prompt 模板
+│   ├── utils/        # 工具函数
+│   └── index.ts      # 入口文件
+├── web/             # Web 体验版
+│   ├── index.html    # 单页应用
+│   ├── api/          # Vercel API 路由
+│   └── assets/       # 静态资源
+├── docs/            # 技术文档
+├── tests/           # 测试文件
+└── README.md        # 项目说明
+```
+
+### 应用场景
+
+**1. 职场娱乐**
+- 体验"职场 PUA"的趣味互动
+- 生成搞笑的职场对话内容
+- 朋友圈分享
+
+**2. 内容创作**
+- 职场黑话生成器
+- 周报快速生成
+- 邮件语气转换
+
+**3. 团队建设**
+- 会议发言建议
+- 新员工培训材料
+- 产品需求文档参考
+
+---
+
+## 快速开始
 
 ## 界面预览
 
