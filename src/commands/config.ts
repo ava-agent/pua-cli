@@ -5,6 +5,8 @@ import confirm from '@inquirer/confirm';
 import { saveGlobalConfig, loadGlobalConfig, ensureConfigDir, type GlobalConfig } from '../config/storage';
 import { PROVIDERS, getProvider, validateApiKey, validateBaseUrl, type ProviderType } from '../config/providers';
 import { logger } from '../utils/logger';
+import type { RoleType } from '../prompts';
+import { ROLE_NAMES, ROLE_EMOJIS } from '../prompts';
 
 export interface ConfigWizardOptions {
   autoMode?: boolean;
@@ -130,14 +132,18 @@ export async function configWizard(options: ConfigWizardOptions = {}): Promise<G
   const role = await select({
     message: '选择默认角色:',
     choices: [
-      { name: '老板模式 (PUA 别人)', value: 'boss' },
-      { name: '员工模式 (被 PUA)', value: 'employee' },
+      { name: `${ROLE_EMOJIS.boss} 老板 (PUA 别人)`, value: 'boss' },
+      { name: `${ROLE_EMOJIS.employee} 员工 (被 PUA)`, value: 'employee' },
+      { name: `${ROLE_EMOJIS.pm} 产品经理 (画饼大师)`, value: 'pm' },
+      { name: `${ROLE_EMOJIS.hr} HR (公司就是家)`, value: 'hr' },
+      { name: `${ROLE_EMOJIS.techlead} 技术主管 (指点江山)`, value: 'techlead' },
+      { name: `${ROLE_EMOJIS.intern} 实习生 (求带求教)`, value: 'intern' },
     ],
     default: existingConfig?.defaults.role || 'boss',
   });
 
   console.log();
-  console.log(chalk.gray(`已选择: ${chalk.white(role === 'boss' ? '老板模式' : '员工模式')}`));
+  console.log(chalk.gray(`已选择: ${chalk.white(ROLE_NAMES[role as RoleType])}`));
   console.log();
 
   // Step 6: Select Default Severity
@@ -181,7 +187,7 @@ export async function configWizard(options: ConfigWizardOptions = {}): Promise<G
     defaults: {
       provider,
       model,
-      role: role as 'boss' | 'employee',
+      role: role as RoleType,
       severity: severity as 'mild' | 'medium' | 'extreme',
     },
     onboardingCompleted: true,
@@ -202,8 +208,11 @@ export async function configWizard(options: ConfigWizardOptions = {}): Promise<G
     console.log();
     console.log(chalk.white.bold('配置完成！现在你可以开始使用 PUA CLI 了：'));
     console.log();
-    console.log('  ' + chalk.white('pua chat --role boss') + chalk.gray('           # 启动老板模式'));
-    console.log('  ' + chalk.white('pua prompt --role boss "你好"') + chalk.gray('     # 单次提示'));
+    console.log('  ' + chalk.white('pua chat --role boss') + chalk.gray('              # 启动老板模式'));
+    console.log('  ' + chalk.white('pua chat --role pm') + chalk.gray('               # 启动产品经理模式'));
+    console.log('  ' + chalk.white('pua prompt --role hr "你好"') + chalk.gray('       # 单次提示'));
+    console.log('  ' + chalk.white('pua jargon --type meeting') + chalk.gray('       # 生成会议黑话'));
+    console.log('  ' + chalk.white('pua weekly --role pm') + chalk.gray('            # 生成产品经理周报'));
     console.log();
     console.log(chalk.gray('更多选项请运行: pua --help'));
     console.log();
@@ -264,7 +273,7 @@ export async function showConfig(): Promise<void> {
 
   console.log(chalk.bold('默认设置:'));
   console.log(`  模型: ${chalk.white(config.defaults.model)}`);
-  console.log(`  角色: ${chalk.white(config.defaults.role)}`);
+  console.log(`  角色: ${chalk.white(ROLE_NAMES[config.defaults.role as RoleType])}`);
   console.log(`  强度: ${chalk.white(config.defaults.severity)}`);
   console.log();
 

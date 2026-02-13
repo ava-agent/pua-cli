@@ -1,6 +1,6 @@
-# PUA CLI
+# Workplace PUA CLI
 
-> 一个趣味性 AI CLI 工具，具有两种角色模式：**老板模式**和**员工模式**。
+> 一个趣味性 AI CLI 工具，具有 6 种角色模式：**老板**、**员工**、**产品经理**、**HR**、**技术主管**、**实习生**。
 
 ## 界面预览
 
@@ -28,11 +28,45 @@
 - 用卑微的语气回应一切
 - 经常加班，从不敢拒绝
 
+### 产品经理模式 📊
+- 经常说"这个需求很简单"
+- 喜欢画饼："下周上线"
+- 习惯性改需求
+- 善用黑话："对齐""赋能""闭环"
+
+### HR 模式 💼
+- 开口就是"公司就是家"
+- 喜欢打感情牌
+- 总是强调"要有格局"
+- 喜欢说"年轻人要有狼性"
+
+### 技术主管模式 💻
+- 对代码各种质疑
+- 喜欢指点江山
+- 口头禅："你这代码不行""重写"
+- 总是能发现架构问题
+
+### 实习生模式 🌱
+- 极度谦虚，总是说"哥/姐教我"
+- 什么都想学
+- 总是说"想学东西"
+- 积极主动，但什么都不会
+
 ---
 
 ## 快速开始
 
-### 一键安装
+### 一键安装（推荐）
+
+```bash
+# 直接从 npm 全局安装
+npm install -g workplace-pua-cli
+
+# 启动聊天（首次运行会自动进入配置向导）
+pua chat
+```
+
+### 从源码安装
 
 ```bash
 # 克隆项目
@@ -44,13 +78,6 @@ npm install && npm run build
 
 # 全局安装
 npm install -g .
-```
-
-### 首次使用
-
-```bash
-# 启动聊天（首次运行会自动进入配置向导）
-pua chat
 ```
 
 配置向导会引导你：
@@ -82,12 +109,23 @@ echo "加班" | pua prompt --role employee
 
 ## 常用命令
 
+### 主命令
+
 | 命令 | 说明 |
 |------|------|
 | `pua chat` | 启动交互模式 |
 | `pua prompt "问题"` | 单次提问 |
 | `pua config` | 重新配置 |
 | `pua config --show` | 查看配置 |
+
+### 新增趣味命令
+
+| 命令 | 说明 | 示例 |
+|------|------|------|
+| `pua jargon` | 职场黑话生成器 | `pua jargon --type meeting` |
+| `pua weekly` | 周报生成器 | `pua weekly --role pm` |
+| `pua email` | 邮件语气转换 | `pua email --from pm --to dev "你好"` |
+| `pua meeting` | 会议发言建议 | `pua meeting --role hr --scenario standup` |
 
 ### 交互模式内命令
 
@@ -134,7 +172,7 @@ pua config
 | 选项 | 说明 |
 |------|------|
 | `--provider <zhipu\|openai>` | AI 服务提供商 |
-| `--role <boss\|employee>` | 角色模式 |
+| `--role <boss\|employee\|pm\|hr\|techlead\|intern>` | 角色模式（6 种角色） |
 | `--model <model>` | 模型名称 |
 | `--severity <mild\|medium\|extreme>` | PUA 强度 |
 | `--format <text\|markdown\|json>` | 输出格式 |
@@ -148,7 +186,74 @@ pua config
 体验"职场 PUA"的趣味互动：
 
 ```bash
+# 老板模式 - PUA 别人
 pua chat --role boss --severity extreme
+
+# 产品经理模式 - 画饼大师
+pua chat --role pm
+
+# HR 模式 - 公司就是家
+pua chat --role hr
+```
+
+### 职场黑话生成
+
+生成各种类型的职场黑话：
+
+```bash
+# 生成会议黑话
+pua jargon --type meeting --intensity heavy
+
+# 生成报告黑话
+pua jargon --type report
+
+# 翻译普通文本为黑话
+pua jargon "帮我做个PPT"
+```
+
+### 周报生成
+
+根据不同角色自动生成周报：
+
+```bash
+# 产品经理周报
+pua weekly --role pm
+
+# HR 周报
+pua weekly --role hr
+
+# 开发人员周报
+pua weekly --role techlead
+```
+
+### 邮件语气转换
+
+转换不同角色之间的邮件语气：
+
+```bash
+# PM -> 开发
+pua email --from pm --to dev "请查收附件"
+
+# HR -> 员工（紧急）
+pua email --from hr --to employee --tone urgent "今天加班"
+
+# 开发 -> PM
+pua email --from dev --to pm "已完成开发"
+```
+
+### 会议发言建议
+
+根据不同会议场景生成发言建议：
+
+```bash
+# 站会发言
+pua meeting --role pm --scenario standup
+
+# 代码评审发言
+pua meeting --role techlead --scenario review
+
+# 头脑风暴发言
+pua meeting --role intern --scenario brainstorm
 ```
 
 ### AI 工作流

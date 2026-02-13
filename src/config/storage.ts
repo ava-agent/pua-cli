@@ -1,6 +1,7 @@
 import os from 'os';
 import path from 'path';
 import fs from 'fs';
+import type { RoleType } from '../prompts';
 
 export interface ProviderConfig {
   apiKey: string;
@@ -16,7 +17,7 @@ export interface GlobalConfig {
   defaults: {
     provider: string;
     model: string;
-    role: 'boss' | 'employee';
+    role: RoleType;
     severity: 'mild' | 'medium' | 'extreme';
   };
   onboardingCompleted: boolean;
@@ -25,7 +26,7 @@ export interface GlobalConfig {
 export interface ProjectConfig {
   provider?: string;
   model?: string;
-  role?: 'boss' | 'employee';
+  role?: RoleType;
   severity?: 'mild' | 'medium' | 'extreme';
 }
 

@@ -56,14 +56,14 @@ export class SessionStorage {
     return JSON.parse(content);
   }
 
-  saveSession(sessionData: SessionData): SessionData {
-    const sessionId = sessionData.id || this.generateId();
+  saveSession(sessionData: Omit<SessionData, 'id' | 'createdAt' | 'updatedAt'>): SessionData {
+    const sessionId = this.generateId();
     const now = new Date().toISOString();
 
     const fullSession: SessionData = {
       ...sessionData,
       id: sessionId,
-      createdAt: sessionData.createdAt || now,
+      createdAt: now,
       updatedAt: now
     };
 

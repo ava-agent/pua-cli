@@ -23,11 +23,6 @@ export interface ChatOptions {
 // 全局会话存储实例
 const sessionStorage = new SessionStorage();
 
-// 扩展 readline.Interface 类型
-interface ExtendedInterface extends readline.Interface {
-  [key: string]: string;
-}
-
 // 扩展 readline 接口以支持动态属性
 declare module 'readline' {
   interface Interface {
@@ -39,6 +34,13 @@ export async function chatCommand(options: ChatOptions): Promise<void> {
   // Create session
   const sessionId = `session-${Date.now()}`;
   sessionManager.createSession(sessionId);
+
+  // Create readline interface first
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    prompt: chalk.green('❯ ')
+  });
 
   // 保存元数据到 rl 以便在命令处理中使用
   rl['role'] = options.role;
@@ -83,13 +85,6 @@ export async function chatCommand(options: ChatOptions): Promise<void> {
   console.log();
   console.log(chalk.gray('输入 /help 查看可用命令，输入 /exit 退出'));
   console.log();
-
-  // Create readline interface
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-    prompt: chalk.green('❯ ')
-  });
 
   rl.prompt();
 
@@ -220,7 +215,7 @@ function printHelp(): void {
 
 async function handleSaveCommand(args: string[], rl: readline.Interface): Promise<void> {
   const sessionName = args.join(' ') || '未命名会话';
-  const currentMessages = sessionManager.getCurrentMessages();
+  const currentMessages = sessionManager.getMessages();
 
   const spinner = ora('保存会话中...').start();
   try {
@@ -305,7 +300,7 @@ async function handleLoadCommand(args: string[], rl: readline.Interface): Promis
     // 加载会话消息
     sessionManager.clearCurrentSession();
     for (const msg of session.messages || []) {
-      sessionManager.addMessage(msg.role, msg.content);
+      sessionManager.addMessage({ role: msg.role as any, content: msg.content });
     }
 
     logger.success(`已加载会话: ${session.name}`);

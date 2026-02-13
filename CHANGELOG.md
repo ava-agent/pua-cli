@@ -4,6 +4,78 @@ All notable changes to PUA CLI will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.5.0] - 2025-02-13 - Feature Expansion Edition
+
+### Added
+- **新增 4 个角色**:
+  - 产品经理 (PM) - 画饼大师，善用黑话
+  - HR - 公司就是家，打感情牌
+  - 技术主管 - 指点江山，质疑代码
+  - 实习生 - 谦虚好学，求带求教
+- **职场黑话生成器** (`pua jargon`)
+  - 支持多种类型：会议、报告、邮件、聊天
+  - 支持强度调节：轻度、中度、重度
+  - 支持普通文本翻译为黑话
+- **周报生成器** (`pua weekly`)
+  - 根据不同角色自动生成周报
+  - 包含本周工作、下周计划、风险问题、数据统计
+  - 支持指定周数
+- **邮件语气转换器** (`pua email`)
+  - 支持不同角色之间的邮件语气转换
+  - 支持多种语气：礼貌、紧急、随意、委婉
+  - 支持角色别名（dev、team 等）
+- **会议发言建议** (`pua meeting`)
+  - 支持多种会议场景：站会、评审、头脑风暴、回顾、规划
+  - 根据角色和场景生成针对性发言建议
+- **统一边框渲染系统**:
+  - 支持多种边框样式：单线、双线、圆角
+  - 支持自定义宽度、内边距、标题
+  - 提供多种预设：info、success、warning、error
+- **颜色主题系统**:
+  - 4 种预定义主题：默认、暗色、多彩、极简
+  - 支持主题切换和列表显示
+
+### Changed
+- **配置向导**:
+  - 更新角色选择，新增 4 个角色选项
+  - 更新示例命令，包含新功能介绍
+  - 改进配置显示格式
+- **类型系统**:
+  - RoleType 扩展为 6 种角色
+  - GlobalConfig 和 ProjectConfig 支持新角色
+
+### Fixed
+- 修复 box.ts 中的类型定义和语法错误
+- 修复 theme.ts 中的 chalk.Color 类型问题
+- 修复 jargon.ts 中的类型转换错误
+- 修复 weekly.ts 中的 Date.getWeek() 方法不存在问题
+- 修复 email.ts 中的角色模板键名不匹配问题
+- 移除遗留开发文件 chat-new-imports.ts
+
+### Technical Details
+- **新增文件**:
+  - `src/prompts/pm.ts` - 产品经理提示词
+  - `src/prompts/hr.ts` - HR 提示词
+  - `src/prompts/techlead.ts` - 技术主管提示词
+  - `src/prompts/intern.ts` - 实习生提示词
+  - `src/commands/jargon.ts` - 黑话生成器命令
+  - `src/commands/weekly.ts` - 周报生成器命令
+  - `src/commands/email.ts` - 邮件语气转换命令
+  - `src/commands/meeting.ts` - 会议发言建议命令
+  - `src/utils/box.ts` - 边框渲染工具
+  - `src/utils/theme.ts` - 主题管理系统
+
+### Contributors
+- @ava-agent (Claude Opus 4.6)
+
+---
+
+## [0.4.1] - 2025-02-12
+
+### Changed
+- **Package name**: renamed from `pua-cli` to `workplace-pua-cli` to avoid naming conflict
+- **Installation**: Updated README with npm installation instructions
+
 ## [0.4.0] - 2025-02-12 - MVP Edition
 
 ### Added

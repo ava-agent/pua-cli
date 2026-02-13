@@ -4,6 +4,10 @@ import chalk from 'chalk';
 import { chatCommand, ChatOptions } from './commands/chat';
 import { promptCommand, PromptOptions } from './commands/prompt';
 import { configWizard, showConfig } from './commands/config';
+import { createJargonCommand } from './commands/jargon';
+import { createWeeklyCommand } from './commands/weekly';
+import { createEmailCommand } from './commands/email';
+import { createMeetingCommand } from './commands/meeting';
 import {
   loadConfig,
   needsOnboarding,
@@ -16,8 +20,8 @@ const program = new Command();
 // CLI metadata
 program
   .name('pua')
-  .description('PUA CLI - 一个趣味性 AI CLI 工具，具有两种角色模式')
-  .version('0.2.0');
+  .description('Workplace PUA CLI - 一个趣味性 AI CLI 工具，具有 6 种角色模式')
+  .version('0.5.0');
 
 /**
  * Wrap command action with onboarding check
@@ -76,7 +80,7 @@ program
 program
   .command('chat')
   .description('启动交互式聊天模式（支持会话历史）')
-  .option('-r, --role <boss|employee>', '角色模式: boss (老板模式) 或 employee (员工模式)')
+  .option('-r, --role <role>', '角色模式: boss(老板), employee(员工), pm(产品经理), hr(HR), techlead(技术主管), intern(实习生)')
   .option('-m, --model <model>', '模型名称')
   .option('-s, --severity <mild|medium|extreme>', 'PUA 强度')
   .option('-p, --provider <zhipu|openai>', 'AI 服务提供商')
@@ -103,7 +107,7 @@ program
 program
   .command('prompt')
   .description('单次提示模式（适合 AI 工作流集成）')
-  .option('-r, --role <boss|employee>', '角色模式: boss (老板模式) 或 employee (员工模式)')
+  .option('-r, --role <role>', '角色模式: boss(老板), employee(员工), pm(产品经理), hr(HR), techlead(技术主管), intern(实习生)')
   .option('-m, --model <model>', '模型名称')
   .option('-s, --severity <mild|medium|extreme>', 'PUA 强度')
   .option('-p, --provider <zhipu|openai>', 'AI 服务提供商')
@@ -130,6 +134,22 @@ program
       }
     });
   });
+
+// Jargon command - 职场黑话生成器
+program.addCommand(createJargonCommand());
+
+// Weekly command - 周报生成器
+program.addCommand(createWeeklyCommand());
+
+// Email command - 邮件语气转换器
+program.addCommand(createEmailCommand());
+
+// Meeting command - 会议发言建议
+program.addCommand(createMeetingCommand());
+
+// Box and Theme system
+import { BoxRenderer, createBox, createSuccessBox, createWarningBox, createErrorBox } from './utils/box';
+import { ThemeManager, listThemes, setTheme, applyTheme } from './utils/theme';
 
 // Default command - show help
 program.action(() => {
