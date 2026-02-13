@@ -194,57 +194,10 @@ ${severityModifier}
       return res.status(500).json({ error: 'AI 服务暂时不可用，请稍后重试' });
     }
 
-    // 支持流式输出
-    const stream = response.body;
-    if (!stream) {
-      return res.status(500).json({ error: '无法获取响应流' });
-    }
+    const data = await response.json();
+    const reply = data.choices?.[0]?.message?.content || '抱歉，我没有理解你的意思。';
 
-    // 设置 SSE headers
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-
-    let fullReply = '';
-
-    try {
-      // 读取流
-      const reader = stream.getReader();
-      const decoder = new TextDecoder();
-      const { value } = await reader.read();
-      const chunk = decoder.decode(value, { stream: true });
-
-      // 解析 SSE 数据
-      const lines = chunk.split('\n');
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6);
-          if (data === '[DONE]') {
-            res.write(`data: [DONE]\n\n`);
-            break;
-          }
-          try {
-            const parsed = JSON.parse(data);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              fullReply += content;
-              res.write(`data: ${JSON.stringify({ content })}\n\n`);
-            }
-          } catch (e) {
-            // 忽略解析错误
-          }
-        }
-      }
-
-      reader.releaseLock();
-      return res.end();
-    } catch (error) {
-      console.error('Stream processing error:', error);
-      // 如果流式处理失败，尝试传统方式
-      const data = await response.json();
-      const reply = data.choices?.[0]?.message?.content || '抱歉，我没有理解你的意思。';
-      return res.status(200).json({ reply });
-    }
+    return res.status(200).json({ reply });
 
   } catch (error) {
     console.error('Chat API error:', error);

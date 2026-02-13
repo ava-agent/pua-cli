@@ -71,7 +71,7 @@
 
 > 💡 Web 版本的 API Key 存储在服务器端，安全且无需自己配置！
 >
-> 🔗 在线体验：[Workplace PUA CLI](https://workplace-pua-cli.vercel.app)
+> 🔗 在线体验：[Workplace PUA CLI](https://pua-cli.vercel.app)
 
 ### 一键安装（推荐）
 

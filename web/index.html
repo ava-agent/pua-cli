@@ -952,97 +952,21 @@
           throw new Error(`HTTP ${response.status}`);
         }
 
-        // Check if response is streaming (SSE)
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('text/event-stream')) {
-          // Handle streaming response
-          loadingLine.style.display = 'none';
+        const data = await response.json();
 
-          const reader = response.body.getReader();
-          const decoder = new TextDecoder();
-          let aiReply = '';
-          let messageLine = null;
-          let messageText = null;
+        // Hide loading first
+        loadingLine.style.display = 'none';
+        inputPrompt.textContent = '➜';
+        isTyping = false;
 
-          // Create a new message line for streaming
-          messageLine = document.createElement('div');
-          messageLine.className = 'prompt-line';
+        // Add AI message (will auto-scroll)
+        addMessage(data.reply, 'assistant');
 
-          const symbol = document.createElement('span');
-          symbol.className = 'prompt-symbol assistant';
-          symbol.textContent = '💬 ';
+        // Add AI response to memory
+        addToMemory('assistant', data.reply);
 
-          messageText = document.createElement('span');
-          messageText.className = 'prompt-text ai-output';
-
-          messageLine.appendChild(symbol);
-          messageLine.appendChild(messageText);
-          messagesContainer.appendChild(messageLine);
-
-          // Scroll to show the empty message
-          terminalBody.scrollTop = terminalBody.scrollHeight;
-
-          let buffer = '';
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
-
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                const data = line.slice(6);
-                if (data === '[DONE]') {
-                  break;
-                }
-                try {
-                  const parsed = JSON.parse(data);
-                  if (parsed.content) {
-                    aiReply += parsed.content;
-                    messageText.textContent = aiReply;
-                    // Auto-scroll as content arrives
-                    terminalBody.scrollTop = terminalBody.scrollHeight;
-                  }
-                } catch (e) {
-                  console.error('Parse error:', e);
-                }
-              }
-            }
-          }
-
-          // Stream complete
-          isTyping = false;
-          inputPrompt.textContent = '➜';
-
-          // Add to memory
-          addToMemory('assistant', aiReply);
-
-          // Update stats
-          updateStatsDisplay();
-
-          inputField.focus();
-        } else {
-          // Handle non-streaming response (fallback)
-          const data = await response.json();
-
-          // Hide loading first
-          loadingLine.style.display = 'none';
-          inputPrompt.textContent = '➜';
-          isTyping = false;
-
-          // Add AI message (will auto-scroll)
-          addMessage(data.reply, 'assistant');
-
-          // Add AI response to memory
-          addToMemory('assistant', data.reply);
-
-          // Update stats
-          updateStatsDisplay();
-
-          inputField.focus();
-        }
+        // Update stats
+        updateStatsDisplay();
 
       } catch (error) {
         addMessage(`Error: ${error.message}`, 'error');
