@@ -103,6 +103,7 @@
     .prompt-symbol.system { color: #00ccff; }
     .prompt-symbol.error { color: #ff4444; }
     .prompt-symbol.success { color: #00ff00; }
+    .prompt-symbol.info { color: #ff9900; }
 
     .prompt-text {
       color: #cccccc;
@@ -123,6 +124,18 @@
     .prompt-text.system-msg {
       color: #00ccff;
       font-style: italic;
+    }
+
+    .prompt-text.info-msg {
+      color: #ff9900;
+    }
+
+    .prompt-text.code {
+      color: #00ff00;
+      background: #002200;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
     }
 
     /* Blinking cursor */
@@ -168,22 +181,6 @@
       font-size: 14px;
       outline: none;
       caret-color: #00ff00;
-    }
-
-    /* Help menu */
-    .help-menu {
-      color: #888;
-      margin-bottom: 20px;
-      white-space: pre;
-      font-size: 12px;
-    }
-
-    .help-menu .cmd {
-      color: #00ff00;
-    }
-
-    .help-menu .desc {
-      color: #888;
     }
 
     /* Role selector - CLI style */
@@ -371,6 +368,48 @@
       margin-bottom: 15px;
     }
 
+    /* Memory indicator */
+    .memory-indicator {
+      background: #111;
+      border: 1px solid #333;
+      padding: 8px 12px;
+      margin-bottom: 15px;
+      font-size: 11px;
+      color: #888;
+    }
+
+    .memory-indicator .count {
+      color: #00ff00;
+    }
+
+    .memory-indicator .clear-btn {
+      color: #ff9900;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .memory-indicator .clear-btn:hover {
+      color: #ffcc00;
+    }
+
+    /* Stats display */
+    .stats-display {
+      background: #0a0a0a;
+      border: 1px solid #222;
+      padding: 8px 12px;
+      margin-bottom: 15px;
+      font-size: 11px;
+      color: #666;
+    }
+
+    .stats-display .label {
+      color: #888;
+    }
+
+    .stats-display .value {
+      color: #00ccff;
+    }
+
     @media (max-width: 600px) {
       .terminal-body {
         padding: 10px;
@@ -437,6 +476,26 @@
           <span class="prompt-symbol system">ℹ</span>
           <span class="prompt-text system-msg">已连接到 AI 后端服务</span>
         </div>
+      </div>
+
+      <!-- NPM Install Info -->
+      <div class="prompt-line">
+        <span class="prompt-symbol info">ℹ</span>
+        <span class="prompt-text info-msg">这是 Web 体验版，解锁完整功能请安装 CLI：</span>
+      </div>
+      <div class="prompt-line">
+        <span class="prompt-symbol user">➜</span>
+        <span class="prompt-text"><span class="code">npm install -g ava-agent/pua-cli</span></span>
+      </div>
+      <div class="prompt-line">
+        <span class="prompt-symbol info">ℹ</span>
+        <span class="prompt-text info-msg">完整版支持：多轮对话记忆、自定义角色、本地历史记录</span>
+      </div>
+
+      <!-- Memory Indicator -->
+      <div class="memory-indicator" id="memoryIndicator">
+        记忆模式: <span class="count">已记住 <span id="memoryCount">0</span> 条对话</span>
+        <span class="clear-btn" id="clearMemory">[清除记忆]</span>
       </div>
 
       <!-- Options Display -->
@@ -511,6 +570,8 @@
         <span class="value">NORMAL</span>
         <span class="key">ROLE</span>
         <span class="value" id="statusRole">boss</span>
+        <span class="key">VISITS</span>
+        <span class="value" id="visitCount">1</span>
       </div>
       <div class="right">
         <span class="key">POS</span>
@@ -521,6 +582,134 @@
   </div>
 
   <script>
+    // ============================================
+    // Analytics & Memory
+    // ============================================
+
+    // Analytics data
+    const analytics = {
+      visits: 0,
+      messagesSent: 0,
+      rolesUsed: {},
+      lastVisit: null
+    };
+
+    // Load analytics from localStorage
+    function loadAnalytics() {
+      try {
+        const saved = localStorage.getItem('pua-cli-analytics');
+        if (saved) {
+          const data = JSON.parse(saved);
+          analytics.visits = data.visits || 0;
+          analytics.messagesSent = data.messagesSent || 0;
+          analytics.rolesUsed = data.rolesUsed || {};
+          analytics.lastVisit = data.lastVisit;
+        }
+      } catch (e) {
+        console.error('Failed to load analytics:', e);
+      }
+    }
+
+    // Save analytics to localStorage
+    function saveAnalytics() {
+      try {
+        localStorage.setItem('pua-cli-analytics', JSON.stringify(analytics));
+      } catch (e) {
+        console.error('Failed to save analytics:', e);
+      }
+    }
+
+    // Track page visit
+    function trackVisit() {
+      analytics.visits++;
+      analytics.lastVisit = new Date().toISOString();
+      saveAnalytics();
+      updateVisitDisplay();
+
+      // Send to analytics endpoint (optional - just tracking locally)
+      console.log('[Analytics] Page visit tracked:', {
+        visits: analytics.visits,
+        timestamp: analytics.lastVisit
+      });
+    }
+
+    // Track message sent
+    function trackMessage(role) {
+      analytics.messagesSent++;
+      analytics.rolesUsed[role] = (analytics.rolesUsed[role] || 0) + 1;
+      saveAnalytics();
+      updateStatsDisplay();
+    }
+
+    // Update visit count display
+    function updateVisitDisplay() {
+      document.getElementById('visitCount').textContent = analytics.visits;
+    }
+
+    // Update stats display
+    function updateStatsDisplay() {
+      // Could add more stats display here
+    }
+
+    // ============================================
+    // Memory (Conversation History)
+    // ============================================
+
+    const MEMORY_KEY = 'pua-cli-memory';
+    const MAX_MEMORY = 50; // Store up to 50 messages
+
+    // Load memory from localStorage
+    function loadMemory() {
+      try {
+        const saved = localStorage.getItem(MEMORY_KEY);
+        if (saved) {
+          return JSON.parse(saved);
+        }
+      } catch (e) {
+        console.error('Failed to load memory:', e);
+      }
+      return [];
+    }
+
+    // Save memory to localStorage
+    function saveMemory(memory) {
+      try {
+        // Keep only last MAX_MEMORY messages
+        const trimmed = memory.slice(-MAX_MEMORY);
+        localStorage.setItem(MEMORY_KEY, JSON.stringify(trimmed));
+        updateMemoryDisplay(trimmed.length);
+      } catch (e) {
+        console.error('Failed to save memory:', e);
+      }
+    }
+
+    // Clear memory
+    function clearMemory() {
+      localStorage.removeItem(MEMORY_KEY);
+      conversationHistory = [];
+      updateMemoryDisplay(0);
+      addMessage('记忆已清除', 'system');
+    }
+
+    // Add to memory
+    function addToMemory(role, content) {
+      conversationHistory.push({
+        role,
+        content,
+        timestamp: new Date().toISOString()
+      });
+      saveMemory(conversationHistory);
+    }
+
+    // Update memory display
+    function updateMemoryDisplay(count) {
+      document.getElementById('memoryCount').textContent = count;
+    }
+
+    // ============================================
+    // Main Application
+    // ============================================
+
     // State
     let currentRole = 'boss';
     let currentSeverity = 'medium';
@@ -549,6 +738,26 @@
       intern: '实习生 (Intern)'
     };
 
+    // Initialize
+    function init() {
+      // Load analytics and memory
+      loadAnalytics();
+
+      // Track visit
+      trackVisit();
+
+      // Load conversation history from memory
+      conversationHistory = loadMemory();
+      updateMemoryDisplay(conversationHistory.length);
+
+      // If there's memory, show summary
+      if (conversationHistory.length > 0) {
+        setTimeout(() => {
+          addMessage(`已恢复上次对话记忆（${conversationHistory.length} 条）`, 'system');
+        }, 1000);
+      }
+    }
+
     // Update options display
     function updateOptionsDisplay() {
       optionsDisplay.innerHTML = `当前配置: 角色=<span>${currentRole}</span> | 强度=<span>${currentSeverity}</span>`;
@@ -564,7 +773,7 @@
       symbol.className = `prompt-symbol ${type}`;
 
       const text = document.createElement('span');
-      text.className = `prompt-text ${type === 'user' ? 'user-input' : 'ai-output'}`;
+      text.className = `prompt-text ${type === 'user' ? 'user-input' : type === 'assistant' ? 'ai-output' : type === 'info' ? 'info-msg' : 'system-msg'}`;
 
       switch(type) {
         case 'user':
@@ -577,19 +786,26 @@
           break;
         case 'system':
           symbol.textContent = 'ℹ ';
-          text.className = 'prompt-text system-msg';
-          text.textContent = content;
+          break;
+        case 'info':
+          symbol.textContent = 'ℹ ';
           break;
         case 'error':
           symbol.textContent = '✗ ';
           line.classList.add('error-msg');
-          text.textContent = content;
           break;
         case 'success':
           symbol.textContent = '✓ ';
           line.classList.add('success-msg');
-          text.textContent = content;
           break;
+        default:
+          if (type.startsWith('prompt-symbol.')) {
+            symbol.textContent = 'ℹ ';
+          }
+      }
+
+      if (!text.textContent) {
+        text.textContent = content;
       }
 
       line.appendChild(symbol);
@@ -600,14 +816,6 @@
       requestAnimationFrame(() => {
         terminalBody.scrollTop = terminalBody.scrollHeight;
       });
-
-      // Save to history
-      if (type === 'user' || type === 'assistant') {
-        conversationHistory.push({
-          role: type === 'user' ? 'user' : 'assistant',
-          content: content
-        });
-      }
     }
 
     // Send message
@@ -622,6 +830,12 @@
       // Add user message
       addMessage(content, 'user');
 
+      // Track message
+      trackMessage(currentRole);
+
+      // Add to memory
+      addToMemory('user', content);
+
       // Show loading
       loadingLine.style.display = 'flex';
 
@@ -635,7 +849,7 @@
             message: content,
             role: currentRole,
             severity: currentSeverity,
-            history: conversationHistory
+            history: conversationHistory.slice(-10) // Send last 10 messages for context
           })
         });
 
@@ -645,6 +859,9 @@
 
         const data = await response.json();
         addMessage(data.reply, 'assistant');
+
+        // Add AI response to memory
+        addToMemory('assistant', data.reply);
 
       } catch (error) {
         addMessage(`Error: ${error.message}`, 'error');
@@ -690,6 +907,13 @@
       inputField.focus();
     });
 
+    // Clear memory button
+    document.getElementById('clearMemory').addEventListener('click', () => {
+      if (confirm('确定要清除对话记忆吗？')) {
+        clearMemory();
+      }
+    });
+
     // Input handlers
     inputField.addEventListener('keydown', (e) => {
       // Enter to send
@@ -725,12 +949,13 @@
       }
     });
 
-    // Initial focus
+    // Initial focus and init
     inputField.focus();
+    init();
 
     // Welcome message animation
     setTimeout(() => {
-      addMessage('提示：选择角色和强度后，直接输入消息即可开始对话。', 'system');
+      addMessage('提示：选择角色和强度后，直接输入消息即可开始对话。AI 会记住之前的对话内容。', 'system');
     }, 500);
   </script>
 </body>
