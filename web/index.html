@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PUA CLI - 职场角色扮演助手</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      padding: 40px 20px;
+      color: #fff;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      background: linear-gradient(90deg, #00d9ff, #00ff88);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header p {
+      color: #8892b0;
+      font-size: 1.1rem;
+    }
+
+    .main-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 25px;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .control-group label {
+      color: #ccd6f6;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .control-group select {
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .control-group select:hover {
+      border-color: rgba(0, 217, 255, 0.3);
+    }
+
+    .control-group select:focus {
+      outline: none;
+      border-color: #00d9ff;
+      box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
+    }
+
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .messages {
+      min-height: 300px;
+      max-height: 500px;
+      overflow-y: auto;
+      padding: 20px;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .message {
+      margin-bottom: 20px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message.user {
+      text-align: right;
+    }
+
+    .message-content {
+      display: inline-block;
+      max-width: 80%;
+      padding: 14px 18px;
+      border-radius: 18px;
+      line-height: 1.5;
+    }
+
+    .message.user .message-content {
+      background: linear-gradient(135deg, #00d9ff, #0099cc);
+      color: #000;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message.assistant .message-content {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ccd6f6;
+      border-bottom-left-radius: 4px;
+      white-space: pre-wrap;
+    }
+
+    .input-area {
+      display: flex;
+      gap: 12px;
+    }
+
+    .input-area textarea {
+      flex: 1;
+      padding: 16px 20px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      font-size: 1rem;
+      font-family: inherit;
+      resize: none;
+      min-height: 60px;
+      max-height: 200px;
+      transition: all 0.3s;
+    }
+
+    .input-area textarea:focus {
+      outline: none;
+      border-color: #00d9ff;
+      box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
+    }
+
+    .send-btn {
+      padding: 16px 32px;
+      border: none;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #00d9ff, #00ff88);
+      color: #000;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+
+    .send-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 217, 255, 0.3);
+    }
+
+    .send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+      color: #8892b0;
+    }
+
+    .loading.active {
+      display: block;
+    }
+
+    .loading-dots::after {
+      content: '';
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+
+    @keyframes dots {
+      0%, 20% { content: ''; }
+      40% { content: '.'; }
+      60% { content: '..'; }
+      80%, 100% { content: '...'; }
+    }
+
+    .footer {
+      text-align: center;
+      padding: 30px 20px;
+      color: #8892b0;
+      font-size: 0.9rem;
+    }
+
+    .footer a {
+      color: #00d9ff;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Scrollbar */
+    .messages::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .messages::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+    }
+
+    .messages::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    .messages::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    @media (max-width: 600px) {
+      .header h1 {
+        font-size: 1.8rem;
+      }
+
+      .controls {
+        grid-template-columns: 1fr;
+      }
+
+      .input-area {
+        flex-direction: column;
+      }
+
+      .send-btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎭 PUA CLI</h1>
+      <p>职场角色扮演助手 - 让 AI 模拟不同职场角色的回复风格</p>
+    </div>
+
+    <div class="main-card">
+      <div class="controls">
+        <div class="control-group">
+          <label for="role">选择角色</label>
+          <select id="role">
+            <option value="boss">👔 老板 - 喜欢画饼和 PUA</option>
+            <option value="employee">😓 员工 - 被老板 PUA 的风格</option>
+            <option value="pm">📋 产品经理 - 需求总在变</option>
+            <option value="hr">💼 HR - 官方话术大师</option>
+            <option value="techlead">👨‍💻 技术主管 - 技术反驳专家</option>
+            <option value="intern">🌱 实习生 - 谦虚学习</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="severity">PUA 强度</label>
+          <select id="severity">
+            <option value="mild">🟢 温和 - 稍微调侃</option>
+            <option value="medium" selected>🟡 中等 - 标准模式</option>
+            <option value="extreme">🔴 强烈 - 暴击模式</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="chat-container">
+        <div class="messages" id="messages">
+          <div class="message assistant">
+            <div class="message-content">👋 嗨！选择一个角色，开始体验职场 PUA 的艺术吧~</div>
+          </div>
+        </div>
+
+        <div class="loading" id="loading">
+          <span class="loading-dots">正在思考如何回复你</span>
+        </div>
+
+        <div class="input-area">
+          <textarea
+            id="input"
+            placeholder="输入你想说的话... 比如：我想加薪 / 这个需求很简单 / 今天能上线吗？"
+            rows="2"
+          ></textarea>
+          <button class="send-btn" id="sendBtn">发送</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>💡 这是一个趣味性工具，仅供娱乐，请勿当真</p>
+      <p>开源项目: <a href="https://github.com/ava-agent/pua-cli" target="_blank">github.com/ava-agent/pua-cli</a></p>
+    </div>
+  </div>
+
+  <script>
+    const messagesEl = document.getElementById('messages');
+    const inputEl = document.getElementById('input');
+    const sendBtn = document.getElementById('sendBtn');
+    const loadingEl = document.getElementById('loading');
+    const roleEl = document.getElementById('role');
+    const severityEl = document.getElementById('severity');
+
+    let conversationHistory = [];
+
+    function addMessage(content, isUser = false) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
+
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'message-content';
+      contentDiv.textContent = content;
+
+      messageDiv.appendChild(contentDiv);
+      messagesEl.appendChild(messageDiv);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+
+      // 保存到历史
+      conversationHistory.push({
+        role: isUser ? 'user' : 'assistant',
+        content: content
+      });
+    }
+
+    async function sendMessage() {
+      const content = inputEl.value.trim();
+      if (!content) return;
+
+      const role = roleEl.value;
+      const severity = severityEl.value;
+
+      // 添加用户消息
+      addMessage(content, true);
+      inputEl.value = '';
+
+      // 显示加载状态
+      loadingEl.classList.add('active');
+      sendBtn.disabled = true;
+
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: content,
+            role: role,
+            severity: severity,
+            history: conversationHistory
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('请求失败，请稍后重试');
+        }
+
+        const data = await response.json();
+
+        // 添加 AI 回复
+        addMessage(data.reply, false);
+
+      } catch (error) {
+        console.error('Error:', error);
+        addMessage('😅 出错了：' + error.message, false);
+      } finally {
+        loadingEl.classList.remove('active');
+        sendBtn.disabled = false;
+      }
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // 自动聚焦输入框
+    inputEl.focus();
+  </script>
+</body>
+</html>

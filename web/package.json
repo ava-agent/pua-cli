@@ -1,0 +1,19 @@
+{
+  "name": "pua-cli-web",
+  "version": "1.0.0",
+  "description": "Web version of PUA CLI - Secure backend with API key hidden",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "next": "^14.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "vercel": "^37.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
