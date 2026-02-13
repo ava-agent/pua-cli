@@ -1,6 +1,83 @@
 // 智谱 AI API 配置
 const ZHIPU_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
 
+// API 安全配置
+const MAX_MESSAGE_LENGTH = 500;
+const MAX_REQUESTS_PER_MINUTE = 10;
+const FORBIDDEN_WORDS = ['<script>', 'javascript:', 'onerror=', 'onload=', 'eval(', 'document.cookie'];
+
+// 速率限制存储 (内存中，生产环境建议使用 Redis)
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+
+// 清理过期的速率限制记录
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, data] of rateLimitMap.entries()) {
+    if (now > data.resetTime) {
+      rateLimitMap.delete(ip);
+    }
+  }
+}, 60000); // 每分钟清理一次
+
+// 获取客户端 IP
+function getClientIP(req: any): string {
+  return req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+         req.headers['x-real-ip'] ||
+         req.connection?.remoteAddress ||
+         req.socket?.remoteAddress ||
+         'unknown';
+}
+
+// 检查速率限制
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const record = rateLimitMap.get(ip);
+
+  if (!record || now > record.resetTime) {
+    // 创建新的限制记录
+    rateLimitMap.set(ip, {
+      count: 1,
+      resetTime: now + 60000 // 1分钟后重置
+    });
+    return true;
+  }
+
+  if (record.count >= MAX_REQUESTS_PER_MINUTE) {
+    return false; // 超过限制
+  }
+
+  record.count++;
+  return true;
+}
+
+// 输入验证
+function validateInput(message: string, role: string): { valid: boolean; error?: string } {
+  // 检查消息长度
+  if (!message || message.trim().length === 0) {
+    return { valid: false, error: '消息不能为空' };
+  }
+
+  if (message.length > MAX_MESSAGE_LENGTH) {
+    return { valid: false, error: `消息长度不能超过 ${MAX_MESSAGE_LENGTH} 字符` };
+  }
+
+  // 检查角色
+  const validRoles = ['boss', 'employee', 'pm', 'hr', 'techlead', 'intern'];
+  if (!validRoles.includes(role)) {
+    return { valid: false, error: '无效的角色选择' };
+  }
+
+  // 检查禁止的词语（防止 XSS 和注入攻击）
+  const lowerMessage = message.toLowerCase();
+  for (const word of FORBIDDEN_WORDS) {
+    if (lowerMessage.includes(word)) {
+      return { valid: false, error: '消息包含不安全的内容' };
+    }
+  }
+
+  return { valid: true };
+}
+
 // 角色 Prompt 映射
 const ROLE_PROMPTS: Record<string, string> = {
   boss: '你是一个喜欢 PUA 员工的老板。你的特点：喜欢画饼、强调"公司就是你的家"、谈论期权和未来、暗示要感恩、用"年轻人要多锻炼"来包装加班。回复要简短有力，充满职场黑话。',
@@ -35,10 +112,25 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
+    // 获取客户端 IP
+    const clientIP = getClientIP(req);
+
+    // 检查速率限制
+    if (!checkRateLimit(clientIP)) {
+      console.warn(`Rate limit exceeded for IP: ${clientIP}`);
+      return res.status(429).json({
+        error: '请求过于频繁，请稍后再试',
+        retryAfter: 60
+      });
+    }
+
     const { message, role, severity, history } = req.body;
 
-    if (!message || !role) {
-      return res.status(400).json({ error: '缺少必要参数' });
+    // 输入验证
+    const validation = validateInput(message, role);
+    if (!validation.valid) {
+      console.warn(`Input validation failed: ${validation.error}`);
+      return res.status(400).json({ error: validation.error });
     }
 
     // 获取 API Key（从环境变量中读取，安全！）
@@ -102,10 +194,57 @@ ${severityModifier}
       return res.status(500).json({ error: 'AI 服务暂时不可用，请稍后重试' });
     }
 
-    const data = await response.json();
-    const reply = data.choices?.[0]?.message?.content || '抱歉，我没有理解你的意思。';
+    // 支持流式输出
+    const stream = response.body;
+    if (!stream) {
+      return res.status(500).json({ error: '无法获取响应流' });
+    }
 
-    return res.status(200).json({ reply });
+    // 设置 SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    let fullReply = '';
+
+    try {
+      // 读取流
+      const reader = stream.getReader();
+      const decoder = new TextDecoder();
+      const { value } = await reader.read();
+      const chunk = decoder.decode(value, { stream: true });
+
+      // 解析 SSE 数据
+      const lines = chunk.split('\n');
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') {
+            res.write(`data: [DONE]\n\n`);
+            break;
+          }
+          try {
+            const parsed = JSON.parse(data);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              fullReply += content;
+              res.write(`data: ${JSON.stringify({ content })}\n\n`);
+            }
+          } catch (e) {
+            // 忽略解析错误
+          }
+        }
+      }
+
+      reader.releaseLock();
+      return res.end();
+    } catch (error) {
+      console.error('Stream processing error:', error);
+      // 如果流式处理失败，尝试传统方式
+      const data = await response.json();
+      const reply = data.choices?.[0]?.message?.content || '抱歉，我没有理解你的意思。';
+      return res.status(200).json({ reply });
+    }
 
   } catch (error) {
     console.error('Chat API error:', error);
