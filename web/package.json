@@ -1,5 +1,8 @@
 {
   "name": "pua-cli-web",
   "version": "1.0.0",
-  "description": "Web version of PUA CLI - Secure backend with API key hidden"
+  "description": "Web version of PUA CLI - Secure backend with API key hidden",
+  "scripts": {
+    "vercel-build": "echo 'No build needed'"
+  }
 }
