@@ -106,7 +106,7 @@
     .prompt-symbol.info { color: #ff9900; }
 
     .prompt-text {
-      color: #cccccc;
+      color: #b8b8b8;
       white-space: pre-wrap;
       word-break: break-word;
       flex: 1;
@@ -118,7 +118,7 @@
     }
 
     .prompt-text.ai-output {
-      color: #ffcc00;
+      color: #ffd966;
     }
 
     .prompt-text.system-msg {
@@ -158,6 +158,22 @@
       50% { opacity: 0; }
     }
 
+    /* Message entrance animation */
+    @keyframes messageIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .prompt-line {
+      animation: messageIn 0.2s ease-out;
+    }
+
     /* Input area */
     .input-container {
       display: flex;
@@ -183,6 +199,14 @@
       caret-color: #00ff00;
     }
 
+    .input-field:focus {
+      box-shadow: 0 0 0 2px rgba(0, 255, 0, 0.3);
+    }
+
+    .input-field::placeholder {
+      color: #666;
+    }
+
     /* Role selector - CLI style */
     .role-selector {
       display: flex;
@@ -193,17 +217,27 @@
 
     .role-option {
       cursor: pointer;
-      padding: 8px 16px;
+      padding: 10px 16px;
       border: 1px solid #333;
       background: #111;
       color: #666;
       font-size: 12px;
       transition: all 0.2s;
+      min-height: 44px;
+      min-width: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .role-option:hover {
       border-color: #00ff00;
       color: #00ff00;
+    }
+
+    .role-option:focus {
+      outline: 2px solid #00ccff;
+      outline-offset: 2px;
     }
 
     .role-option.active {
@@ -225,17 +259,27 @@
 
     .severity-option {
       cursor: pointer;
-      padding: 6px 12px;
+      padding: 8px 14px;
       border: 1px solid #333;
       background: #111;
       color: #666;
       font-size: 11px;
       transition: all 0.2s;
+      min-height: 42px;
+      min-width: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .severity-option:hover {
       border-color: #ff9900;
       color: #ff9900;
+    }
+
+    .severity-option:focus {
+      outline: 2px solid #00ccff;
+      outline-offset: 2px;
     }
 
     .severity-option.active {
@@ -386,10 +430,15 @@
       color: #ff9900;
       cursor: pointer;
       text-decoration: underline;
+      padding: 4px 8px;
+      margin-left: 8px;
+      border-radius: 4px;
+      transition: all 0.2s;
     }
 
     .memory-indicator .clear-btn:hover {
       color: #ffcc00;
+      background: rgba(255, 153, 0, 0.1);
     }
 
     /* Stats display */
@@ -420,12 +469,49 @@
       }
 
       .role-option {
-        padding: 6px 10px;
+        padding: 8px 12px;
         font-size: 11px;
+        min-height: 40px;
+        min-width: 40px;
+      }
+
+      .severity-option {
+        padding: 8px 10px;
+        font-size: 10px;
+        min-height: 40px;
+        min-width: 40px;
       }
 
       .ascii-header {
-        font-size: 8px;
+        font-size: 7px;
+        line-height: 1;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+
+      .input-container {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .input-field {
+        width: 100%;
+      }
+
+      .send-btn {
+        width: 100%;
+        padding: 12px;
+      }
+
+      .status-bar {
+        flex-direction: column;
+        gap: 4px;
+        align-items: flex-start;
+      }
+
+      .status-bar .left {
+        flex-wrap: wrap;
+        gap: 8px;
       }
     }
   </style>
