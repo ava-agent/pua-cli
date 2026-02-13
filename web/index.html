@@ -4,16 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PUA CLI v0.4.0 - 职场角色扮演助手</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💬</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-    }
-
-    @font-face {
-      font-family: 'JetBrains Mono';
-      src: url('https://fonts.gstatic.com/s/jetbrainsmono/v15/tDbY2o-flEEny0FZhf4z3KKqB1K7VQ.woff2') format('woff2');
     }
 
     body {
@@ -69,7 +68,10 @@
       flex: 1;
       padding: 20px;
       overflow-y: auto;
+      overflow-x: hidden;
       background: #0a0a0a;
+      scroll-behavior: smooth;
+      min-height: 0;
     }
 
     /* ASCII art header */
@@ -594,8 +596,10 @@
       line.appendChild(text);
       messagesContainer.appendChild(line);
 
-      // Scroll to bottom
-      terminalBody.scrollTop = terminalBody.scrollHeight;
+      // Scroll to bottom - use requestAnimationFrame for better timing
+      requestAnimationFrame(() => {
+        terminalBody.scrollTop = terminalBody.scrollHeight;
+      });
 
       // Save to history
       if (type === 'user' || type === 'assistant') {
