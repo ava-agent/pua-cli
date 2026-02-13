@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/npm/l/workplace-pua-cli.svg)](https://github.com/ava-agent/pua-cli/blob/main/LICENSE)
 [![Downloads](https://img.shields.io/npm/dm/workplace-pua-cli.svg)](https://www.npmjs.com/package/workplace-pua-cli)
 
-[![Online Demo](https://pua-cli.vercel.app)](https://pua-cli.vercel.app) •
+[Online Demo](https://pua-cli.vercel.app)•
 [Web 源码](web/) •
 [CLI 安装](#-一键安装推荐)
 
