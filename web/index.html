@@ -485,7 +485,7 @@
       </div>
       <div class="prompt-line">
         <span class="prompt-symbol user">➜</span>
-        <span class="prompt-text"><span class="code">npm install -g ava-agent/pua-cli</span></span>
+        <span class="prompt-text"><span class="code">npm install -g workplace-pua-cli</span></span>
       </div>
       <div class="prompt-line">
         <span class="prompt-symbol info">ℹ</span>
@@ -812,10 +812,10 @@
       line.appendChild(text);
       messagesContainer.appendChild(line);
 
-      // Scroll to bottom - use requestAnimationFrame for better timing
-      requestAnimationFrame(() => {
+      // Scroll to bottom immediately
+      setTimeout(() => {
         terminalBody.scrollTop = terminalBody.scrollHeight;
-      });
+      }, 0);
     }
 
     // Send message
@@ -858,10 +858,20 @@
         }
 
         const data = await response.json();
+
+        // Hide loading
+        loadingLine.style.display = 'none';
+        inputPrompt.textContent = '➜';
+        isTyping = false;
+
+        // Add AI message (will auto-scroll)
         addMessage(data.reply, 'assistant');
 
         // Add AI response to memory
         addToMemory('assistant', data.reply);
+
+        // Focus input after scroll
+        setTimeout(() => inputField.focus(), 100);
 
       } catch (error) {
         addMessage(`Error: ${error.message}`, 'error');
@@ -869,7 +879,6 @@
         loadingLine.style.display = 'none';
         inputPrompt.textContent = '➜';
         isTyping = false;
-        inputField.focus();
       }
     }
 
