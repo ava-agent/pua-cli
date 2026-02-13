@@ -18,45 +18,34 @@ const SEVERITY_MODIFIERS: Record<string, string> = {
   extreme: '发挥到极致，不留情面，但不要过于冒犯。'
 };
 
-export default async function handler(request: Request) {
+export default async function handler(req: any, res: any) {
+  // 设置 CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
   // 处理 CORS 预检请求
-  if (request.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-    });
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
   }
 
   // 只处理 POST 请求
-  if (request.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' },
-    });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const body = await request.text();
-    const { message, role, severity, history } = JSON.parse(body);
+    const { message, role, severity, history } = req.body;
 
     if (!message || !role) {
-      return new Response(JSON.stringify({ error: '缺少必要参数' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return res.status(400).json({ error: '缺少必要参数' });
     }
 
     // 获取 API Key（从环境变量中读取，安全！）
     const apiKey = process.env.ZHIPU_API_KEY;
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: '服务器配置错误' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      console.error('ZHIPU_API_KEY not configured');
+      return res.status(500).json({ error: '服务器配置错误' });
     }
 
     // 构建 system prompt
@@ -90,28 +79,16 @@ export default async function handler(request: Request) {
     if (!response.ok) {
       const errorData = await response.text();
       console.error('Zhipu API error:', errorData);
-      return new Response(JSON.stringify({ error: 'AI 服务暂时不可用，请稍后重试' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return res.status(500).json({ error: 'AI 服务暂时不可用，请稍后重试' });
     }
 
     const data = await response.json();
     const reply = data.choices?.[0]?.message?.content || '抱歉，我没有理解你的意思。';
 
-    return new Response(JSON.stringify({ reply }), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-    });
+    return res.status(200).json({ reply });
 
   } catch (error) {
     console.error('Chat API error:', error);
-    return new Response(JSON.stringify({ error: '服务器内部错误' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return res.status(500).json({ error: '服务器内部错误' });
   }
 }
