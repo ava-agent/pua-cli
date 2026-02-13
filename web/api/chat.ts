@@ -40,7 +40,8 @@ export default async function handler(request: Request) {
   }
 
   try {
-    const { message, role, severity, history } = await request.json();
+    const body = await request.text();
+    const { message, role, severity, history } = JSON.parse(body);
 
     if (!message || !role) {
       return new Response(JSON.stringify({ error: '缺少必要参数' }), {
