@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PUA CLI - 职场角色扮演助手</title>
+  <title>PUA CLI v0.4.0 - 职场角色扮演助手</title>
   <style>
     * {
       margin: 0;
@@ -11,366 +11,615 @@
       box-sizing: border-box;
     }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-      min-height: 100vh;
-      padding: 20px;
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: url('https://fonts.gstatic.com/s/jetbrainsmono/v15/tDbY2o-flEEny0FZhf4z3KKqB1K7VQ.woff2') format('woff2');
     }
 
-    .container {
+    body {
+      font-family: 'JetBrains Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+      background: #0a0a0a;
+      min-height: 100vh;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    .terminal {
       max-width: 900px;
       margin: 0 auto;
-    }
-
-    .header {
-      text-align: center;
-      padding: 40px 20px;
-      color: #fff;
-    }
-
-    .header h1 {
-      font-size: 2.5rem;
-      margin-bottom: 10px;
-      background: linear-gradient(90deg, #00d9ff, #00ff88);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .header p {
-      color: #8892b0;
-      font-size: 1.1rem;
-    }
-
-    .main-card {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
-      border-radius: 20px;
-      padding: 30px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
-
-    .controls {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      margin-bottom: 25px;
-    }
-
-    .control-group {
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
+    }
+
+    /* Terminal header bar */
+    .terminal-header {
+      background: #1a1a1a;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #333;
+    }
+
+    .terminal-buttons {
+      display: flex;
       gap: 8px;
     }
 
-    .control-group label {
-      color: #ccd6f6;
-      font-size: 0.9rem;
-      font-weight: 500;
+    .terminal-btn {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
     }
 
-    .control-group select {
-      padding: 12px 16px;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      background: rgba(255, 255, 255, 0.05);
-      color: #fff;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
+    .terminal-btn.close { background: #ff5f56; }
+    .terminal-btn.minimize { background: #ffbd2e; }
+    .terminal-btn.maximize { background: #27ca3f; }
 
-    .control-group select:hover {
-      border-color: rgba(0, 217, 255, 0.3);
-    }
-
-    .control-group select:focus {
-      outline: none;
-      border-color: #00d9ff;
-      box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
-    }
-
-    .chat-container {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .messages {
-      min-height: 300px;
-      max-height: 500px;
-      overflow-y: auto;
-      padding: 20px;
-      border-radius: 16px;
-      background: rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .message {
-      margin-bottom: 20px;
-      animation: fadeIn 0.3s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .message.user {
-      text-align: right;
-    }
-
-    .message-content {
-      display: inline-block;
-      max-width: 80%;
-      padding: 14px 18px;
-      border-radius: 18px;
-      line-height: 1.5;
-    }
-
-    .message.user .message-content {
-      background: linear-gradient(135deg, #00d9ff, #0099cc);
-      color: #000;
-      border-bottom-right-radius: 4px;
-    }
-
-    .message.assistant .message-content {
-      background: rgba(255, 255, 255, 0.1);
-      color: #ccd6f6;
-      border-bottom-left-radius: 4px;
-      white-space: pre-wrap;
-    }
-
-    .input-area {
-      display: flex;
-      gap: 12px;
-    }
-
-    .input-area textarea {
+    .terminal-title {
+      color: #888;
+      font-size: 12px;
       flex: 1;
-      padding: 16px 20px;
-      border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      background: rgba(255, 255, 255, 0.05);
-      color: #fff;
-      font-size: 1rem;
-      font-family: inherit;
-      resize: none;
-      min-height: 60px;
-      max-height: 200px;
-      transition: all 0.3s;
-    }
-
-    .input-area textarea:focus {
-      outline: none;
-      border-color: #00d9ff;
-      box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
-    }
-
-    .send-btn {
-      padding: 16px 32px;
-      border: none;
-      border-radius: 16px;
-      background: linear-gradient(135deg, #00d9ff, #00ff88);
-      color: #000;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-      white-space: nowrap;
-    }
-
-    .send-btn:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0, 217, 255, 0.3);
-    }
-
-    .send-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .loading {
-      display: none;
       text-align: center;
+    }
+
+    /* Terminal content */
+    .terminal-body {
+      flex: 1;
       padding: 20px;
-      color: #8892b0;
+      overflow-y: auto;
+      background: #0a0a0a;
     }
 
-    .loading.active {
-      display: block;
+    /* ASCII art header */
+    .ascii-header {
+      color: #00ff00;
+      white-space: pre;
+      font-size: 10px;
+      line-height: 1.2;
+      margin-bottom: 20px;
+      user-select: none;
     }
 
-    .loading-dots::after {
-      content: '';
-      animation: dots 1.5s steps(4, end) infinite;
+    /* Command line prompt */
+    .prompt-line {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
     }
 
-    @keyframes dots {
-      0%, 20% { content: ''; }
-      40% { content: '.'; }
-      60% { content: '..'; }
-      80%, 100% { content: '...'; }
+    .prompt-symbol {
+      color: #00ff00;
+      margin-right: 8px;
+      white-space: pre;
     }
 
-    .footer {
-      text-align: center;
-      padding: 30px 20px;
-      color: #8892b0;
-      font-size: 0.9rem;
+    .prompt-symbol.user { color: #00ff00; }
+    .prompt-symbol.ai { color: #ff9900; }
+    .prompt-symbol.system { color: #00ccff; }
+    .prompt-symbol.error { color: #ff4444; }
+    .prompt-symbol.success { color: #00ff00; }
+
+    .prompt-text {
+      color: #cccccc;
+      white-space: pre-wrap;
+      word-break: break-word;
+      flex: 1;
     }
 
-    .footer a {
-      color: #00d9ff;
-      text-decoration: none;
+    .prompt-text.user-input {
+      color: #ffffff;
+      font-weight: bold;
     }
 
-    .footer a:hover {
-      text-decoration: underline;
+    .prompt-text.ai-output {
+      color: #ffcc00;
+    }
+
+    .prompt-text.system-msg {
+      color: #00ccff;
+      font-style: italic;
+    }
+
+    /* Blinking cursor */
+    .cursor {
+      display: inline-block;
+      width: 10px;
+      height: 18px;
+      background: #00ff00;
+      margin-left: 2px;
+      animation: blink 1s step-end infinite;
+      vertical-align: middle;
+    }
+
+    .cursor.typing {
+      background: #ffffff;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* Input area */
+    .input-container {
+      display: flex;
+      align-items: center;
+      padding: 10px 0;
+      border-top: 1px solid #222;
+    }
+
+    .input-prompt {
+      color: #00ff00;
+      white-space: pre;
+      margin-right: 8px;
+    }
+
+    .input-field {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      caret-color: #00ff00;
+    }
+
+    /* Help menu */
+    .help-menu {
+      color: #888;
+      margin-bottom: 20px;
+      white-space: pre;
+      font-size: 12px;
+    }
+
+    .help-menu .cmd {
+      color: #00ff00;
+    }
+
+    .help-menu .desc {
+      color: #888;
+    }
+
+    /* Role selector - CLI style */
+    .role-selector {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .role-option {
+      cursor: pointer;
+      padding: 8px 16px;
+      border: 1px solid #333;
+      background: #111;
+      color: #666;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+
+    .role-option:hover {
+      border-color: #00ff00;
+      color: #00ff00;
+    }
+
+    .role-option.active {
+      border-color: #00ff00;
+      background: #002200;
+      color: #00ff00;
+    }
+
+    .role-option .icon {
+      margin-right: 6px;
+    }
+
+    /* Severity selector */
+    .severity-selector {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .severity-option {
+      cursor: pointer;
+      padding: 6px 12px;
+      border: 1px solid #333;
+      background: #111;
+      color: #666;
+      font-size: 11px;
+      transition: all 0.2s;
+    }
+
+    .severity-option:hover {
+      border-color: #ff9900;
+      color: #ff9900;
+    }
+
+    .severity-option.active {
+      border-color: #ff9900;
+      background: #221100;
+      color: #ff9900;
+    }
+
+    /* Loading indicator */
+    .loading {
+      color: #ff9900;
+      font-style: italic;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
     }
 
     /* Scrollbar */
-    .messages::-webkit-scrollbar {
+    .terminal-body::-webkit-scrollbar {
       width: 8px;
     }
 
-    .messages::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.05);
+    .terminal-body::-webkit-scrollbar-track {
+      background: #0a0a0a;
+    }
+
+    .terminal-body::-webkit-scrollbar-thumb {
+      background: #333;
       border-radius: 4px;
     }
 
-    .messages::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
+    .terminal-body::-webkit-scrollbar-thumb:hover {
+      background: #444;
     }
 
-    .messages::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.2);
+    /* Typing animation */
+    .typing::after {
+      content: '▋';
+      animation: typing 1s step-end infinite;
+      color: #ff9900;
+      margin-left: 2px;
+    }
+
+    @keyframes typing {
+      0%, 100% { content: '▋'; }
+      50% { content: ''; }
+    }
+
+    /* Status bar */
+    .status-bar {
+      background: #1a1a1a;
+      padding: 6px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #333;
+      font-size: 11px;
+    }
+
+    .status-bar .left {
+      color: #00ff00;
+    }
+
+    .status-bar .right {
+      color: #666;
+    }
+
+    .status-bar .key {
+      color: #888;
+      margin-right: 15px;
+    }
+
+    .status-bar .value {
+      color: #ccc;
+    }
+
+    /* Welcome screen */
+    .welcome-screen {
+      color: #00ff00;
+    }
+
+    .welcome-screen h1 {
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    .welcome-screen p {
+      color: #666;
+      font-size: 12px;
+      margin-bottom: 20px;
+    }
+
+    .welcome-screen .hint {
+      color: #444;
+      font-size: 11px;
+    }
+
+    /* Options display */
+    .options-display {
+      background: #111;
+      border: 1px solid #333;
+      padding: 10px 15px;
+      margin-bottom: 20px;
+      font-size: 12px;
+      color: #888;
+    }
+
+    .options-display span {
+      color: #00ff00;
+    }
+
+    /* Error message */
+    .error-msg {
+      color: #ff4444;
+      background: #220000;
+      border: 1px solid #ff4444;
+      padding: 10px 15px;
+      margin-bottom: 15px;
+    }
+
+    /* Success message */
+    .success-msg {
+      color: #00ff00;
+      background: #002200;
+      border: 1px solid #00ff00;
+      padding: 10px 15px;
+      margin-bottom: 15px;
     }
 
     @media (max-width: 600px) {
-      .header h1 {
-        font-size: 1.8rem;
+      .terminal-body {
+        padding: 10px;
       }
 
-      .controls {
-        grid-template-columns: 1fr;
+      .role-selector {
+        gap: 10px;
       }
 
-      .input-area {
-        flex-direction: column;
+      .role-option {
+        padding: 6px 10px;
+        font-size: 11px;
       }
 
-      .send-btn {
-        width: 100%;
+      .ascii-header {
+        font-size: 8px;
       }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>🎭 PUA CLI</h1>
-      <p>职场角色扮演助手 - 让 AI 模拟不同职场角色的回复风格</p>
+  <div class="terminal">
+    <!-- Terminal Header -->
+    <div class="terminal-header">
+      <div class="terminal-buttons">
+        <div class="terminal-btn close"></div>
+        <div class="terminal-btn minimize"></div>
+        <div class="terminal-btn maximize"></div>
+      </div>
+      <div class="terminal-title">pua-cli — zsh — 80x24</div>
     </div>
 
-    <div class="main-card">
-      <div class="controls">
-        <div class="control-group">
-          <label for="role">选择角色</label>
-          <select id="role">
-            <option value="boss">👔 老板 - 喜欢画饼和 PUA</option>
-            <option value="employee">😓 员工 - 被老板 PUA 的风格</option>
-            <option value="pm">📋 产品经理 - 需求总在变</option>
-            <option value="hr">💼 HR - 官方话术大师</option>
-            <option value="techlead">👨‍💻 技术主管 - 技术反驳专家</option>
-            <option value="intern">🌱 实习生 - 谦虚学习</option>
-          </select>
-        </div>
+    <!-- Terminal Body -->
+    <div class="terminal-body" id="terminalBody">
+      <!-- ASCII Art Header -->
+      <div class="ascii-header">
+  __          __  _                         _
+ / /| |    |  \| |                       | |
+| | | | __| | || |_ ___ _ __   __ _| | __ _
+| | | |/ _` | || __/ _ \ '_ \ / _` | |/ _` |
+ \  _/ (_| | || ||  __/ | | | (_| | | (_| |
+  _| |\__,_|_||_| \___|_| |_|\__,_|_|\__,_|
+ |__/
+                        _   _          _
+                       | | | |        | |
+  __ _ _ __ ___  __ _| | | | ___  __| | __ _
+ / _` | '_ ` _ \/ _` | | | |/ _ \/ _` |/ _` |
+| (_| | | | | | (_| | | | |  __/ (_| | (_| |
+ \__,_|_| |_| |_|\__,_|_| |_|\___|\__,_|\__,_|
 
-        <div class="control-group">
-          <label for="severity">PUA 强度</label>
-          <select id="severity">
-            <option value="mild">🟢 温和 - 稍微调侃</option>
-            <option value="medium" selected>🟡 中等 - 标准模式</option>
-            <option value="extreme">🔴 强烈 - 暴击模式</option>
-          </select>
+      </div>
+
+      <!-- Welcome Message -->
+      <div class="welcome-screen">
+        <div class="prompt-line">
+          <span class="prompt-symbol user">➜</span>
+          <span class="prompt-text">pua-cli --version</span>
+        </div>
+        <div class="prompt-line">
+          <span class="prompt-symbol success">✓</span>
+          <span class="prompt-text">PUA CLI v0.4.0 - 职场角色扮演助手</span>
+        </div>
+        <div class="prompt-line">
+          <span class="prompt-symbol system">ℹ</span>
+          <span class="prompt-text system-msg">已连接到 AI 后端服务</span>
         </div>
       </div>
 
-      <div class="chat-container">
-        <div class="messages" id="messages">
-          <div class="message assistant">
-            <div class="message-content">👋 嗨！选择一个角色，开始体验职场 PUA 的艺术吧~</div>
-          </div>
-        </div>
+      <!-- Options Display -->
+      <div class="options-display" id="optionsDisplay">
+        当前配置: 角色=<span>boss</span> | 强度=<span>medium</span>
+      </div>
 
-        <div class="loading" id="loading">
-          <span class="loading-dots">正在思考如何回复你</span>
+      <!-- Role Selector -->
+      <div class="prompt-line">
+        <span class="prompt-symbol user">➜</span>
+        <span class="prompt-text">选择角色 [使用方向键或点击选择]</span>
+      </div>
+      <div class="role-selector" id="roleSelector">
+        <div class="role-option active" data-role="boss">
+          <span class="icon">👔</span>boss
         </div>
+        <div class="role-option" data-role="employee">
+          <span class="icon">😓</span>employee
+        </div>
+        <div class="role-option" data-role="pm">
+          <span class="icon">📋</span>pm
+        </div>
+        <div class="role-option" data-role="hr">
+          <span class="icon">💼</span>hr
+        </div>
+        <div class="role-option" data-role="techlead">
+          <span class="icon">👨‍💻</span>techlead
+        </div>
+        <div class="role-option" data-role="intern">
+          <span class="icon">🌱</span>intern
+        </div>
+      </div>
 
-        <div class="input-area">
-          <textarea
-            id="input"
-            placeholder="输入你想说的话... 比如：我想加薪 / 这个需求很简单 / 今天能上线吗？"
-            rows="2"
-          ></textarea>
-          <button class="send-btn" id="sendBtn">发送</button>
-        </div>
+      <!-- Severity Selector -->
+      <div class="prompt-line">
+        <span class="prompt-symbol user">➜</span>
+        <span class="prompt-text">选择 PUA 强度</span>
+      </div>
+      <div class="severity-selector" id="severitySelector">
+        <div class="severity-option" data-severity="mild">🟢 mild</div>
+        <div class="severity-option active" data-severity="medium">🟡 medium</div>
+        <div class="severity-option" data-severity="extreme">🔴 extreme</div>
+      </div>
+
+      <!-- Messages Container -->
+      <div id="messages"></div>
+
+      <!-- Loading -->
+      <div class="prompt-line" id="loadingLine" style="display: none;">
+        <span class="prompt-symbol ai">⏳</span>
+        <span class="prompt-text loading">AI 正在回复<span class="typing"></span></span>
       </div>
     </div>
 
-    <div class="footer">
-      <p>💡 这是一个趣味性工具，仅供娱乐，请勿当真</p>
-      <p>开源项目: <a href="https://github.com/ava-agent/pua-cli" target="_blank">github.com/ava-agent/pua-cli</a></p>
+    <!-- Input Area -->
+    <div class="input-container">
+      <span class="input-prompt" id="inputPrompt">➜</span>
+      <input
+        type="text"
+        class="input-field"
+        id="inputField"
+        placeholder="输入消息... (Enter 发送, Tab=换行)"
+        autocomplete="off"
+        spellcheck="false"
+      >
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div class="left">
+        <span class="key">MODE</span>
+        <span class="value">NORMAL</span>
+        <span class="key">ROLE</span>
+        <span class="value" id="statusRole">boss</span>
+      </div>
+      <div class="right">
+        <span class="key">POS</span>
+        <span class="value" id="cursorPos">1:1</span>
+        <span class="key">UTF-8</span>
+      </div>
     </div>
   </div>
 
   <script>
-    const messagesEl = document.getElementById('messages');
-    const inputEl = document.getElementById('input');
-    const sendBtn = document.getElementById('sendBtn');
-    const loadingEl = document.getElementById('loading');
-    const roleEl = document.getElementById('role');
-    const severityEl = document.getElementById('severity');
-
+    // State
+    let currentRole = 'boss';
+    let currentSeverity = 'medium';
     let conversationHistory = [];
+    let isTyping = false;
 
-    function addMessage(content, isUser = false) {
-      const messageDiv = document.createElement('div');
-      messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
+    // Elements
+    const terminalBody = document.getElementById('terminalBody');
+    const messagesContainer = document.getElementById('messages');
+    const inputField = document.getElementById('inputField');
+    const inputPrompt = document.getElementById('inputPrompt');
+    const loadingLine = document.getElementById('loadingLine');
+    const roleSelector = document.getElementById('roleSelector');
+    const severitySelector = document.getElementById('severitySelector');
+    const optionsDisplay = document.getElementById('optionsDisplay');
+    const statusRole = document.getElementById('statusRole');
+    const cursorPos = document.getElementById('cursorPos');
 
-      const contentDiv = document.createElement('div');
-      contentDiv.className = 'message-content';
-      contentDiv.textContent = content;
+    // Role names mapping
+    const roleNames = {
+      boss: '老板 (Boss)',
+      employee: '员工 (Employee)',
+      pm: '产品经理 (PM)',
+      hr: 'HR',
+      techlead: '技术主管 (Tech Lead)',
+      intern: '实习生 (Intern)'
+    };
 
-      messageDiv.appendChild(contentDiv);
-      messagesEl.appendChild(messageDiv);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-
-      // 保存到历史
-      conversationHistory.push({
-        role: isUser ? 'user' : 'assistant',
-        content: content
-      });
+    // Update options display
+    function updateOptionsDisplay() {
+      optionsDisplay.innerHTML = `当前配置: 角色=<span>${currentRole}</span> | 强度=<span>${currentSeverity}</span>`;
+      statusRole.textContent = `${currentRole} (${roleNames[currentRole]})`;
     }
 
+    // Add message to terminal
+    function addMessage(content, type = 'user') {
+      const line = document.createElement('div');
+      line.className = 'prompt-line';
+
+      const symbol = document.createElement('span');
+      symbol.className = `prompt-symbol ${type}`;
+
+      const text = document.createElement('span');
+      text.className = `prompt-text ${type === 'user' ? 'user-input' : 'ai-output'}`;
+
+      switch(type) {
+        case 'user':
+          symbol.textContent = '➜ ';
+          text.textContent = content;
+          break;
+        case 'assistant':
+          symbol.textContent = '💬 ';
+          text.textContent = content;
+          break;
+        case 'system':
+          symbol.textContent = 'ℹ ';
+          text.className = 'prompt-text system-msg';
+          text.textContent = content;
+          break;
+        case 'error':
+          symbol.textContent = '✗ ';
+          line.classList.add('error-msg');
+          text.textContent = content;
+          break;
+        case 'success':
+          symbol.textContent = '✓ ';
+          line.classList.add('success-msg');
+          text.textContent = content;
+          break;
+      }
+
+      line.appendChild(symbol);
+      line.appendChild(text);
+      messagesContainer.appendChild(line);
+
+      // Scroll to bottom
+      terminalBody.scrollTop = terminalBody.scrollHeight;
+
+      // Save to history
+      if (type === 'user' || type === 'assistant') {
+        conversationHistory.push({
+          role: type === 'user' ? 'user' : 'assistant',
+          content: content
+        });
+      }
+    }
+
+    // Send message
     async function sendMessage() {
-      const content = inputEl.value.trim();
-      if (!content) return;
+      const content = inputField.value.trim();
+      if (!content || isTyping) return;
 
-      const role = roleEl.value;
-      const severity = severityEl.value;
+      isTyping = true;
+      inputField.value = '';
+      inputPrompt.textContent = '⏳';
 
-      // 添加用户消息
-      addMessage(content, true);
-      inputEl.value = '';
+      // Add user message
+      addMessage(content, 'user');
 
-      // 显示加载状态
-      loadingEl.classList.add('active');
-      sendBtn.disabled = true;
+      // Show loading
+      loadingLine.style.display = 'flex';
 
       try {
         const response = await fetch('/api/chat', {
@@ -380,41 +629,105 @@
           },
           body: JSON.stringify({
             message: content,
-            role: role,
-            severity: severity,
+            role: currentRole,
+            severity: currentSeverity,
             history: conversationHistory
           })
         });
 
         if (!response.ok) {
-          throw new Error('请求失败，请稍后重试');
+          throw new Error(`HTTP ${response.status}`);
         }
 
         const data = await response.json();
-
-        // 添加 AI 回复
-        addMessage(data.reply, false);
+        addMessage(data.reply, 'assistant');
 
       } catch (error) {
-        console.error('Error:', error);
-        addMessage('😅 出错了：' + error.message, false);
+        addMessage(`Error: ${error.message}`, 'error');
       } finally {
-        loadingEl.classList.remove('active');
-        sendBtn.disabled = false;
+        loadingLine.style.display = 'none';
+        inputPrompt.textContent = '➜';
+        isTyping = false;
+        inputField.focus();
       }
     }
 
-    sendBtn.addEventListener('click', sendMessage);
+    // Role selection
+    roleSelector.addEventListener('click', (e) => {
+      const option = e.target.closest('.role-option');
+      if (!option) return;
 
-    inputEl.addEventListener('keydown', (e) => {
+      // Update active state
+      document.querySelectorAll('.role-option').forEach(el => el.classList.remove('active'));
+      option.classList.add('active');
+
+      // Update role
+      currentRole = option.dataset.role;
+      updateOptionsDisplay();
+
+      // Focus input
+      inputField.focus();
+    });
+
+    // Severity selection
+    severitySelector.addEventListener('click', (e) => {
+      const option = e.target.closest('.severity-option');
+      if (!option) return;
+
+      // Update active state
+      document.querySelectorAll('.severity-option').forEach(el => el.classList.remove('active'));
+      option.classList.add('active');
+
+      // Update severity
+      currentSeverity = option.dataset.severity;
+      updateOptionsDisplay();
+
+      // Focus input
+      inputField.focus();
+    });
+
+    // Input handlers
+    inputField.addEventListener('keydown', (e) => {
+      // Enter to send
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         sendMessage();
       }
     });
 
-    // 自动聚焦输入框
-    inputEl.focus();
+    // Update cursor position display
+    inputField.addEventListener('input', () => {
+      const val = inputField.value;
+      const pos = inputField.selectionStart;
+      const lines = val.substring(0, pos).split('\n');
+      const line = lines.length;
+      const col = lines[lines.length - 1].length + 1;
+      cursorPos.textContent = `${line}:${col}`;
+    });
+
+    inputField.addEventListener('click', () => {
+      const val = inputField.value;
+      const pos = inputField.selectionStart;
+      const lines = val.substring(0, pos).split('\n');
+      const line = lines.length;
+      const col = lines[lines.length - 1].length + 1;
+      cursorPos.textContent = `${line}:${col}`;
+    });
+
+    // Focus input on click anywhere in terminal body
+    terminalBody.addEventListener('click', () => {
+      if (!isTyping) {
+        inputField.focus();
+      }
+    });
+
+    // Initial focus
+    inputField.focus();
+
+    // Welcome message animation
+    setTimeout(() => {
+      addMessage('提示：选择角色和强度后，直接输入消息即可开始对话。', 'system');
+    }, 500);
   </script>
 </body>
 </html>
