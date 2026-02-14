@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PUA Meeting Room v0.6.0 - 职场会议室模拟器</title>
+  <meta name="description" content="PUA Meeting Room - 多角色职场会议模拟，选择参会者开始一场充满职场PUA的会议">
+  <meta property="og:title" content="PUA Meeting Room - 职场会议室">
+  <meta property="og:description" content="多角色同时参会的职场会议模拟器，6种角色随机搭话，体验真实会议讨论">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#0a0a0a">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏢</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'JetBrains Mono', 'Consolas', monospace;
+      background: #0a0a0a;
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: #e0e0e0;
+    }
+
+    /* === Terminal Shell === */
+    .terminal {
+      width: 94%;
+      max-width: 960px;
+      margin: 20px auto;
+      background: #0a0a0a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 40px);
+      overflow: hidden;
+    }
+
+    .terminal-header {
+      padding: 10px 16px;
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #333;
+    }
+
+    .terminal-buttons { display: flex; gap: 8px; }
+    .terminal-btn { width: 12px; height: 12px; border-radius: 50%; }
+    .terminal-btn.close { background: #ff5f56; }
+    .terminal-btn.minimize { background: #ffbd2e; }
+    .terminal-btn.maximize { background: #27ca3f; }
+    .terminal-title { color: #888; font-size: 12px; flex: 1; text-align: center; }
+
+    /* === Views === */
+    .view { display: none; flex-direction: column; flex: 1; min-height: 0; }
+    .view.active { display: flex; }
+
+    /* === SETUP VIEW === */
+    #setupView { padding: 24px; overflow-y: auto; }
+    #setupView h2 { color: #00ff00; font-size: 18px; margin-bottom: 6px; }
+    .setup-subtitle { color: #666; font-size: 12px; margin-bottom: 24px; }
+
+    .section-label { color: #888; font-size: 13px; margin-bottom: 10px; display: block; }
+
+    /* Character Grid */
+    .char-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .char-card {
+      background: #111;
+      border: 2px solid #333;
+      border-radius: 12px;
+      padding: 14px 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+
+    .char-card:hover { border-color: #555; transform: translateY(-2px); }
+    .char-card.selected { border-color: var(--role-color, #00ff00); background: #1a1a1a; }
+
+    .char-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      margin: 0 auto 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      transition: box-shadow 0.3s;
+    }
+
+    .char-card.selected .char-avatar {
+      box-shadow: 0 0 20px var(--role-glow, rgba(0,255,0,0.4));
+    }
+
+    .char-name { color: #fff; font-size: 14px; font-weight: 700; }
+    .char-title { color: #888; font-size: 11px; margin-top: 2px; }
+    .char-tag { color: #555; font-size: 10px; margin-top: 4px; font-style: italic; }
+
+    /* Avatar color variants */
+    .avatar-boss { background: linear-gradient(135deg, #ff4444, #cc0000); }
+    .avatar-employee { background: linear-gradient(135deg, #ffcc00, #cc9900); }
+    .avatar-pm { background: linear-gradient(135deg, #00cccc, #008888); }
+    .avatar-hr { background: linear-gradient(135deg, #cc44ff, #8800aa); }
+    .avatar-techlead { background: linear-gradient(135deg, #4488ff, #0044cc); }
+    .avatar-intern { background: linear-gradient(135deg, #44ff44, #00aa00); }
+
+    /* Meeting type & chaos */
+    .option-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .option-group { flex: 1; min-width: 200px; }
+    .option-group label { color: #888; font-size: 12px; display: block; margin-bottom: 6px; }
+    .option-group select, .option-group input[type="range"] {
+      width: 100%;
+      background: #111;
+      color: #e0e0e0;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-family: inherit;
+      font-size: 13px;
+    }
+    .option-group select:focus { outline: none; border-color: #00ff00; }
+
+    .chaos-display {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    .chaos-value { color: #00ff00; font-weight: 700; font-size: 13px; text-align: center; margin-top: 4px; }
+
+    /* Start button */
+    .start-btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #00aa00, #008800);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+
+    .start-btn:hover { background: linear-gradient(135deg, #00cc00, #00aa00); transform: translateY(-1px); }
+    .start-btn:disabled { background: #333; color: #666; cursor: not-allowed; transform: none; }
+    .start-btn-hint { color: #555; font-size: 11px; text-align: center; margin-top: 8px; }
+
+    /* === MEETING VIEW === */
+    /* Top participants bar */
+    .participants-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      background: #111;
+      border-bottom: 1px solid #222;
+      overflow-x: auto;
+    }
+
+    .participant-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: #1a1a1a;
+      border-radius: 16px;
+      border: 1px solid #333;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .participant-mini-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      transition: box-shadow 0.5s;
+    }
+
+    .participant-chip-name { font-size: 11px; color: #aaa; }
+
+    /* Mood glow animation */
+    @keyframes moodPulse {
+      0%, 100% { box-shadow: 0 0 8px var(--glow-color, transparent); }
+      50% { box-shadow: 0 0 16px var(--glow-color, transparent); }
+    }
+
+    .participant-mini-avatar[data-mood="angry"] { --glow-color: rgba(255,0,0,0.6); animation: moodPulse 1.5s infinite; }
+    .participant-mini-avatar[data-mood="smug"] { --glow-color: rgba(255,215,0,0.6); animation: moodPulse 1.5s infinite; }
+    .participant-mini-avatar[data-mood="worried"] { --glow-color: rgba(255,165,0,0.5); animation: moodPulse 1.5s infinite; }
+    .participant-mini-avatar[data-mood="submissive"] { --glow-color: rgba(100,100,255,0.4); animation: moodPulse 1.5s infinite; }
+    .participant-mini-avatar[data-mood="excited"] { --glow-color: rgba(0,255,100,0.5); animation: moodPulse 1.5s infinite; }
+
+    /* Chat area */
+    .chat-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      scroll-behavior: smooth;
+      min-height: 0;
+    }
+
+    .chat-msg {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+      animation: fadeSlideIn 0.4s ease-out;
+    }
+
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .msg-body { flex: 1; }
+    .msg-name { font-size: 12px; font-weight: 700; margin-bottom: 3px; }
+    .msg-content { font-size: 13px; color: #ccc; line-height: 1.5; }
+
+    /* User message */
+    .chat-msg.user-msg .msg-avatar { background: linear-gradient(135deg, #333, #555); }
+    .chat-msg.user-msg .msg-name { color: #00ff00; }
+
+    /* Role colors for names */
+    .name-boss { color: #ff4444; }
+    .name-employee { color: #ffcc00; }
+    .name-pm { color: #00cccc; }
+    .name-hr { color: #cc44ff; }
+    .name-techlead { color: #4488ff; }
+    .name-intern { color: #44ff44; }
+
+    /* Meeting event */
+    .meeting-event {
+      text-align: center;
+      padding: 8px 16px;
+      margin: 10px 0;
+      color: #888;
+      font-size: 12px;
+      font-style: italic;
+      background: #111;
+      border-radius: 8px;
+      border: 1px dashed #333;
+      animation: fadeSlideIn 0.4s ease-out;
+    }
+
+    /* Gold quote */
+    .gold-quote {
+      border-left: 3px solid #ffd700;
+      padding-left: 10px;
+    }
+
+    .gold-quote .msg-content::before {
+      content: '💎 ';
+    }
+
+    /* Typing indicator */
+    .typing-indicator {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+      align-items: center;
+      animation: fadeSlideIn 0.3s ease-out;
+    }
+
+    .typing-dots { display: flex; gap: 4px; }
+    .typing-dots span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #555;
+      animation: typingBounce 1.2s infinite;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typingBounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-6px); opacity: 1; }
+    }
+
+    .typing-name { font-size: 11px; color: #666; }
+
+    /* Score card overlay */
+    .score-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .score-overlay.active { display: flex; }
+
+    .score-card {
+      background: #111;
+      border: 2px solid #333;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 420px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .score-card h3 { color: #ffd700; font-size: 16px; margin-bottom: 16px; text-align: center; }
+
+    .score-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #222;
+      font-size: 13px;
+    }
+    .score-label { color: #888; }
+    .score-value { color: #00ff00; font-weight: 700; }
+
+    .score-stars { text-align: center; font-size: 24px; margin: 12px 0; }
+    .score-summary { text-align: center; color: #888; font-size: 13px; font-style: italic; margin: 8px 0; }
+    .score-gold { color: #ffd700; font-size: 12px; margin-top: 12px; padding: 8px; background: #1a1a1a; border-radius: 6px; }
+
+    .score-close {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-top: 16px;
+      background: #333;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    /* Input area */
+    .input-area {
+      padding: 12px 16px;
+      border-top: 1px solid #222;
+      background: #0d0d0d;
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    .input-area textarea {
+      flex: 1;
+      background: #111;
+      color: #e0e0e0;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 13px;
+      resize: none;
+      min-height: 40px;
+      max-height: 100px;
+    }
+    .input-area textarea:focus { outline: none; border-color: #00ff00; }
+    .input-area textarea::placeholder { color: #555; }
+
+    .send-btn {
+      padding: 10px 18px;
+      background: #00aa00;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .send-btn:hover { background: #00cc00; }
+    .send-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+
+    /* Status bar */
+    .status-bar {
+      padding: 6px 16px;
+      background: #111;
+      border-top: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #555;
+    }
+
+    .status-bar a { color: #00aa00; text-decoration: none; }
+    .status-bar a:hover { text-decoration: underline; }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .terminal { width: 100%; margin: 0; height: 100vh; border-radius: 0; border: none; }
+      .char-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      #setupView { padding: 16px; }
+      .char-avatar { width: 48px; height: 48px; font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="terminal">
+  <div class="terminal-header">
+    <div class="terminal-buttons">
+      <span class="terminal-btn close"></span>
+      <span class="terminal-btn minimize"></span>
+      <span class="terminal-btn maximize"></span>
+    </div>
+    <div class="terminal-title">PUA Meeting Room v0.6.0</div>
+  </div>
+
+  <!-- ====== SETUP VIEW ====== -->
+  <div id="setupView" class="view active">
+    <h2>🏢 职场会议室</h2>
+    <div class="setup-subtitle">选择参会角色，开始一场充满PUA的会议</div>
+
+    <span class="section-label">选择参会者（2-6人）</span>
+    <div class="char-grid" id="charGrid">
+      <div class="char-card" data-role="boss" style="--role-color:#ff4444;--role-glow:rgba(255,68,68,0.4)" onclick="toggleChar(this)">
+        <div class="char-avatar avatar-boss">👔</div>
+        <div class="char-name">张总</div>
+        <div class="char-title">老板</div>
+        <div class="char-tag">画饼大师 / PUA专家</div>
+      </div>
+      <div class="char-card" data-role="employee" style="--role-color:#ffcc00;--role-glow:rgba(255,204,0,0.4)" onclick="toggleChar(this)">
+        <div class="char-avatar avatar-employee">😓</div>
+        <div class="char-name">小王</div>
+        <div class="char-title">员工</div>
+        <div class="char-tag">打工人 / 卑微求生</div>
+      </div>
+      <div class="char-card" data-role="pm" style="--role-color:#00cccc;--role-glow:rgba(0,204,204,0.4)" onclick="toggleChar(this)">
+        <div class="char-avatar avatar-pm">📋</div>
+        <div class="char-name">李姐</div>
+        <div class="char-title">产品经理</div>
+        <div class="char-tag">需求变更专家</div>
+      </div>
+      <div class="char-card" data-role="hr" style="--role-color:#cc44ff;--role-glow:rgba(204,68,255,0.4)" onclick="toggleChar(this)">
+        <div class="char-avatar avatar-hr">💼</div>
+        <div class="char-name">陈姐</div>
+        <div class="char-title">HR</div>
+        <div class="char-tag">公司就是家</div>
+      </div>
+      <div class="char-card" data-role="techlead" style="--role-color:#4488ff;--role-glow:rgba(68,136,255,0.4)" onclick="toggleChar(this)">
+        <div class="char-avatar avatar-techlead">💻</div>
+        <div class="char-name">刘哥</div>
+        <div class="char-title">技术主管</div>
+        <div class="char-tag">重构狂人</div>
+      </div>
+      <div class="char-card" data-role="intern" style="--role-color:#44ff44;--role-glow:rgba(68,255,68,0.4)" onclick="toggleChar(this)">
+        <div class="char-avatar avatar-intern">🌱</div>
+        <div class="char-name">小赵</div>
+        <div class="char-title">实习生</div>
+        <div class="char-tag">卑微求学者</div>
+      </div>
+    </div>
+
+    <div class="option-row">
+      <div class="option-group">
+        <label>会议类型</label>
+        <select id="meetingType">
+          <option value="standup">📋 每日站会</option>
+          <option value="brainstorm">💡 头脑风暴</option>
+          <option value="review">🔍 评审会议</option>
+          <option value="retro">🔄 回顾会议</option>
+          <option value="planning">📅 规划会议</option>
+          <option value="emergency" selected>🚨 紧急会议</option>
+        </select>
+      </div>
+      <div class="option-group">
+        <label>混乱程度</label>
+        <input type="range" id="chaosLevel" min="1" max="3" value="2" oninput="updateChaosDisplay()">
+        <div class="chaos-display">
+          <span>有序</span>
+          <span>标准</span>
+          <span>混乱</span>
+        </div>
+        <div class="chaos-value" id="chaosValue">🔥 标准</div>
+      </div>
+    </div>
+
+    <button class="start-btn" id="startBtn" onclick="startMeeting()" disabled>
+      🚀 开始会议
+    </button>
+    <div class="start-btn-hint" id="startHint">请至少选择 2 个参会角色</div>
+  </div>
+
+  <!-- ====== MEETING VIEW ====== -->
+  <div id="meetingView" class="view">
+    <div class="participants-bar" id="participantsBar"></div>
+
+    <div class="chat-area" id="chatArea"></div>
+
+    <div class="input-area">
+      <textarea id="msgInput" placeholder="在会议中发言..." rows="1"
+        onkeydown="handleMeetingKeydown(event)"></textarea>
+      <button class="send-btn" id="meetingSendBtn" onclick="sendMeetingMessage()">发送</button>
+    </div>
+
+    <div class="status-bar">
+      <span id="meetingInfo">--</span>
+      <span>
+        <a href="#" onclick="showScoreCard(); return false;">/score</a> |
+        <a href="/index.html">1v1 对话</a> |
+        <a href="https://github.com/ava-agent/pua-cli" target="_blank">GitHub</a>
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- Score Card Overlay -->
+<div class="score-overlay" id="scoreOverlay">
+  <div class="score-card" id="scoreCardContent"></div>
+</div>
+
+<script>
+// ==================== STATE ====================
+const state = {
+  selectedRoles: [],
+  meetingType: 'emergency',
+  chaosLevel: 2,
+  messages: [],       // { role, name, content, mood }
+  history: [],        // for API context
+  lastRespondents: [],
+  isSending: false,
+  messageCount: 0,
+};
+
+const CHAR_INFO = {
+  boss:     { name: '张总', title: '老板',   emoji: '👔', avatarClass: 'avatar-boss',     nameClass: 'name-boss' },
+  employee: { name: '小王', title: '员工',   emoji: '😓', avatarClass: 'avatar-employee', nameClass: 'name-employee' },
+  pm:       { name: '李姐', title: '产品经理', emoji: '📋', avatarClass: 'avatar-pm',       nameClass: 'name-pm' },
+  hr:       { name: '陈姐', title: 'HR',     emoji: '💼', avatarClass: 'avatar-hr',       nameClass: 'name-hr' },
+  techlead: { name: '刘哥', title: '技术主管', emoji: '💻', avatarClass: 'avatar-techlead', nameClass: 'name-techlead' },
+  intern:   { name: '小赵', title: '实习生',  emoji: '🌱', avatarClass: 'avatar-intern',   nameClass: 'name-intern' },
+};
+
+const MEETING_EVENTS = [
+  { text: '📱 张总的手机响了，他出去接电话了...', role: 'boss' },
+  { text: '☕ 小赵打翻了咖啡！"对不起对不起！"', role: 'intern' },
+  { text: '🦗 ...尴尬的沉默...大家互相看着...' },
+  { text: '💥 李姐突然说："等等，需求变了"', role: 'pm' },
+  { text: '📢 张总开始即兴演讲："想当年我创业的时候..."', role: 'boss' },
+  { text: '💤 小王差点睡着了...', role: 'employee' },
+  { text: '📝 小赵疯狂记笔记中...', role: 'intern' },
+  { text: '🔥 刘哥和李姐吵起来了！', role: 'techlead' },
+  { text: '🎂 陈姐突然提议："要不要团建？"', role: 'hr' },
+  { text: '💻 刘哥打开了IDE开始写代码...', role: 'techlead' },
+  { text: '🍜 有人的外卖到了，整个会议室都是味道...' },
+  { text: '📊 李姐掏出了一个40页的PPT...', role: 'pm' },
+  { text: '🤝 陈姐发起大家一起喊口号："加油！奋斗！"', role: 'hr' },
+  { text: '⏰ 已经超时了，但张总还在说...', role: 'boss' },
+];
+
+// ==================== SETUP ====================
+function toggleChar(card) {
+  const role = card.dataset.role;
+  card.classList.toggle('selected');
+
+  if (card.classList.contains('selected')) {
+    if (!state.selectedRoles.includes(role)) state.selectedRoles.push(role);
+  } else {
+    state.selectedRoles = state.selectedRoles.filter(r => r !== role);
+  }
+
+  updateStartButton();
+}
+
+function updateStartButton() {
+  const btn = document.getElementById('startBtn');
+  const hint = document.getElementById('startHint');
+  const count = state.selectedRoles.length;
+
+  if (count >= 2) {
+    btn.disabled = false;
+    hint.textContent = `已选 ${count} 人参会，准备开会！`;
+  } else {
+    btn.disabled = true;
+    hint.textContent = `请至少选择 2 个参会角色（已选 ${count} 人）`;
+  }
+}
+
+function updateChaosDisplay() {
+  const val = parseInt(document.getElementById('chaosLevel').value);
+  state.chaosLevel = val;
+  const labels = { 1: '🧊 有序', 2: '🔥 标准', 3: '💥 混乱' };
+  document.getElementById('chaosValue').textContent = labels[val];
+}
+
+// ==================== START MEETING ====================
+function startMeeting() {
+  state.meetingType = document.getElementById('meetingType').value;
+  state.chaosLevel = parseInt(document.getElementById('chaosLevel').value);
+
+  // Switch view
+  document.getElementById('setupView').classList.remove('active');
+  document.getElementById('meetingView').classList.add('active');
+
+  // Build participants bar
+  buildParticipantsBar();
+
+  // Update status info
+  const typeNames = {
+    standup: '每日站会', brainstorm: '头脑风暴', review: '评审会议',
+    retro: '回顾会议', planning: '规划会议', emergency: '紧急会议',
+  };
+  const chaosLabels = { 1: '有序', 2: '标准', 3: '混乱' };
+  document.getElementById('meetingInfo').textContent =
+    `${typeNames[state.meetingType]} | 混乱: ${chaosLabels[state.chaosLevel]} | ${state.selectedRoles.length}人参会`;
+
+  // Welcome message
+  addSystemMessage(`🏢 ${typeNames[state.meetingType]}开始了！参会人员：${state.selectedRoles.map(r => CHAR_INFO[r].name).join('、')}和你。`);
+
+  // Focus input
+  document.getElementById('msgInput').focus();
+}
+
+function buildParticipantsBar() {
+  const bar = document.getElementById('participantsBar');
+  bar.innerHTML = '';
+
+  // Add user chip
+  const userChip = document.createElement('div');
+  userChip.className = 'participant-chip';
+  userChip.innerHTML = `
+    <div class="participant-mini-avatar" style="background:linear-gradient(135deg,#333,#555)">👤</div>
+    <span class="participant-chip-name" style="color:#00ff00">你</span>
+  `;
+  bar.appendChild(userChip);
+
+  // Add role chips
+  for (const role of state.selectedRoles) {
+    const info = CHAR_INFO[role];
+    const chip = document.createElement('div');
+    chip.className = 'participant-chip';
+    chip.id = `chip-${role}`;
+    chip.innerHTML = `
+      <div class="participant-mini-avatar ${info.avatarClass}" id="avatar-${role}">${info.emoji}</div>
+      <span class="participant-chip-name">${info.name}</span>
+    `;
+    bar.appendChild(chip);
+  }
+}
+
+// ==================== CHAT ====================
+function addSystemMessage(text) {
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'meeting-event';
+  div.textContent = text;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function addUserMessage(text) {
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'chat-msg user-msg';
+  div.innerHTML = `
+    <div class="msg-avatar" style="background:linear-gradient(135deg,#333,#555)">👤</div>
+    <div class="msg-body">
+      <div class="msg-name" style="color:#00ff00">你</div>
+      <div class="msg-content">${escapeHtml(text)}</div>
+    </div>
+  `;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function addRoleMessage(role, name, content, mood, isGold) {
+  const info = CHAR_INFO[role];
+  if (!info) return;
+
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = `chat-msg${isGold ? ' gold-quote' : ''}`;
+  div.innerHTML = `
+    <div class="msg-avatar ${info.avatarClass}">${info.emoji}</div>
+    <div class="msg-body">
+      <div class="msg-name ${info.nameClass}">${name} (${info.title})</div>
+      <div class="msg-content">${escapeHtml(content)}</div>
+    </div>
+  `;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+
+  // Update mood on participant chip
+  const avatar = document.getElementById(`avatar-${role}`);
+  if (avatar) {
+    avatar.setAttribute('data-mood', mood || 'neutral');
+  }
+}
+
+function showTypingIndicator(role) {
+  const info = CHAR_INFO[role];
+  if (!info) return null;
+
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'typing-indicator';
+  div.id = `typing-${role}`;
+  div.innerHTML = `
+    <div class="msg-avatar ${info.avatarClass}" style="width:28px;height:28px;font-size:14px">${info.emoji}</div>
+    <div class="typing-dots"><span></span><span></span><span></span></div>
+    <span class="typing-name">${info.name} 正在发言...</span>
+  `;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+  return div;
+}
+
+function removeTypingIndicator(role) {
+  const el = document.getElementById(`typing-${role}`);
+  if (el) el.remove();
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ==================== SEND MESSAGE ====================
+async function sendMeetingMessage() {
+  const input = document.getElementById('msgInput');
+  const message = input.value.trim();
+  if (!message || state.isSending) return;
+
+  // Handle commands
+  if (message === '/score') {
+    input.value = '';
+    showScoreCard();
+    return;
+  }
+  if (message === '/exit') {
+    input.value = '';
+    endMeeting();
+    return;
+  }
+
+  state.isSending = true;
+  input.value = '';
+  document.getElementById('meetingSendBtn').disabled = true;
+
+  // Add user message
+  addUserMessage(message);
+  state.messages.push({ role: 'user', content: message });
+  state.messageCount++;
+
+  // Maybe trigger a random event
+  if (Math.random() < 0.1) {
+    const relevantEvents = MEETING_EVENTS.filter(
+      e => !e.role || state.selectedRoles.includes(e.role)
+    );
+    if (relevantEvents.length > 0) {
+      const event = relevantEvents[Math.floor(Math.random() * relevantEvents.length)];
+      setTimeout(() => addSystemMessage(event.text), 500);
+    }
+  }
+
+  try {
+    // Build history for API (keep last 6 exchanges)
+    const apiHistory = state.history.slice(-6);
+
+    const response = await fetch('/api/meeting', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message,
+        participants: state.selectedRoles,
+        meetingType: state.meetingType,
+        chaosLevel: state.chaosLevel,
+        history: apiHistory,
+        lastRespondents: state.lastRespondents,
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || `请求失败 (${response.status})`);
+    }
+
+    const data = await response.json();
+
+    if (!data.responses || data.responses.length === 0) {
+      throw new Error('没有角色回复');
+    }
+
+    // Add user message to history BEFORE AI responses (correct ordering)
+    state.history.push({ role: 'user', content: message });
+
+    // Display responses with staggered delays
+    state.lastRespondents = data.responses.map(r => r.role);
+
+    // Determine if any response is a "gold quote" (longest one)
+    let longestIdx = 0;
+    let longestLen = 0;
+    data.responses.forEach((r, i) => {
+      if (r.content.length > longestLen) {
+        longestLen = r.content.length;
+        longestIdx = i;
+      }
+    });
+    const isGoldQuote = longestLen > 40 && data.responses.length >= 2;
+
+    for (let i = 0; i < data.responses.length; i++) {
+      const r = data.responses[i];
+
+      // Show typing indicator first
+      showTypingIndicator(r.role);
+
+      // Staggered delay: 800ms + random 200-800ms per message
+      await sleep(800 + Math.random() * 600);
+
+      removeTypingIndicator(r.role);
+      addRoleMessage(r.role, r.name, r.content, r.mood, isGoldQuote && i === longestIdx);
+
+      // Track in state
+      state.messages.push({ role: r.role, name: r.name, content: r.content, mood: r.mood });
+      state.history.push({ role: 'assistant', content: `[${r.name}]: ${r.content}` });
+    }
+
+    // Cap arrays to prevent unbounded memory growth
+    if (state.messages.length > 200) state.messages = state.messages.slice(-200);
+    if (state.history.length > 20) state.history = state.history.slice(-20);
+
+  } catch (err) {
+    addSystemMessage(`⚠️ ${err.message || '发送失败，请稍后重试'}`);
+  }
+
+  state.isSending = false;
+  document.getElementById('meetingSendBtn').disabled = false;
+  document.getElementById('msgInput').focus();
+}
+
+function handleMeetingKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMeetingMessage();
+  }
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// ==================== SCORE CARD ====================
+function showScoreCard() {
+  if (state.messages.length === 0) {
+    addSystemMessage('还没有消息记录，先发几条消息再看评分吧！');
+    return;
+  }
+
+  const card = generateScoreCard();
+  const container = document.getElementById('scoreCardContent');
+
+  const starStr = '★'.repeat(card.rating) + '☆'.repeat(5 - card.rating);
+
+  container.innerHTML = `
+    <h3>📊 会议评分卡</h3>
+    <div class="score-row"><span class="score-label">总消息数</span><span class="score-value">${card.totalMessages}</span></div>
+    <div class="score-row"><span class="score-label">画饼次数</span><span class="score-value">${card.cakePaintCount}次</span></div>
+    <div class="score-row"><span class="score-label">黑话密度</span><span class="score-value">${card.jargonDensity}%</span></div>
+    <div class="score-row"><span class="score-label">有效决策</span><span class="score-value">${card.effectiveDecisions}个</span></div>
+    <div class="score-row"><span class="score-label">打断次数</span><span class="score-value">${card.interruptCount}次</span></div>
+    <div class="score-row"><span class="score-label">最活跃</span><span class="score-value">${escapeHtml(card.topContributor)}</span></div>
+    <div class="score-stars">${starStr}</div>
+    <div class="score-summary">"${escapeHtml(card.summary)}"</div>
+    ${card.goldQuote ? `<div class="score-gold">💎 金句: ${escapeHtml(card.goldQuote)}</div>` : ''}
+    <button class="score-close" onclick="closeScoreCard()">关闭</button>
+  `;
+
+  document.getElementById('scoreOverlay').classList.add('active');
+}
+
+function closeScoreCard() {
+  document.getElementById('scoreOverlay').classList.remove('active');
+}
+
+function generateScoreCard() {
+  const CAKE_KW = ['期权','股权','未来','前景','发展空间','上市','格局','赋能','抓手','闭环','对齐','大饼','潜力','机会','平台','成长'];
+  const JARGON_KW = ['赋能','对齐','闭环','抓手','颗粒度','打通','底层逻辑','顶层设计','组合拳','方法论','链路','漏斗','触达','心智','拉通','沉淀','复盘','MVP','PMF','ROI','OKR','KPI'];
+
+  const roleMsgs = {};
+  let cakeCount = 0, jargonCount = 0, totalChars = 0, interruptCount = 0;
+  let longestMsg = '', longestRole = '';
+
+  for (const msg of state.messages) {
+    if (msg.role === 'user') continue;
+    roleMsgs[msg.role] = (roleMsgs[msg.role] || 0) + 1;
+    totalChars += msg.content.length;
+
+    for (const kw of CAKE_KW) { if (msg.content.includes(kw)) cakeCount++; }
+    for (const kw of JARGON_KW) { if (msg.content.includes(kw)) jargonCount++; }
+    if (msg.content.includes('等等') || msg.content.includes('我说') || msg.content.includes('打断')) interruptCount++;
+
+    if (msg.content.length > longestMsg.length) {
+      longestMsg = msg.content;
+      longestRole = msg.name || CHAR_INFO[msg.role]?.name || msg.role;
+    }
+  }
+
+  let topRole = '', topCount = 0;
+  for (const [role, count] of Object.entries(roleMsgs)) {
+    if (count > topCount) { topCount = count; topRole = role; }
+  }
+  const topName = CHAR_INFO[topRole]?.name || topRole;
+
+  const jargonDensity = totalChars > 0 ? Math.min(100, Math.round((jargonCount / (totalChars / 20)) * 100)) : 0;
+  const totalMsgs = state.messages.filter(m => m.role !== 'user').length;
+  const rating = Math.max(1, Math.min(5, 5 - Math.floor(cakeCount / 3) - Math.floor(interruptCount / 2)));
+
+  const summaries = [
+    '又一场可以用邮件代替的会议',
+    '会议很成功，什么都没决定',
+    '时间管理大师们的聚会',
+    '黑话浓度超标，请打开窗户',
+    '有效信息密度约等于零',
+    '一场精彩的职场大戏',
+  ];
+
+  return {
+    totalMessages: totalMsgs,
+    cakePaintCount: cakeCount,
+    jargonDensity,
+    effectiveDecisions: 0,
+    interruptCount,
+    topContributor: `${topName}(${topCount}条)`,
+    goldQuote: longestMsg ? `${longestRole}: "${longestMsg}"` : null,
+    rating,
+    summary: summaries[Math.floor(Math.random() * summaries.length)],
+  };
+}
+
+// ==================== END MEETING ====================
+function endMeeting() {
+  showScoreCard();
+}
+
+// Close overlay on Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeScoreCard();
+});
+
+// Close overlay on background click
+document.getElementById('scoreOverlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeScoreCard();
+});
+</script>
+
+</body>
+</html>

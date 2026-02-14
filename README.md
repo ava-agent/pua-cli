@@ -220,6 +220,7 @@ echo "加班" | workplace-pua-cli prompt --role employee
 | `workplace-pua-cli weekly` | 周报生成器 | `workplace-pua-cli weekly --role pm` |
 | `workplace-pua-cli email` | 邮件语气转换 | `workplace-pua-cli email --from pm --to dev "你好"` |
 | `workplace-pua-cli meeting` | 会议发言建议 | `workplace-pua-cli meeting --role hr --scenario standup` |
+| `workplace-pua-cli meeting-room` | **会议室** - 多角色会议模拟 | `workplace-pua-cli meeting-room` |
 
 ### 交互模式内命令
 
@@ -349,6 +350,36 @@ workplace-pua-cli meeting --role techlead --scenario review
 # 头脑风暴发言
 workplace-pua-cli meeting --role intern --scenario brainstorm
 ```
+
+### 会议室模式（v0.6.0 新增）
+
+多角色同时参会的职场会议模拟，支持 2-6 个角色同时参与：
+
+```bash
+# 启动会议室（交互式选择参会者）
+workplace-pua-cli meeting-room
+
+# Web 版本
+# 访问 https://pua-cli.vercel.app/meeting.html
+```
+
+**会议室特色功能：**
+- 多角色同时回复，上下文链传递（角色能看到前面角色说了什么）
+- 角色间关系动态（老板-HR同盟、PM-技术对立等）
+- 随机会议事件（张总接电话、小赵打翻咖啡等）
+- 会议评分卡（画饼次数、黑话密度、有效决策数）
+- 金句高亮系统
+
+**会议室角色昵称：**
+
+| 角色 | 昵称 | 性格标签 |
+|------|------|---------|
+| 老板 | 张总 | 画饼大师 / PUA专家 |
+| 员工 | 小王 | 打工人 / 卑微求生 |
+| 产品经理 | 李姐 | 需求变更专家 |
+| HR | 陈姐 | 公司就是家 |
+| 技术主管 | 刘哥 | 重构狂人 |
+| 实习生 | 小赵 | 卑微求学者 |
 
 ### AI 工作流
 

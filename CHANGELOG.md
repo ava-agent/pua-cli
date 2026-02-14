@@ -4,6 +4,50 @@ All notable changes to PUA CLI will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.6.0] - 2026-02-14 - Meeting Room Edition
+
+### Added
+- **会议室功能（核心）**: 多角色同时参会的职场会议模拟
+  - 支持 2-6 个角色同时参与会议
+  - 上下文链调用（Context Chaining）：角色能回应其他角色的发言
+  - 角色间动态关系系统（老板-HR同盟、PM-技术对立等）
+  - 关键词智能匹配回复者选择算法
+  - 情绪检测系统（angry/smug/worried/submissive/excited）
+- **Web 会议室** (`web/meeting.html`):
+  - 独立 SPA 页面，不影响 v1 功能
+  - 元素人画风 CSS 头像系统（渐变圆形 + emoji + 情绪光环动画）
+  - 两个视图：会议设置 → 会议进行中
+  - 角色选择网格（6个角色卡片）
+  - 会议类型选择（站会/头脑风暴/评审/回顾/规划/紧急会议）
+  - 混乱程度滑块（有序/标准/混乱）
+  - 打字指示器动画 + 交错延迟回复
+  - 随机会议事件系统（10%概率触发趣味事件）
+  - 会议评分卡（画饼次数、黑话密度、有效决策数、金句高亮）
+- **CLI 会议室** (`pua meeting-room`):
+  - 交互式参会者选择（checkbox）
+  - 多角色彩色边框输出
+  - 支持 /score（评分卡）、/minutes（会议纪要）、/exit 命令
+  - 随机会议事件
+- **Web 入口**: 1v1 页面状态栏添加 Meeting Room 链接
+
+### Technical Details
+- **新增文件**:
+  - `web/meeting.html` - 会议室 Web 页面
+  - `web/api/meeting.ts` - 会议室 API（Vercel serverless）
+  - `src/prompts/meeting-prompts.ts` - 会议专用 prompt + 角色昵称/关系
+  - `src/commands/meeting-room.ts` - CLI 会议室命令
+  - `src/utils/meeting-utils.ts` - 共享工具函数
+- **修改文件**:
+  - `src/index.ts` - 注册 meeting-room 命令，版本升级
+  - `web/index.html` - 状态栏添加会议室链接
+  - `README.md` - 添加会议室文档
+  - `package.json` - 版本升级至 0.6.0
+
+### Contributors
+- @ava-agent (Claude Opus 4.6)
+
+---
+
 ## [0.5.1] - 2026-02-14 - Bug Fix & UX Enhancement Edition
 
 ### Fixed
