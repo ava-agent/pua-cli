@@ -542,6 +542,59 @@
       color: #00ccff;
     }
 
+    /* Meeting Room Banner */
+    .meeting-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      border: 1px solid #0f3460;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 15px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .meeting-banner:hover {
+      border-color: #00ff00;
+      background: linear-gradient(135deg, #1a2a3e, #1a3a5e);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 12px rgba(0, 255, 0, 0.1);
+    }
+
+    .meeting-banner-icon {
+      font-size: 28px;
+      flex-shrink: 0;
+    }
+
+    .meeting-banner-body {
+      flex: 1;
+    }
+
+    .meeting-banner-title {
+      color: #00ff00;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .meeting-banner-desc {
+      color: #888;
+      font-size: 11px;
+    }
+
+    .meeting-banner-badge {
+      background: #00aa00;
+      color: #fff;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      flex-shrink: 0;
+      font-weight: 700;
+    }
+
     @media (max-width: 600px) {
       .terminal-body {
         padding: 10px;
@@ -642,6 +695,16 @@
         <span class="prompt-symbol info">ℹ</span>
         <span class="prompt-text info-msg">完整版支持：多轮对话记忆、自定义角色、本地历史记录</span>
       </div>
+
+      <!-- Meeting Room Banner -->
+      <a class="meeting-banner" href="/meeting.html">
+        <span class="meeting-banner-icon">🏢</span>
+        <div class="meeting-banner-body">
+          <div class="meeting-banner-title">会议室模式 - 多角色同时参会</div>
+          <div class="meeting-banner-desc">选择 2-6 个角色，体验一场充满 PUA 的职场会议</div>
+        </div>
+        <span class="meeting-banner-badge">NEW</span>
+      </a>
 
       <!-- Stats Display -->
       <div class="stats-display" id="statsDisplay">
