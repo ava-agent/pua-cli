@@ -177,6 +177,36 @@ function renderMinutes(
   console.log();
 }
 
+/**
+ * 清理 AI 回复 - 去除泄漏的上下文格式
+ */
+function cleanMeetingResponse(raw: string, currentRole: RoleType): string {
+  let cleaned = raw.trim();
+
+  // 去除开头的 [角色名]: 或 角色名: 格式
+  const allNames = Object.values(CHARACTER_NAMES);
+  for (const name of allNames) {
+    cleaned = cleaned.replace(new RegExp(`^\\[${name}\\][:：]\\s*`, 'g'), '');
+    cleaned = cleaned.replace(new RegExp(`^${name}[:：]\\s*`, 'g'), '');
+  }
+
+  // 去除回复中夹带的其他角色发言
+  for (const name of allNames) {
+    if (name === CHARACTER_NAMES[currentRole]) continue;
+    cleaned = cleaned.replace(new RegExp(`\\s*\\[${name}\\][:：][^\\n]*`, 'g'), '');
+  }
+
+  // 去除多余的引号包裹
+  cleaned = cleaned.replace(/^["「](.+)["」]$/, '$1');
+  cleaned = cleaned.trim();
+
+  if (cleaned.length < 2 || cleaned === '...' || cleaned === '……') {
+    return '...';
+  }
+
+  return cleaned;
+}
+
 export function createMeetingRoomCommand(): Command {
   const command = new Command('meeting-room')
     .description('会议室 - 多角色同时参会的职场会议模拟')
@@ -319,8 +349,8 @@ export function createMeetingRoomCommand(): Command {
 
         // Build context for LLM calls
         const historyMessages = state.messages.slice(-8).map(m => ({
-          role: (m.role === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
-          content: m.role === 'user' ? m.content : `[${m.name}]: ${m.content}`,
+          role: 'user' as const,
+          content: m.role === 'user' ? m.content : `（${m.name}说："${m.content}"）`,
         }));
 
         const spinner = ora({ text: '角色们在讨论...', spinner: 'dots' }).start();
@@ -330,13 +360,11 @@ export function createMeetingRoomCommand(): Command {
         for (const role of respondents) {
           const systemPrompt = getMeetingPrompt(role, meetingType, chaosLevel, participants);
 
-          // Include previous respondents' messages in context
+          // Include previous respondents' messages in context (narrative format)
+          const prevSpeech = respondentResults.map(r => `${r.name}说："${r.content}"`).join('\n');
           const contextWithPrev = [
             ...historyMessages,
-            ...respondentResults.map(r => ({
-              role: 'assistant' as const,
-              content: `[${r.name}]: ${r.content}`,
-            })),
+            ...(prevSpeech ? [{ role: 'user' as const, content: `（会议中其他人的发言：\n${prevSpeech}）` }] : []),
           ];
 
           const messages = [
@@ -345,7 +373,8 @@ export function createMeetingRoomCommand(): Command {
           ];
 
           try {
-            const reply = await llm.chat(messages);
+            const rawReply = await llm.chat(messages);
+            const reply = cleanMeetingResponse(rawReply, role);
             respondentResults.push({
               role,
               name: CHARACTER_NAMES[role],

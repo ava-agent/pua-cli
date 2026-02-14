@@ -61,10 +61,38 @@
 
     /* === SETUP VIEW === */
     #setupView { padding: 24px; overflow-y: auto; }
-    #setupView h2 { color: #00ff00; font-size: 18px; margin-bottom: 6px; }
-    .setup-subtitle { color: #666; font-size: 12px; margin-bottom: 24px; }
 
-    .section-label { color: #888; font-size: 13px; margin-bottom: 10px; display: block; }
+    .setup-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .setup-header h2 {
+      color: #00ff00;
+      font-size: 22px;
+      margin-bottom: 4px;
+    }
+
+    .setup-header .logo-emoji {
+      font-size: 48px;
+      display: block;
+      margin-bottom: 8px;
+      animation: floatBounce 3s ease-in-out infinite;
+    }
+
+    @keyframes floatBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .setup-subtitle { color: #666; font-size: 12px; }
+
+    .section-label {
+      color: #888;
+      font-size: 13px;
+      margin-bottom: 10px;
+      display: block;
+    }
 
     /* Character Grid */
     .char-grid {
@@ -81,32 +109,84 @@
       padding: 14px 10px;
       text-align: center;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.25s;
       user-select: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .char-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, var(--role-glow, transparent) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.3s;
     }
 
     .char-card:hover { border-color: #555; transform: translateY(-2px); }
+    .char-card:hover::before { opacity: 0.1; }
     .char-card.selected { border-color: var(--role-color, #00ff00); background: #1a1a1a; }
+    .char-card.selected::before { opacity: 0.15; }
+
+    .char-card.selected .char-check {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .char-check {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--role-color, #00ff00);
+      color: #000;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: scale(0);
+      transition: all 0.25s;
+    }
 
     .char-avatar {
-      width: 64px;
-      height: 64px;
+      width: 72px;
+      height: 72px;
       border-radius: 50%;
       margin: 0 auto 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 30px;
-      transition: box-shadow 0.3s;
+      font-size: 32px;
+      transition: all 0.3s;
+      position: relative;
     }
 
     .char-card.selected .char-avatar {
-      box-shadow: 0 0 20px var(--role-glow, rgba(0,255,0,0.4));
+      box-shadow: 0 0 24px var(--role-glow, rgba(0,255,0,0.4));
+      transform: scale(1.05);
     }
 
-    .char-name { color: #fff; font-size: 14px; font-weight: 700; }
-    .char-title { color: #888; font-size: 11px; margin-top: 2px; }
-    .char-tag { color: #555; font-size: 10px; margin-top: 4px; font-style: italic; }
+    .char-card:active .char-avatar {
+      transform: scale(0.95);
+    }
+
+    .char-name { color: #fff; font-size: 14px; font-weight: 700; position: relative; }
+    .char-title { color: #888; font-size: 11px; margin-top: 2px; position: relative; }
+    .char-tag {
+      color: #555;
+      font-size: 10px;
+      margin-top: 6px;
+      font-style: italic;
+      position: relative;
+      background: #1a1a1a;
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-block;
+    }
 
     /* Avatar color variants */
     .avatar-boss { background: linear-gradient(135deg, #ff4444, #cc0000); }
@@ -165,8 +245,8 @@
       margin-top: 8px;
     }
 
-    .start-btn:hover { background: linear-gradient(135deg, #00cc00, #00aa00); transform: translateY(-1px); }
-    .start-btn:disabled { background: #333; color: #666; cursor: not-allowed; transform: none; }
+    .start-btn:hover { background: linear-gradient(135deg, #00cc00, #00aa00); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,170,0,0.3); }
+    .start-btn:disabled { background: #333; color: #666; cursor: not-allowed; transform: none; box-shadow: none; }
     .start-btn-hint { color: #555; font-size: 11px; text-align: center; margin-top: 8px; }
 
     /* === MEETING VIEW === */
@@ -191,25 +271,46 @@
       border: 1px solid #333;
       white-space: nowrap;
       flex-shrink: 0;
+      transition: all 0.3s;
+    }
+
+    .participant-chip.speaking {
+      border-color: var(--chip-color, #555);
+      box-shadow: 0 0 8px var(--chip-glow, transparent);
     }
 
     .participant-mini-avatar {
-      width: 24px;
-      height: 24px;
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 13px;
-      transition: box-shadow 0.5s;
+      font-size: 14px;
+      transition: all 0.5s;
+      position: relative;
     }
 
     .participant-chip-name { font-size: 11px; color: #aaa; }
 
+    /* Mood expression overlay */
+    .mood-expression {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      font-size: 10px;
+      animation: popIn 0.3s ease-out;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0); }
+      to { transform: scale(1); }
+    }
+
     /* Mood glow animation */
     @keyframes moodPulse {
       0%, 100% { box-shadow: 0 0 8px var(--glow-color, transparent); }
-      50% { box-shadow: 0 0 16px var(--glow-color, transparent); }
+      50% { box-shadow: 0 0 18px var(--glow-color, transparent); }
     }
 
     .participant-mini-avatar[data-mood="angry"] { --glow-color: rgba(255,0,0,0.6); animation: moodPulse 1.5s infinite; }
@@ -227,36 +328,88 @@
       min-height: 0;
     }
 
+    /* Chat message - bubble style */
     .chat-msg {
       display: flex;
       gap: 10px;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
       animation: fadeSlideIn 0.4s ease-out;
     }
 
     @keyframes fadeSlideIn {
-      from { opacity: 0; transform: translateY(10px); }
+      from { opacity: 0; transform: translateY(12px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
     .msg-avatar {
-      width: 36px;
-      height: 36px;
+      width: 38px;
+      height: 38px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 18px;
       flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     }
 
-    .msg-body { flex: 1; }
-    .msg-name { font-size: 12px; font-weight: 700; margin-bottom: 3px; }
-    .msg-content { font-size: 13px; color: #ccc; line-height: 1.5; }
+    .msg-body {
+      flex: 1;
+      min-width: 0;
+    }
 
-    /* User message */
-    .chat-msg.user-msg .msg-avatar { background: linear-gradient(135deg, #333, #555); }
-    .chat-msg.user-msg .msg-name { color: #00ff00; }
+    .msg-name {
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .msg-title-tag {
+      font-size: 10px;
+      font-weight: 400;
+      color: #555;
+      background: #1a1a1a;
+      padding: 1px 6px;
+      border-radius: 3px;
+    }
+
+    .msg-bubble {
+      font-size: 13px;
+      color: #ddd;
+      line-height: 1.6;
+      padding: 10px 14px;
+      background: #161616;
+      border-radius: 4px 12px 12px 12px;
+      border-left: 3px solid var(--msg-color, #333);
+      position: relative;
+      max-width: 85%;
+    }
+
+    /* User message - right aligned style */
+    .chat-msg.user-msg {
+      flex-direction: row-reverse;
+    }
+
+    .chat-msg.user-msg .msg-avatar { background: linear-gradient(135deg, #1a3a1a, #2a5a2a); }
+    .chat-msg.user-msg .msg-name { color: #00ff00; justify-content: flex-end; }
+    .chat-msg.user-msg .msg-bubble {
+      background: #112211;
+      border-left: none;
+      border-right: 3px solid #00aa00;
+      border-radius: 12px 4px 12px 12px;
+      text-align: right;
+    }
+
+    /* Role color accents for msg-bubble */
+    .msg-boss .msg-bubble { --msg-color: #ff4444; background: #1a1111; }
+    .msg-employee .msg-bubble { --msg-color: #ffcc00; background: #1a1811; }
+    .msg-pm .msg-bubble { --msg-color: #00cccc; background: #111a1a; }
+    .msg-hr .msg-bubble { --msg-color: #cc44ff; background: #1a111a; }
+    .msg-techlead .msg-bubble { --msg-color: #4488ff; background: #11141a; }
+    .msg-intern .msg-bubble { --msg-color: #44ff44; background: #111a11; }
 
     /* Role colors for names */
     .name-boss { color: #ff4444; }
@@ -269,25 +422,65 @@
     /* Meeting event */
     .meeting-event {
       text-align: center;
-      padding: 8px 16px;
-      margin: 10px 0;
+      padding: 10px 20px;
+      margin: 12px 0;
       color: #888;
       font-size: 12px;
       font-style: italic;
-      background: #111;
+      background: linear-gradient(90deg, transparent, #111 20%, #111 80%, transparent);
       border-radius: 8px;
-      border: 1px dashed #333;
+      border: 1px dashed #292929;
       animation: fadeSlideIn 0.4s ease-out;
+      position: relative;
+    }
+
+    .meeting-event::before {
+      content: '';
+      position: absolute;
+      left: 10%;
+      right: 10%;
+      top: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #333, transparent);
+    }
+
+    /* Entrance animation */
+    .entrance-event {
+      background: linear-gradient(90deg, transparent, #0a150a 20%, #0a150a 80%, transparent);
+      border-color: #1a3a1a;
+      color: #4a8a4a;
     }
 
     /* Gold quote */
-    .gold-quote {
-      border-left: 3px solid #ffd700;
-      padding-left: 10px;
+    .gold-quote .msg-bubble {
+      border-left: 3px solid #ffd700 !important;
+      background: #1a1a11 !important;
+      position: relative;
     }
 
-    .gold-quote .msg-content::before {
-      content: '💎 ';
+    .gold-badge {
+      display: inline-block;
+      font-size: 10px;
+      background: linear-gradient(135deg, #ffd700, #ffaa00);
+      color: #000;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-weight: 700;
+      margin-left: 6px;
+    }
+
+    /* Floating reaction */
+    .float-reaction {
+      position: absolute;
+      font-size: 18px;
+      pointer-events: none;
+      animation: floatUp 1.5s ease-out forwards;
+      z-index: 50;
+    }
+
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-40px) scale(1.3); }
     }
 
     /* Typing indicator */
@@ -315,17 +508,18 @@
       30% { transform: translateY(-6px); opacity: 1; }
     }
 
-    .typing-name { font-size: 11px; color: #666; }
+    .typing-name { font-size: 11px; color: #555; font-style: italic; }
 
     /* Score card overlay */
     .score-overlay {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.8);
+      background: rgba(0,0,0,0.85);
       z-index: 100;
       align-items: center;
       justify-content: center;
+      backdrop-filter: blur(4px);
     }
 
     .score-overlay.active { display: flex; }
@@ -333,42 +527,102 @@
     .score-card {
       background: #111;
       border: 2px solid #333;
-      border-radius: 12px;
-      padding: 24px;
-      max-width: 420px;
+      border-radius: 16px;
+      padding: 28px;
+      max-width: 440px;
       width: 90%;
       max-height: 80vh;
       overflow-y: auto;
+      animation: scorePopIn 0.3s ease-out;
     }
 
-    .score-card h3 { color: #ffd700; font-size: 16px; margin-bottom: 16px; text-align: center; }
+    @keyframes scorePopIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .score-card h3 {
+      color: #ffd700;
+      font-size: 18px;
+      margin-bottom: 18px;
+      text-align: center;
+    }
 
     .score-row {
       display: flex;
       justify-content: space-between;
-      padding: 6px 0;
-      border-bottom: 1px solid #222;
+      padding: 8px 0;
+      border-bottom: 1px solid #1a1a1a;
       font-size: 13px;
     }
     .score-label { color: #888; }
     .score-value { color: #00ff00; font-weight: 700; }
+    .score-value.highlight { color: #ff4444; }
+    .score-value.warning { color: #ffcc00; }
 
-    .score-stars { text-align: center; font-size: 24px; margin: 12px 0; }
-    .score-summary { text-align: center; color: #888; font-size: 13px; font-style: italic; margin: 8px 0; }
-    .score-gold { color: #ffd700; font-size: 12px; margin-top: 12px; padding: 8px; background: #1a1a1a; border-radius: 6px; }
+    .score-stars {
+      text-align: center;
+      font-size: 28px;
+      margin: 16px 0;
+      letter-spacing: 4px;
+    }
+
+    .score-summary {
+      text-align: center;
+      color: #888;
+      font-size: 13px;
+      font-style: italic;
+      margin: 10px 0;
+      padding: 8px 16px;
+      background: #0d0d0d;
+      border-radius: 8px;
+    }
+
+    .score-gold {
+      color: #ffd700;
+      font-size: 12px;
+      margin-top: 14px;
+      padding: 10px 12px;
+      background: #1a1a11;
+      border-radius: 8px;
+      border-left: 3px solid #ffd700;
+      line-height: 1.5;
+    }
+
+    .score-participants {
+      margin-top: 14px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .score-participant {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      background: #1a1a1a;
+      border-radius: 12px;
+      font-size: 11px;
+    }
 
     .score-close {
       display: block;
       width: 100%;
-      padding: 10px;
-      margin-top: 16px;
-      background: #333;
+      padding: 12px;
+      margin-top: 18px;
+      background: #222;
       color: #fff;
-      border: none;
-      border-radius: 6px;
+      border: 1px solid #333;
+      border-radius: 8px;
       font-family: inherit;
+      font-size: 13px;
       cursor: pointer;
+      transition: background 0.2s;
     }
+
+    .score-close:hover { background: #333; }
 
     /* Input area */
     .input-area {
@@ -385,30 +639,33 @@
       background: #111;
       color: #e0e0e0;
       border: 1px solid #333;
-      border-radius: 6px;
+      border-radius: 8px;
       padding: 10px 12px;
       font-family: inherit;
       font-size: 13px;
       resize: none;
       min-height: 40px;
       max-height: 100px;
+      transition: border-color 0.2s;
     }
-    .input-area textarea:focus { outline: none; border-color: #00ff00; }
-    .input-area textarea::placeholder { color: #555; }
+    .input-area textarea:focus { outline: none; border-color: #00aa00; box-shadow: 0 0 8px rgba(0,170,0,0.15); }
+    .input-area textarea::placeholder { color: #444; }
 
     .send-btn {
-      padding: 10px 18px;
-      background: #00aa00;
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #00aa00, #008800);
       color: #fff;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       font-family: inherit;
       font-size: 13px;
+      font-weight: 600;
       cursor: pointer;
       white-space: nowrap;
+      transition: all 0.2s;
     }
-    .send-btn:hover { background: #00cc00; }
-    .send-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+    .send-btn:hover { background: linear-gradient(135deg, #00cc00, #00aa00); box-shadow: 0 2px 12px rgba(0,170,0,0.3); }
+    .send-btn:disabled { background: #222; color: #555; cursor: not-allowed; box-shadow: none; }
 
     /* Status bar */
     .status-bar {
@@ -424,12 +681,18 @@
     .status-bar a { color: #00aa00; text-decoration: none; }
     .status-bar a:hover { text-decoration: underline; }
 
+    .meeting-timer {
+      color: #666;
+      font-variant-numeric: tabular-nums;
+    }
+
     /* Responsive */
     @media (max-width: 600px) {
       .terminal { width: 100%; margin: 0; height: 100vh; border-radius: 0; border: none; }
       .char-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
       #setupView { padding: 16px; }
-      .char-avatar { width: 48px; height: 48px; font-size: 22px; }
+      .char-avatar { width: 56px; height: 56px; font-size: 26px; }
+      .msg-bubble { max-width: 92%; }
     }
   </style>
 </head>
@@ -447,42 +710,51 @@
 
   <!-- ====== SETUP VIEW ====== -->
   <div id="setupView" class="view active">
-    <h2>🏢 职场会议室</h2>
-    <div class="setup-subtitle">选择参会角色，开始一场充满PUA的会议</div>
+    <div class="setup-header">
+      <span class="logo-emoji">🏢</span>
+      <h2>职场会议室</h2>
+      <div class="setup-subtitle">选择参会角色，开始一场充满PUA的会议</div>
+    </div>
 
     <span class="section-label">选择参会者（2-6人）</span>
     <div class="char-grid" id="charGrid">
       <div class="char-card" data-role="boss" style="--role-color:#ff4444;--role-glow:rgba(255,68,68,0.4)" onclick="toggleChar(this)">
+        <span class="char-check">✓</span>
         <div class="char-avatar avatar-boss">👔</div>
         <div class="char-name">张总</div>
         <div class="char-title">老板</div>
         <div class="char-tag">画饼大师 / PUA专家</div>
       </div>
       <div class="char-card" data-role="employee" style="--role-color:#ffcc00;--role-glow:rgba(255,204,0,0.4)" onclick="toggleChar(this)">
+        <span class="char-check">✓</span>
         <div class="char-avatar avatar-employee">😓</div>
         <div class="char-name">小王</div>
         <div class="char-title">员工</div>
         <div class="char-tag">打工人 / 卑微求生</div>
       </div>
       <div class="char-card" data-role="pm" style="--role-color:#00cccc;--role-glow:rgba(0,204,204,0.4)" onclick="toggleChar(this)">
+        <span class="char-check">✓</span>
         <div class="char-avatar avatar-pm">📋</div>
         <div class="char-name">李姐</div>
         <div class="char-title">产品经理</div>
         <div class="char-tag">需求变更专家</div>
       </div>
       <div class="char-card" data-role="hr" style="--role-color:#cc44ff;--role-glow:rgba(204,68,255,0.4)" onclick="toggleChar(this)">
+        <span class="char-check">✓</span>
         <div class="char-avatar avatar-hr">💼</div>
         <div class="char-name">陈姐</div>
         <div class="char-title">HR</div>
         <div class="char-tag">公司就是家</div>
       </div>
       <div class="char-card" data-role="techlead" style="--role-color:#4488ff;--role-glow:rgba(68,136,255,0.4)" onclick="toggleChar(this)">
+        <span class="char-check">✓</span>
         <div class="char-avatar avatar-techlead">💻</div>
         <div class="char-name">刘哥</div>
         <div class="char-title">技术主管</div>
         <div class="char-tag">重构狂人</div>
       </div>
       <div class="char-card" data-role="intern" style="--role-color:#44ff44;--role-glow:rgba(68,255,68,0.4)" onclick="toggleChar(this)">
+        <span class="char-check">✓</span>
         <div class="char-avatar avatar-intern">🌱</div>
         <div class="char-name">小赵</div>
         <div class="char-title">实习生</div>
@@ -527,13 +799,14 @@
     <div class="chat-area" id="chatArea"></div>
 
     <div class="input-area">
-      <textarea id="msgInput" placeholder="在会议中发言..." rows="1"
+      <textarea id="msgInput" placeholder="在会议中发言... (Enter 发送, Shift+Enter 换行)" rows="1"
         onkeydown="handleMeetingKeydown(event)"></textarea>
       <button class="send-btn" id="meetingSendBtn" onclick="sendMeetingMessage()">发送</button>
     </div>
 
     <div class="status-bar">
       <span id="meetingInfo">--</span>
+      <span class="meeting-timer" id="meetingTimer">00:00</span>
       <span>
         <a href="#" onclick="showScoreCard(); return false;">/score</a> |
         <a href="/index.html">1v1 对话</a> |
@@ -559,17 +832,36 @@ const state = {
   lastRespondents: [],
   isSending: false,
   messageCount: 0,
+  meetingStartTime: null,
+  timerInterval: null,
 };
 
 const CHAR_INFO = {
-  boss:     { name: '张总', title: '老板',   emoji: '👔', avatarClass: 'avatar-boss',     nameClass: 'name-boss' },
-  employee: { name: '小王', title: '员工',   emoji: '😓', avatarClass: 'avatar-employee', nameClass: 'name-employee' },
-  pm:       { name: '李姐', title: '产品经理', emoji: '📋', avatarClass: 'avatar-pm',       nameClass: 'name-pm' },
-  hr:       { name: '陈姐', title: 'HR',     emoji: '💼', avatarClass: 'avatar-hr',       nameClass: 'name-hr' },
-  techlead: { name: '刘哥', title: '技术主管', emoji: '💻', avatarClass: 'avatar-techlead', nameClass: 'name-techlead' },
-  intern:   { name: '小赵', title: '实习生',  emoji: '🌱', avatarClass: 'avatar-intern',   nameClass: 'name-intern' },
+  boss:     { name: '张总', title: '老板',   emoji: '👔', avatarClass: 'avatar-boss',     nameClass: 'name-boss',     color: '#ff4444', glow: 'rgba(255,68,68,0.3)' },
+  employee: { name: '小王', title: '员工',   emoji: '😓', avatarClass: 'avatar-employee', nameClass: 'name-employee', color: '#ffcc00', glow: 'rgba(255,204,0,0.3)' },
+  pm:       { name: '李姐', title: '产品经理', emoji: '📋', avatarClass: 'avatar-pm',       nameClass: 'name-pm',       color: '#00cccc', glow: 'rgba(0,204,204,0.3)' },
+  hr:       { name: '陈姐', title: 'HR',     emoji: '💼', avatarClass: 'avatar-hr',       nameClass: 'name-hr',       color: '#cc44ff', glow: 'rgba(204,68,255,0.3)' },
+  techlead: { name: '刘哥', title: '技术主管', emoji: '💻', avatarClass: 'avatar-techlead', nameClass: 'name-techlead', color: '#4488ff', glow: 'rgba(68,136,255,0.3)' },
+  intern:   { name: '小赵', title: '实习生',  emoji: '🌱', avatarClass: 'avatar-intern',   nameClass: 'name-intern',   color: '#44ff44', glow: 'rgba(68,255,68,0.3)' },
 };
 
+// Mood emoji expressions
+const MOOD_EMOJIS = {
+  angry: '😤', smug: '😏', worried: '😰',
+  submissive: '😣', excited: '😄', neutral: '',
+};
+
+// Role-specific typing verbs
+const TYPING_VERBS = {
+  boss: '正在训话',
+  employee: '正在小心翼翼地说',
+  pm: '正在对齐需求',
+  hr: '正在打感情牌',
+  techlead: '正在质疑架构',
+  intern: '正在鼓起勇气发言',
+};
+
+// Expanded meeting events
 const MEETING_EVENTS = [
   { text: '📱 张总的手机响了，他出去接电话了...', role: 'boss' },
   { text: '☕ 小赵打翻了咖啡！"对不起对不起！"', role: 'intern' },
@@ -585,6 +877,16 @@ const MEETING_EVENTS = [
   { text: '📊 李姐掏出了一个40页的PPT...', role: 'pm' },
   { text: '🤝 陈姐发起大家一起喊口号："加油！奋斗！"', role: 'hr' },
   { text: '⏰ 已经超时了，但张总还在说...', role: 'boss' },
+  { text: '🔇 小王悄悄把手机调成了静音...', role: 'employee' },
+  { text: '📎 刘哥发了一个技术方案链接，没人点开...', role: 'techlead' },
+  { text: '🎤 张总开始念PPT上的文字...', role: 'boss' },
+  { text: '😴 小赵眼皮开始打架了...', role: 'intern' },
+  { text: '🗳️ 李姐发起投票，但只有她自己投了...', role: 'pm' },
+  { text: '🍵 陈姐开始给每个人倒茶："来来来，喝口茶"', role: 'hr' },
+  { text: '💡 小王刚要说什么就被张总打断了...', role: 'employee' },
+  { text: '📞 投影仪突然坏了，大家松了口气...' },
+  { text: '🎯 张总说了一个KPI，全场沉默...', role: 'boss' },
+  { text: '🤔 刘哥在白板上画了一个架构图，越画越复杂...', role: 'techlead' },
 ];
 
 // ==================== SETUP ====================
@@ -641,13 +943,44 @@ function startMeeting() {
   };
   const chaosLabels = { 1: '有序', 2: '标准', 3: '混乱' };
   document.getElementById('meetingInfo').textContent =
-    `${typeNames[state.meetingType]} | 混乱: ${chaosLabels[state.chaosLevel]} | ${state.selectedRoles.length}人参会`;
+    `${typeNames[state.meetingType]} | 混乱: ${chaosLabels[state.chaosLevel]} | ${state.selectedRoles.length}人`;
 
-  // Welcome message
-  addSystemMessage(`🏢 ${typeNames[state.meetingType]}开始了！参会人员：${state.selectedRoles.map(r => CHAR_INFO[r].name).join('、')}和你。`);
+  // Start meeting timer
+  state.meetingStartTime = Date.now();
+  state.timerInterval = setInterval(updateTimer, 1000);
+
+  // Welcome event
+  addSystemMessage(`🏢 ${typeNames[state.meetingType]}开始了！`);
+
+  // Entrance animations with staggered delay
+  const participantNames = state.selectedRoles.map(r => CHAR_INFO[r].name);
+  setTimeout(() => {
+    addEntranceEvent(`${participantNames.join('、')} 和你进入了会议室`);
+  }, 400);
+
+  // Flavor text based on meeting type
+  const flavorTexts = {
+    standup: '张总看了看手表："开始吧，今天站会要高效。"',
+    brainstorm: '"今天畅所欲言，但记住——我说了算。"',
+    review: '所有人默默打开了笔记本电脑...',
+    retro: '"上个迭代的问题，谁来说说？"',
+    planning: '李姐打开了一个巨大的甘特图...',
+    emergency: '🚨 气氛突然紧张了起来...',
+  };
+  setTimeout(() => {
+    addSystemMessage(flavorTexts[state.meetingType] || '会议开始了。');
+  }, 1200);
 
   // Focus input
-  document.getElementById('msgInput').focus();
+  setTimeout(() => document.getElementById('msgInput').focus(), 500);
+}
+
+function updateTimer() {
+  if (!state.meetingStartTime) return;
+  const elapsed = Math.floor((Date.now() - state.meetingStartTime) / 1000);
+  const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
+  const secs = String(elapsed % 60).padStart(2, '0');
+  document.getElementById('meetingTimer').textContent = `${mins}:${secs}`;
 }
 
 function buildParticipantsBar() {
@@ -658,7 +991,7 @@ function buildParticipantsBar() {
   const userChip = document.createElement('div');
   userChip.className = 'participant-chip';
   userChip.innerHTML = `
-    <div class="participant-mini-avatar" style="background:linear-gradient(135deg,#333,#555)">👤</div>
+    <div class="participant-mini-avatar" style="background:linear-gradient(135deg,#1a3a1a,#2a5a2a)">👤</div>
     <span class="participant-chip-name" style="color:#00ff00">你</span>
   `;
   bar.appendChild(userChip);
@@ -669,6 +1002,8 @@ function buildParticipantsBar() {
     const chip = document.createElement('div');
     chip.className = 'participant-chip';
     chip.id = `chip-${role}`;
+    chip.style.setProperty('--chip-color', info.color);
+    chip.style.setProperty('--chip-glow', info.glow);
     chip.innerHTML = `
       <div class="participant-mini-avatar ${info.avatarClass}" id="avatar-${role}">${info.emoji}</div>
       <span class="participant-chip-name">${info.name}</span>
@@ -687,15 +1022,24 @@ function addSystemMessage(text) {
   area.scrollTop = area.scrollHeight;
 }
 
+function addEntranceEvent(text) {
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'meeting-event entrance-event';
+  div.textContent = `🚪 ${text}`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
 function addUserMessage(text) {
   const area = document.getElementById('chatArea');
   const div = document.createElement('div');
   div.className = 'chat-msg user-msg';
   div.innerHTML = `
-    <div class="msg-avatar" style="background:linear-gradient(135deg,#333,#555)">👤</div>
+    <div class="msg-avatar" style="background:linear-gradient(135deg,#1a3a1a,#2a5a2a)">👤</div>
     <div class="msg-body">
       <div class="msg-name" style="color:#00ff00">你</div>
-      <div class="msg-content">${escapeHtml(text)}</div>
+      <div class="msg-bubble" style="--msg-color:#00aa00">${escapeHtml(text)}</div>
     </div>
   `;
   area.appendChild(div);
@@ -708,14 +1052,29 @@ function addRoleMessage(role, name, content, mood, isGold) {
 
   const area = document.getElementById('chatArea');
   const div = document.createElement('div');
-  div.className = `chat-msg${isGold ? ' gold-quote' : ''}`;
+  div.className = `chat-msg msg-${role}`;
+  div.style.position = 'relative';
+
+  const moodEmoji = MOOD_EMOJIS[mood] || '';
+  const goldBadge = isGold ? '<span class="gold-badge">💎 金句</span>' : '';
+
   div.innerHTML = `
     <div class="msg-avatar ${info.avatarClass}">${info.emoji}</div>
     <div class="msg-body">
-      <div class="msg-name ${info.nameClass}">${name} (${info.title})</div>
-      <div class="msg-content">${escapeHtml(content)}</div>
+      <div class="msg-name ${info.nameClass}">
+        ${name}
+        <span class="msg-title-tag">${info.title}</span>
+        ${moodEmoji ? `<span style="font-size:13px">${moodEmoji}</span>` : ''}
+        ${goldBadge}
+      </div>
+      <div class="msg-bubble">${escapeHtml(content)}</div>
     </div>
   `;
+
+  if (isGold) {
+    div.classList.add('gold-quote');
+  }
+
   area.appendChild(div);
   area.scrollTop = area.scrollHeight;
 
@@ -723,21 +1082,54 @@ function addRoleMessage(role, name, content, mood, isGold) {
   const avatar = document.getElementById(`avatar-${role}`);
   if (avatar) {
     avatar.setAttribute('data-mood', mood || 'neutral');
+    // Add mood expression mini-emoji
+    const existing = avatar.querySelector('.mood-expression');
+    if (existing) existing.remove();
+    if (moodEmoji) {
+      const moodEl = document.createElement('span');
+      moodEl.className = 'mood-expression';
+      moodEl.textContent = moodEmoji;
+      avatar.appendChild(moodEl);
+    }
   }
+
+  // Brief "speaking" highlight on participant chip
+  const chip = document.getElementById(`chip-${role}`);
+  if (chip) {
+    chip.classList.add('speaking');
+    setTimeout(() => chip.classList.remove('speaking'), 2000);
+  }
+
+  // Float reaction for strong moods
+  if (mood === 'angry' || mood === 'excited') {
+    spawnFloatReaction(div, mood === 'angry' ? '💢' : '✨');
+  }
+}
+
+function spawnFloatReaction(parentEl, emoji) {
+  const reaction = document.createElement('div');
+  reaction.className = 'float-reaction';
+  reaction.textContent = emoji;
+  reaction.style.left = (Math.random() * 40 + 30) + '%';
+  reaction.style.top = '10px';
+  parentEl.appendChild(reaction);
+  setTimeout(() => reaction.remove(), 1600);
 }
 
 function showTypingIndicator(role) {
   const info = CHAR_INFO[role];
   if (!info) return null;
 
+  const verb = TYPING_VERBS[role] || '正在发言';
+
   const area = document.getElementById('chatArea');
   const div = document.createElement('div');
   div.className = 'typing-indicator';
   div.id = `typing-${role}`;
   div.innerHTML = `
-    <div class="msg-avatar ${info.avatarClass}" style="width:28px;height:28px;font-size:14px">${info.emoji}</div>
+    <div class="msg-avatar ${info.avatarClass}" style="width:30px;height:30px;font-size:15px">${info.emoji}</div>
     <div class="typing-dots"><span></span><span></span><span></span></div>
-    <span class="typing-name">${info.name} 正在发言...</span>
+    <span class="typing-name">${info.name} ${verb}...</span>
   `;
   area.appendChild(div);
   area.scrollTop = area.scrollHeight;
@@ -772,6 +1164,11 @@ async function sendMeetingMessage() {
     endMeeting();
     return;
   }
+  if (message === '/help') {
+    input.value = '';
+    addSystemMessage('命令: /score 评分卡 | /exit 结束会议 | /help 帮助');
+    return;
+  }
 
   state.isSending = true;
   input.value = '';
@@ -782,14 +1179,14 @@ async function sendMeetingMessage() {
   state.messages.push({ role: 'user', content: message });
   state.messageCount++;
 
-  // Maybe trigger a random event
-  if (Math.random() < 0.1) {
+  // Maybe trigger a random event (12% chance)
+  if (Math.random() < 0.12) {
     const relevantEvents = MEETING_EVENTS.filter(
       e => !e.role || state.selectedRoles.includes(e.role)
     );
     if (relevantEvents.length > 0) {
       const event = relevantEvents[Math.floor(Math.random() * relevantEvents.length)];
-      setTimeout(() => addSystemMessage(event.text), 500);
+      setTimeout(() => addSystemMessage(event.text), 600);
     }
   }
 
@@ -891,18 +1288,37 @@ function showScoreCard() {
 
   const starStr = '★'.repeat(card.rating) + '☆'.repeat(5 - card.rating);
 
+  // Meeting duration
+  let durationStr = '--';
+  if (state.meetingStartTime) {
+    const elapsed = Math.floor((Date.now() - state.meetingStartTime) / 1000);
+    const mins = Math.floor(elapsed / 60);
+    const secs = elapsed % 60;
+    durationStr = `${mins}分${secs}秒`;
+  }
+
+  // Build per-role stats
+  let participantChips = '';
+  for (const role of state.selectedRoles) {
+    const info = CHAR_INFO[role];
+    const count = card.roleCounts[role] || 0;
+    participantChips += `<div class="score-participant"><span>${info.emoji}</span><span>${info.name}: ${count}条</span></div>`;
+  }
+
   container.innerHTML = `
     <h3>📊 会议评分卡</h3>
+    <div class="score-row"><span class="score-label">会议时长</span><span class="score-value">${escapeHtml(durationStr)}</span></div>
     <div class="score-row"><span class="score-label">总消息数</span><span class="score-value">${card.totalMessages}</span></div>
-    <div class="score-row"><span class="score-label">画饼次数</span><span class="score-value">${card.cakePaintCount}次</span></div>
-    <div class="score-row"><span class="score-label">黑话密度</span><span class="score-value">${card.jargonDensity}%</span></div>
-    <div class="score-row"><span class="score-label">有效决策</span><span class="score-value">${card.effectiveDecisions}个</span></div>
-    <div class="score-row"><span class="score-label">打断次数</span><span class="score-value">${card.interruptCount}次</span></div>
-    <div class="score-row"><span class="score-label">最活跃</span><span class="score-value">${escapeHtml(card.topContributor)}</span></div>
+    <div class="score-row"><span class="score-label">🎂 画饼次数</span><span class="score-value highlight">${card.cakePaintCount}次</span></div>
+    <div class="score-row"><span class="score-label">🗣️ 黑话密度</span><span class="score-value warning">${card.jargonDensity}%</span></div>
+    <div class="score-row"><span class="score-label">✅ 有效决策</span><span class="score-value">${card.effectiveDecisions}个</span></div>
+    <div class="score-row"><span class="score-label">🤚 打断次数</span><span class="score-value">${card.interruptCount}次</span></div>
+    <div class="score-row"><span class="score-label">🏆 最活跃</span><span class="score-value">${escapeHtml(card.topContributor)}</span></div>
     <div class="score-stars">${starStr}</div>
     <div class="score-summary">"${escapeHtml(card.summary)}"</div>
+    <div class="score-participants">${participantChips}</div>
     ${card.goldQuote ? `<div class="score-gold">💎 金句: ${escapeHtml(card.goldQuote)}</div>` : ''}
-    <button class="score-close" onclick="closeScoreCard()">关闭</button>
+    <button class="score-close" onclick="closeScoreCard()">继续开会</button>
   `;
 
   document.getElementById('scoreOverlay').classList.add('active');
@@ -913,16 +1329,16 @@ function closeScoreCard() {
 }
 
 function generateScoreCard() {
-  const CAKE_KW = ['期权','股权','未来','前景','发展空间','上市','格局','赋能','抓手','闭环','对齐','大饼','潜力','机会','平台','成长'];
+  const CAKE_KW = ['期权','股权','未来','前景','发展空间','上市','格局','赋能','抓手','闭环','对齐','大饼','潜力','机会','平台','成长','当年','画饼'];
   const JARGON_KW = ['赋能','对齐','闭环','抓手','颗粒度','打通','底层逻辑','顶层设计','组合拳','方法论','链路','漏斗','触达','心智','拉通','沉淀','复盘','MVP','PMF','ROI','OKR','KPI'];
 
-  const roleMsgs = {};
+  const roleCounts = {};
   let cakeCount = 0, jargonCount = 0, totalChars = 0, interruptCount = 0;
   let longestMsg = '', longestRole = '';
 
   for (const msg of state.messages) {
     if (msg.role === 'user') continue;
-    roleMsgs[msg.role] = (roleMsgs[msg.role] || 0) + 1;
+    roleCounts[msg.role] = (roleCounts[msg.role] || 0) + 1;
     totalChars += msg.content.length;
 
     for (const kw of CAKE_KW) { if (msg.content.includes(kw)) cakeCount++; }
@@ -936,7 +1352,7 @@ function generateScoreCard() {
   }
 
   let topRole = '', topCount = 0;
-  for (const [role, count] of Object.entries(roleMsgs)) {
+  for (const [role, count] of Object.entries(roleCounts)) {
     if (count > topCount) { topCount = count; topRole = role; }
   }
   const topName = CHAR_INFO[topRole]?.name || topRole;
@@ -952,10 +1368,13 @@ function generateScoreCard() {
     '黑话浓度超标，请打开窗户',
     '有效信息密度约等于零',
     '一场精彩的职场大戏',
+    '恭喜你，又浪费了一段人生',
+    '这场会议的含金量不如茶水间八卦',
   ];
 
   return {
     totalMessages: totalMsgs,
+    roleCounts,
     cakePaintCount: cakeCount,
     jargonDensity,
     effectiveDecisions: 0,

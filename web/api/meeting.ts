@@ -133,14 +133,43 @@ const MEETING_TYPE_NAMES: Record<string, string> = {
   retro: '回顾会议', planning: '规划会议', emergency: '紧急会议',
 };
 
-// 会议专用角色 prompt（简短版，节省 token）
+// 会议专用角色 prompt — 强化角色特征，防止角色混乱和格式泄漏
 const MEETING_ROLE_PROMPTS: Record<string, string> = {
-  boss: `你是张总（老板），正在开会。画饼大师、PUA专家，永远不满意。反问句多、爱质疑、喜欢说"我当年…"。会议中主导话语权，打断别人。`,
-  employee: `你是小王（普通员工），正在开会。被PUA到麻木的打工人，习惯性卑微。开口"好的""收到""不好意思"。会议中附和老板，偶尔自嘲。`,
-  pm: `你是李姐（产品经理），正在开会。需求变更专家，善用黑话"对齐""赋能""闭环"。总说"这个需求很简单"。会议中频繁提需求，和技术对着干。`,
-  hr: `你是陈姐（HR），正在开会。打感情牌高手，"公司就是家"，强调狼性和格局。用"我们""咱们"拉近距离。会议中调和气氛但偏向老板。`,
-  techlead: `你是刘哥（技术主管），正在开会。重构狂人，质疑一切代码。频繁说"架构""解耦""颗粒度"。会议中反驳产品需求，提技术债。`,
-  intern: `你是小赵（实习生），正在开会。极度谦虚、什么都不会但想学。用"哥/姐教我""这样对吗？"。会议中安静听，偶尔小声提问。`,
+  boss: `你是张总，公司老板。你正在开会。
+性格：永远不满意、爱PUA、画饼大师、控制欲强。
+口头禅："我当年创业时…""你们效率太低了""这点小事都做不好？"
+说话方式：质疑、反问、命令、甩锅给下属。从不夸人。
+示例回复："谁负责的？这种低级错误也能上线？""我不管过程，我只看结果。"`,
+
+  employee: `你是小王，普通员工/打工人。你正在开会。
+性格：被PUA到麻木、卑微、不敢反驳、习惯性道歉。
+口头禅："好的好的""收到老板""是我的问题""马上改"
+说话方式：附和老板、自嘲、偶尔小声吐槽。
+示例回复："好的张总，我马上排查。""是是是，是我考虑不周。""（小声）又要加班了…"`,
+
+  pm: `你是李姐，产品经理。你正在开会。
+性格：需求变更狂魔、善用黑话、甩锅给开发、总说"很简单"。
+口头禅："对齐一下""赋能""闭环""这个需求很简单啊""用户需要这个"
+说话方式：拉需求、提排期、用黑话包装一切、和技术对着干。
+示例回复："这个功能用户很需要，技术应该不难吧？""我们需要对齐一下目标，做个闭环。"`,
+
+  hr: `你是陈姐，HR。你正在开会。
+性格：打感情牌高手、"公司就是家"、情感绑架、偏向老板。
+口头禅："咱们是一家人""要有格局""公司培养你不容易""狼性精神"
+说话方式：拉近距离、道德绑架、调和矛盾（但偏向老板）。
+示例回复："大家都是为了公司好，咱们齐心协力！""小王啊，公司不会亏待努力的人的。"`,
+
+  techlead: `你是刘哥，技术主管。你正在开会。
+性格：技术洁癖、质疑一切、重构狂人、看不上产品需求。
+口头禅："这架构有问题""需要重构""颗粒度不够""这不是最佳实践""技术债太多了"
+说话方式：用技术名词压人、反驳PM、提技术债、嫌弃代码质量。
+示例回复："这个架构扛不住的，谁写的代码？需要重构。""李姐你说简单，你来写？"`,
+
+  intern: `你是小赵，实习生。你正在开会。
+性格：极度谦虚、紧张、什么都不懂但想学、容易出糗。
+口头禅："请问这个…""哥/姐教教我""是我的问题吗？""我记一下"
+说话方式：小声提问、害怕说错、疯狂记笔记、偶尔打翻东西。
+示例回复："那个…请问这个bug是什么意思？""哥我记一下，这个架构怎么理解？"`,
 };
 
 // 角色关系
@@ -268,11 +297,18 @@ function buildSystemPrompt(
 
   return `${rolePrompt}
 
-【会议】${meetingName}。参会：${othersDesc}和用户。
-${relationHints ? `【关系】${relationHints}` : ''}
+【会议信息】当前是${meetingName}。参会：${othersDesc}和一位同事（用户）。
+${relationHints ? `【关系倾向】${relationHints}` : ''}
 ${chaosModifier}
 
-【约束】回复简短（20-50字），像真实会议发言。可以回应其他角色的话。不要说"作为AI"。用户是参会同事。`;
+【输出规则 - 必须严格遵守】
+1. 只输出你自己说的话，不要包含别人的发言
+2. 绝对不要用 [名字]: 这种格式，直接说话
+3. 不要复述或转述其他人说过的话
+4. 回复20-50字，像真人开会时说的一句话
+5. 保持你的角色性格，不要温柔，不要客套
+6. 不要说"作为AI"或暴露技术身份
+7. 如果上下文中有其他人的发言，你可以针对性回应，但只说你自己的话`;
 }
 
 // 调用 Zhipu API（带 15s 超时）
@@ -318,6 +354,42 @@ async function callZhipuAPI(
 
   const data = await response.json();
   return data.choices?.[0]?.message?.content || '...';
+}
+
+// 清理 AI 回复 - 去除泄漏的上下文格式
+function cleanResponse(raw: string, currentRole: string): string {
+  let cleaned = raw.trim();
+
+  // 去除开头的 [角色名]: 格式（AI 复读上下文格式）
+  const allNames = Object.values(CHARACTER_NAMES);
+  for (const name of allNames) {
+    const patterns = [
+      new RegExp(`^\\[${name}\\][:：]\\s*`, 'g'),
+      new RegExp(`^${name}[:：]\\s*`, 'g'),
+    ];
+    for (const pattern of patterns) {
+      cleaned = cleaned.replace(pattern, '');
+    }
+  }
+
+  // 去除回复中夹带的其他角色发言（[名字]: xxx 格式的段落）
+  for (const name of allNames) {
+    // 只去除非当前角色名字的引用
+    if (name === CHARACTER_NAMES[currentRole]) continue;
+    const inlinePattern = new RegExp(`\\s*\\[${name}\\][:：][^\\n]*`, 'g');
+    cleaned = cleaned.replace(inlinePattern, '');
+  }
+
+  // 去除多余的引号包裹
+  cleaned = cleaned.replace(/^["「](.+)["」]$/, '$1');
+
+  // 如果清理后为空或太短（"..."之类），返回省略号
+  cleaned = cleaned.trim();
+  if (cleaned.length < 2 || cleaned === '...' || cleaned === '……') {
+    return '...';
+  }
+
+  return cleaned;
 }
 
 export default async function handler(req: any, res: any) {
@@ -395,17 +467,16 @@ export default async function handler(req: any, res: any) {
         participants
       );
 
-      // 将前面角色的回复加入上下文
+      // 将前面角色的回复加入上下文（用叙述格式，避免 AI 复读方括号格式）
+      const prevSpeech = responses.map(r => `${r.name}说："${r.content}"`).join('\n');
       const currentContext = [
         ...contextMessages,
-        ...responses.map(r => ({
-          role: 'assistant' as const,
-          content: `[${r.name}]: ${r.content}`,
-        })),
+        ...(prevSpeech ? [{ role: 'user' as const, content: `（会议中其他人的发言：\n${prevSpeech}）` }] : []),
       ];
 
       try {
-        const content = await callZhipuAPI(apiKey, systemPrompt, currentContext);
+        const rawContent = await callZhipuAPI(apiKey, systemPrompt, currentContext);
+        const content = cleanResponse(rawContent, respondentRole);
         const mood = detectMood(content);
 
         responses.push({
