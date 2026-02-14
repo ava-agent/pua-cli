@@ -147,10 +147,6 @@ program.addCommand(createEmailCommand());
 // Meeting command - 会议发言建议
 program.addCommand(createMeetingCommand());
 
-// Box and Theme system
-import { BoxRenderer, createBox, createSuccessBox, createWarningBox, createErrorBox } from './utils/box';
-import { ThemeManager, listThemes, setTheme, applyTheme } from './utils/theme';
-
 // Default command - show help
 program.action(() => {
   console.log();
@@ -158,10 +154,14 @@ program.action(() => {
   console.log(chalk.cyan.bold('║') + '          ' + chalk.white.bold('PUA CLI') + ' - 趣味 AI 职场角色扮演工具' + '        ' + chalk.cyan.bold('║'));
   console.log(chalk.cyan.bold('╚═══════════════════════════════════════════════════════════╝'));
   console.log();
-  console.log(chalk.gray('这是一个趣味性的 AI CLI 工具，提供两种角色模式：'));
+  console.log(chalk.gray('这是一个趣味性的 AI CLI 工具，提供六种职场角色模式：'));
   console.log();
-  console.log('  ' + chalk.red.bold('老板模式') + '   - 用喜欢 PUA 员工的老板风格回应');
-  console.log('  ' + chalk.yellow.bold('员工模式') + ' - 用被老板 PUA 的员工风格回应');
+  console.log('  ' + chalk.red.bold('👔 老板')     + '       - 喜欢 PUA 员工，画饼大师');
+  console.log('  ' + chalk.yellow.bold('😓 员工')   + '       - 被 PUA 的打工人');
+  console.log('  ' + chalk.blue.bold('📋 产品经理') + '   - 需求变更专家，善用黑话');
+  console.log('  ' + chalk.green.bold('💼 HR')      + '         - 公司就是家，打感情牌');
+  console.log('  ' + chalk.magenta.bold('💻 技术主管') + '   - 指点江山，质疑代码');
+  console.log('  ' + chalk.cyan.bold('🌱 实习生')   + '     - 谦虚好学，求带求教');
   console.log();
   console.log(chalk.gray('─────────────────────────────────────────────────────────────'));
   console.log();

@@ -4,6 +4,31 @@ All notable changes to PUA CLI will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.5.1] - 2026-02-14 - Bug Fix & UX Enhancement Edition
+
+### Fixed
+- **Website**: 修复缺失的 `.terminal` 和 `.terminal-header` CSS 类导致的布局异常
+- **Website**: 修复 ASCII art 显示乱码
+- **Website**: 修复版本号不一致（v0.4.0 -> v0.5.0）
+- **Website**: 修复 npm 包名显示错误（pua-cli -> workplace-pua-cli）
+- **Website**: 改进 429/400 错误提示为用户友好文案
+- **CLI**: 修复默认帮助文本仅显示 2 种角色（现正确显示全部 6 种）
+- **CLI**: 移除 index.ts 中未使用的 Box/Theme 导入
+- **文档**: 修复 README 重复的"快速开始"章节
+- **文档**: 修复重复的安装命令
+- **文档**: 移除不存在的 `web/assets/` 目录引用
+- **文档**: 统一 Node.js 版本要求为 >=18.0.0
+
+### Added
+- **Website**: 添加 SEO meta 标签（description, Open Graph, Twitter Card）
+- **Website**: 输入区域改为 textarea 支持多行输入
+- **Website**: 添加发送按钮
+- **Website**: 添加键盘快捷键提示（Enter/Shift+Enter/Esc）
+- **Website**: 状态栏添加 GitHub 和 npm 链接
+- **Website**: 移动端隐藏 ASCII art 避免显示异常
+
+---
+
 ## [0.5.0] - 2025-02-13 - Feature Expansion Edition
 
 ### Added

@@ -35,7 +35,7 @@
 
 ### 技术栈
 
-- **运行时**: Node.js 18+
+- **运行时**: Node.js 18+（推荐 20+）
 - **开发语言**: TypeScript
 - **AI 模型**: 智谱 AI GLM-4-flash / OpenAI GPT-4
 - **部署平台**: Vercel（Web 版本）
@@ -54,8 +54,7 @@ pua-cli/
 │   └── index.ts      # 入口文件
 ├── web/             # Web 体验版
 │   ├── index.html    # 单页应用
-│   ├── api/          # Vercel API 路由
-│   └── assets/       # 静态资源
+│   └── api/          # Vercel API 路由
 ├── docs/            # 技术文档
 ├── tests/           # 测试文件
 └── README.md        # 项目说明
@@ -79,8 +78,6 @@ pua-cli/
 - 产品需求文档参考
 
 ---
-
-## 快速开始
 
 ## 界面预览
 
@@ -138,7 +135,7 @@ pua-cli/
 
 ### 🌐 在线体验（无需安装）
 
-**Workplace PUA CLI Web v0.4.0** - 直接在浏览器中使用，体验完整的职场角色扮演功能：
+**Workplace PUA CLI Web v0.5.0** - 直接在浏览器中使用，体验完整的职场角色扮演功能：
 
 | 功能 | 说明 |
 |------|------|
@@ -158,9 +155,6 @@ pua-cli/
 ```bash
 # 直接从 npm 全局安装
 npm install -g workplace-pua-cli
-
-# 启动聊天（首次运行会自动进入配置向导）
-workplace-pua-cli chat
 
 # 启动聊天（首次运行会自动进入配置向导）
 workplace-pua-cli chat

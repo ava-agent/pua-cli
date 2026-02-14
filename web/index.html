@@ -3,7 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Workplace PUA CLI v0.4.0 - 职场角色扮演助手</title>
+  <title>Workplace PUA CLI v0.5.0 - 职场角色扮演助手</title>
+  <meta name="description" content="Workplace PUA CLI - 趣味职场角色扮演助手，支持6种角色和3种强度等级，在线体验无需安装">
+  <meta property="og:title" content="Workplace PUA CLI - 职场角色扮演助手">
+  <meta property="og:description" content="趣味性 AI CLI 工具，6种职场角色（老板、员工、产品经理、HR、技术主管、实习生），3种强度等级">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://pua-cli.vercel.app">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Workplace PUA CLI">
+  <meta name="twitter:description" content="趣味职场角色扮演助手 - 6种角色，在线体验">
+  <meta name="theme-color" content="#0a0a0a">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💬</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,6 +32,24 @@
       overflow-x: hidden;
     }
 
+    /* Terminal container */
+    .terminal {
+      width: 90%;
+      max-width: 900px;
+      margin: 40px auto;
+      background: #0a0a0a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 80px);
+      overflow: hidden;
+    }
+
+    .terminal-header {
+      padding: 10px 16px;
+      background: #1a1a1a;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -164,15 +191,16 @@
     /* Input area */
     .input-container {
       display: flex;
-      align-items: center;
-      padding: 10px 0;
+      align-items: flex-end;
+      padding: 10px 16px;
       border-top: 1px solid #222;
+      gap: 8px;
     }
 
     .input-prompt {
       color: #00ff00;
       white-space: pre;
-      margin-right: 8px;
+      line-height: 36px;
     }
 
     .input-field {
@@ -184,14 +212,43 @@
       font-size: 14px;
       outline: none;
       caret-color: #00ff00;
+      resize: none;
+      min-height: 24px;
+      max-height: 120px;
+      overflow-y: auto;
+      line-height: 1.5;
     }
 
     .input-field:focus {
-      box-shadow: 0 0 0 2px rgba(0, 255, 0, 0.3);
+      box-shadow: none;
     }
 
     .input-field::placeholder {
       color: #666;
+    }
+
+    .send-btn {
+      background: #002200;
+      border: 1px solid #333;
+      color: #00ff00;
+      padding: 6px 14px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+      transition: all 0.2s;
+      min-height: 36px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .send-btn:hover {
+      background: #003300;
+      border-color: #00ff00;
+    }
+
+    .send-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
     }
 
     /* Role selector - CLI style */
@@ -346,6 +403,45 @@
       color: #ccc;
     }
 
+    .status-bar .separator {
+      color: #444;
+      margin: 0 6px;
+    }
+
+    .status-bar a {
+      color: #00ccff;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .status-bar a:hover {
+      color: #00ffff;
+    }
+
+    /* Keyboard shortcuts hint */
+    .shortcuts-hint {
+      background: #0a0a0a;
+      border: 1px solid #222;
+      padding: 6px 12px;
+      margin-bottom: 15px;
+      font-size: 10px;
+      color: #555;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .shortcuts-hint kbd {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-family: inherit;
+      font-size: 10px;
+      color: #00ff00;
+      margin-right: 3px;
+    }
+
     /* Welcome screen */
     .welcome-screen {
       color: #00ff00;
@@ -470,19 +566,15 @@
       }
 
       .ascii-header {
-        font-size: 7px;
-        line-height: 1;
-        white-space: pre-wrap;
-        word-break: break-all;
+        display: none;
       }
 
       .input-container {
-        flex-direction: column;
-        gap: 8px;
+        padding: 8px 10px;
       }
 
-      .input-field {
-        width: 100%;
+      .shortcuts-hint {
+        display: none;
       }
 
       .status-bar {
@@ -514,10 +606,11 @@
     <div class="terminal-body" id="terminalBody">
       <!-- ASCII Art Header -->
       <div class="ascii-header">
-   ____  ____  ____  ____  _____
-  |  _ \|  _ \|  _ \|  _ \| __ \| |
- | (_) \| (_) \| (_) \| (_) \| _ \|
- |____/ \___/ \___/ \___/ \__\
+ ____  _   _   _       ____ _     ___
+|  _ \| | | | / \     / ___| |   |_ _|
+| |_) | | | |/ _ \   | |   | |    | |
+|  __/| |_| / ___ \  | |___| |___ | |
+|_|    \___/_/   \_\  \____|_____|___|
       </div>
 
       <!-- Welcome Message -->
@@ -528,7 +621,7 @@
         </div>
         <div class="prompt-line">
           <span class="prompt-symbol success">✓</span>
-          <span class="prompt-text">PUA CLI v0.4.0 - 职场角色扮演助手</span>
+          <span class="prompt-text">PUA CLI v0.5.0 - 职场角色扮演助手</span>
         </div>
         <div class="prompt-line">
           <span class="prompt-symbol system">ℹ</span>
@@ -543,7 +636,7 @@
       </div>
       <div class="prompt-line">
         <span class="prompt-symbol user">➜</span>
-        <span class="prompt-text"><span class="code">npm install -g pua-cli</span></span>
+        <span class="prompt-text"><span class="code">npm install -g workplace-pua-cli</span></span>
       </div>
       <div class="prompt-line">
         <span class="prompt-symbol info">ℹ</span>
@@ -569,28 +662,35 @@
         当前配置: 角色=<span>boss</span> | 强度=<span>medium</span>
       </div>
 
+      <!-- Keyboard Shortcuts Hint -->
+      <div class="shortcuts-hint">
+        <span><kbd>Enter</kbd> 发送</span>
+        <span><kbd>Shift+Enter</kbd> 换行</span>
+        <span><kbd>Esc</kbd> 清空输入</span>
+      </div>
+
       <!-- Role Selector -->
       <div class="prompt-line">
         <span class="prompt-symbol user">➜</span>
         <span class="prompt-text">选择角色 [使用方向键或点击选择]</span>
       </div>
-      <div class="role-selector" id="roleSelector">
-        <div class="role-option active" data-role="boss">
+      <div class="role-selector" id="roleSelector" role="radiogroup" aria-label="选择角色">
+        <div class="role-option active" data-role="boss" role="radio" aria-checked="true" tabindex="0">
           <span class="icon">👔</span>boss
         </div>
-        <div class="role-option" data-role="employee">
+        <div class="role-option" data-role="employee" role="radio" aria-checked="false" tabindex="0">
           <span class="icon">😓</span>employee
         </div>
-        <div class="role-option" data-role="pm">
+        <div class="role-option" data-role="pm" role="radio" aria-checked="false" tabindex="0">
           <span class="icon">📋</span>pm
         </div>
-        <div class="role-option" data-role="hr">
+        <div class="role-option" data-role="hr" role="radio" aria-checked="false" tabindex="0">
           <span class="icon">💼</span>hr
         </div>
-        <div class="role-option" data-role="techlead">
+        <div class="role-option" data-role="techlead" role="radio" aria-checked="false" tabindex="0">
           <span class="icon">👨‍💻</span>techlead
         </div>
-        <div class="role-option" data-role="intern">
+        <div class="role-option" data-role="intern" role="radio" aria-checked="false" tabindex="0">
           <span class="icon">🌱</span>intern
         </div>
       </div>
@@ -619,15 +719,16 @@
     <!-- Input Area -->
     <div class="input-container">
       <span class="input-prompt" id="inputPrompt">➜</span>
-      <input
-        type="text"
+      <textarea
         class="input-field"
         id="inputField"
-        placeholder="输入消息... (Enter 发送, Tab=换行)"
+        placeholder="输入消息... (Enter 发送, Shift+Enter 换行)"
         autocomplete="off"
         spellcheck="false"
         maxlength="500"
-      >
+        rows="1"
+      ></textarea>
+      <button class="send-btn" id="sendBtn" title="发送 (Enter)" aria-label="发送消息">➤</button>
     </div>
 
     <!-- Status Bar -->
@@ -638,12 +739,15 @@
         <span class="key">ROLE</span>
         <span class="value" id="statusRole">boss</span>
         <span class="key">VISITS</span>
-        <span class="value" id="visitCount">1</span>
+        <span class="value" id="statusVisitCount">1</span>
       </div>
       <div class="right">
         <span class="key">POS</span>
         <span class="value" id="cursorPos">1:1</span>
-        <span class="key">UTF-8</span>
+        <span class="separator">|</span>
+        <a href="https://github.com/ava-agent/pua-cli" target="_blank" rel="noopener" title="GitHub">GitHub</a>
+        <span class="separator">|</span>
+        <a href="https://www.npmjs.com/package/workplace-pua-cli" target="_blank" rel="noopener" title="npm">npm</a>
       </div>
     </div>
   </div>
@@ -711,6 +815,8 @@
     // Update visit count display
     function updateVisitDisplay() {
       document.getElementById('visitCount').textContent = analytics.visits;
+      const statusEl = document.getElementById('statusVisitCount');
+      if (statusEl) statusEl.textContent = analytics.visits;
     }
 
     // Update stats display
@@ -952,7 +1058,13 @@
         updateStatsDisplay();
 
       } catch (error) {
-        addMessage(`Error: ${error.message}`, 'error');
+        if (error.message.includes('429')) {
+          addMessage('请求过于频繁，请等待 1 分钟后重试（每分钟最多 10 条消息）', 'error');
+        } else if (error.message.includes('400')) {
+          addMessage('输入验证失败，请检查消息内容（长度不超过 500 字符）', 'error');
+        } else {
+          addMessage(`请求失败: ${error.message}`, 'error');
+        }
       } finally {
         loadingLine.style.display = 'none';
         inputPrompt.textContent = '➜';
@@ -962,20 +1074,31 @@
     }
 
     // Role selection
+    function selectRole(option) {
+      document.querySelectorAll('.role-option').forEach(el => {
+        el.classList.remove('active');
+        el.setAttribute('aria-checked', 'false');
+      });
+      option.classList.add('active');
+      option.setAttribute('aria-checked', 'true');
+      currentRole = option.dataset.role;
+      updateOptionsDisplay();
+      inputField.focus();
+    }
+
     roleSelector.addEventListener('click', (e) => {
       const option = e.target.closest('.role-option');
       if (!option) return;
+      selectRole(option);
+    });
 
-      // Update active state
-      document.querySelectorAll('.role-option').forEach(el => el.classList.remove('active'));
-      option.classList.add('active');
-
-      // Update role
-      currentRole = option.dataset.role;
-      updateOptionsDisplay();
-
-      // Focus input
-      inputField.focus();
+    roleSelector.addEventListener('keydown', (e) => {
+      const option = e.target.closest('.role-option');
+      if (!option) return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        selectRole(option);
+      }
     });
 
     // Severity selection
@@ -1002,32 +1125,46 @@
       }
     });
 
+    // Send button
+    const sendBtn = document.getElementById('sendBtn');
+    sendBtn.addEventListener('click', () => {
+      if (!isTyping) sendMessage();
+    });
+
     // Input handlers
     inputField.addEventListener('keydown', (e) => {
-      // Enter to send
+      // Enter to send, Shift+Enter for newline
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         sendMessage();
       }
     });
 
-    // Update cursor position display
+    // Auto-resize textarea & update cursor position
     inputField.addEventListener('input', () => {
+      inputField.style.height = 'auto';
+      inputField.style.height = Math.min(inputField.scrollHeight, 120) + 'px';
+
       const val = inputField.value;
       const pos = inputField.selectionStart;
       const lines = val.substring(0, pos).split('\n');
-      const line = lines.length;
-      const col = lines[lines.length - 1].length + 1;
-      cursorPos.textContent = `${line}:${col}`;
+      cursorPos.textContent = `${lines.length}:${lines[lines.length - 1].length + 1}`;
     });
 
     inputField.addEventListener('click', () => {
       const val = inputField.value;
       const pos = inputField.selectionStart;
       const lines = val.substring(0, pos).split('\n');
-      const line = lines.length;
-      const col = lines[lines.length - 1].length + 1;
-      cursorPos.textContent = `${line}:${col}`;
+      cursorPos.textContent = `${lines.length}:${lines[lines.length - 1].length + 1}`;
+    });
+
+    // Global keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        inputField.value = '';
+        inputField.style.height = 'auto';
+        inputField.focus();
+      }
     });
 
     // Focus input on click anywhere in terminal body
