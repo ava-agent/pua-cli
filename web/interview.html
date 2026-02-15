@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>压力面试 - PUA CLI</title>
+  <meta name="description" content="压力面试模拟器 - 面对刁钻面试官的连环追问，坚持10轮拿到Offer">
+  <meta property="og:title" content="压力面试 - PUA CLI">
+  <meta property="og:description" content="压力面试模拟器 - 10轮问答制，挺住压力拿到Offer">
+  <meta name="theme-color" content="#0a0a0a">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: #0a0a0a;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .terminal {
+      width: 90%; max-width: 900px; margin: 40px auto;
+      background: #0a0a0a; border: 1px solid #333; border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      display: flex; flex-direction: column;
+      height: calc(100vh - 80px); overflow: hidden;
+    }
+
+    .terminal-header {
+      padding: 10px 16px; background: #1a1a1a;
+      display: flex; align-items: center; gap: 8px;
+      border-bottom: 1px solid #333;
+    }
+
+    .terminal-buttons { display: flex; gap: 8px; }
+    .terminal-btn { width: 12px; height: 12px; border-radius: 50%; }
+    .terminal-btn.close { background: #ff5f56; }
+    .terminal-btn.minimize { background: #ffbd2e; }
+    .terminal-btn.maximize { background: #27ca3f; }
+
+    .terminal-title { color: #888; font-size: 12px; flex: 1; text-align: center; }
+
+    .terminal-body {
+      flex: 1; padding: 20px; overflow-y: auto; overflow-x: hidden;
+      background: #0a0a0a; scroll-behavior: smooth; min-height: 0;
+    }
+
+    .terminal-body::-webkit-scrollbar { width: 8px; }
+    .terminal-body::-webkit-scrollbar-track { background: #0a0a0a; }
+    .terminal-body::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+
+    /* ─── Setup View ─── */
+    .setup-view { animation: fadeIn 0.3s ease-out; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
+
+    .setup-title {
+      font-size: 22px; font-weight: 700; margin-bottom: 6px;
+      background: linear-gradient(90deg, #ff4444, #ff8800);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .setup-subtitle { color: #666; font-size: 12px; margin-bottom: 24px; }
+
+    .setup-section { margin-bottom: 20px; }
+    .setup-label { color: #888; font-size: 12px; margin-bottom: 10px; }
+
+    /* Position cards */
+    .position-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+    }
+
+    .position-card {
+      background: #111; border: 1px solid #333; border-radius: 8px;
+      padding: 14px; cursor: pointer; transition: all 0.2s;
+      position: relative;
+    }
+
+    .position-card:hover {
+      border-color: #ff6644; background: #1a1111;
+      box-shadow: 0 0 20px rgba(255,68,68,0.1);
+    }
+
+    .position-card.selected {
+      border-color: #ff4444; background: #1a1111;
+      box-shadow: 0 0 20px rgba(255,68,68,0.15);
+    }
+
+    .position-card.selected::after {
+      content: '✓'; position: absolute; top: 8px; right: 10px;
+      color: #ff4444; font-size: 14px; font-weight: 700;
+    }
+
+    .position-card .emoji { font-size: 20px; margin-bottom: 4px; }
+    .position-card .name { color: #ddd; font-size: 13px; font-weight: 500; }
+    .position-card .desc { color: #666; font-size: 10px; margin-top: 4px; }
+
+    /* Interviewer cards */
+    .interviewer-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+    }
+
+    .interviewer-card {
+      background: #111; border: 1px solid #333; border-radius: 8px;
+      padding: 12px; cursor: pointer; transition: all 0.2s;
+      position: relative;
+    }
+
+    .interviewer-card:hover { border-color: #ff6644; }
+
+    .interviewer-card.selected {
+      border-color: #ff4444; background: #1a1111;
+    }
+
+    .interviewer-card.selected::after {
+      content: '✓'; position: absolute; top: 8px; right: 10px;
+      color: #ff4444; font-size: 14px; font-weight: 700;
+    }
+
+    .interviewer-card .emoji { font-size: 18px; }
+    .interviewer-card .name { color: #ddd; font-size: 12px; font-weight: 500; }
+    .interviewer-card .title { color: #888; font-size: 10px; }
+    .interviewer-card .tag { color: #666; font-size: 9px; margin-top: 4px; }
+
+    /* Severity slider */
+    .severity-options { display: flex; gap: 10px; }
+
+    .severity-btn {
+      flex: 1; background: #111; border: 1px solid #333; border-radius: 8px;
+      padding: 10px; cursor: pointer; transition: all 0.2s;
+      text-align: center; font-family: inherit; font-size: 11px; color: #888;
+    }
+
+    .severity-btn:hover { border-color: #ff6644; color: #ddd; }
+    .severity-btn.selected { border-color: #ff4444; background: #1a1111; color: #ff6644; }
+
+    /* Start button */
+    .start-btn {
+      width: 100%; padding: 14px; margin-top: 16px;
+      background: linear-gradient(135deg, #cc0000, #ff4444);
+      border: none; border-radius: 8px; color: white;
+      font-family: inherit; font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s;
+    }
+
+    .start-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(255,68,68,0.3); }
+    .start-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* ─── Interview View ─── */
+    .interview-view { display: none; }
+
+    /* Status bars */
+    .status-panel {
+      background: #111; border: 1px solid #333; border-radius: 8px;
+      padding: 12px 16px; margin-bottom: 16px;
+    }
+
+    .status-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .status-round { color: #ff4444; font-size: 14px; font-weight: 700; }
+    .status-timer { color: #666; font-size: 11px; }
+
+    .meter { margin-bottom: 8px; }
+    .meter-label { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .meter-name { color: #888; font-size: 11px; }
+    .meter-value { font-size: 11px; font-weight: 700; }
+    .meter-value.stress { color: #ff4444; }
+    .meter-value.confidence { color: #44ff44; }
+
+    .meter-bar {
+      height: 8px; background: #222; border-radius: 4px; overflow: hidden;
+    }
+
+    .meter-fill {
+      height: 100%; border-radius: 4px; transition: width 0.5s ease-out;
+    }
+
+    .meter-fill.stress {
+      background: linear-gradient(90deg, #ff8800, #ff0000);
+    }
+
+    .meter-fill.confidence {
+      background: linear-gradient(90deg, #44ff44, #00cc00);
+    }
+
+    /* Interviewer chips */
+    .interviewer-chips {
+      display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;
+    }
+
+    .interviewer-chip {
+      display: flex; align-items: center; gap: 4px;
+      background: #111; border: 1px solid #333; border-radius: 16px;
+      padding: 4px 10px; font-size: 11px; color: #888;
+      transition: all 0.3s;
+    }
+
+    .interviewer-chip.speaking {
+      border-color: #ff4444; color: #ff6644;
+      animation: chipPulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes chipPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255,68,68,0); }
+      50% { box-shadow: 0 0 8px 2px rgba(255,68,68,0.3); }
+    }
+
+    /* Chat messages */
+    .chat-area { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+
+    .msg { display: flex; gap: 10px; animation: msgIn 0.3s ease-out; }
+
+    @keyframes msgIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; } }
+
+    .msg-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0; background: #1a1a1a;
+      border: 1px solid #333;
+    }
+
+    .msg-body { flex: 1; max-width: 80%; }
+
+    .msg-name { font-size: 10px; color: #888; margin-bottom: 3px; }
+
+    .msg-bubble {
+      padding: 10px 14px; border-radius: 12px; font-size: 13px;
+      line-height: 1.6; border-left: 3px solid var(--msg-color, #444);
+      background: #111;
+    }
+
+    /* Role-specific message colors */
+    .msg-techlead .msg-bubble { --msg-color: #4488ff; background: #111122; }
+    .msg-boss .msg-bubble { --msg-color: #ff4444; background: #1a1111; }
+    .msg-hr .msg-bubble { --msg-color: #cc44cc; background: #1a1122; }
+    .msg-pm .msg-bubble { --msg-color: #44cccc; background: #111a1a; }
+
+    .msg-techlead .msg-bubble { color: #aabbff; }
+    .msg-boss .msg-bubble { color: #ffaaaa; }
+    .msg-hr .msg-bubble { color: #eaaaee; }
+    .msg-pm .msg-bubble { color: #aaeeff; }
+
+    /* User message */
+    .msg-user { flex-direction: row-reverse; }
+    .msg-user .msg-body { text-align: right; }
+    .msg-user .msg-name { text-align: right; }
+
+    .msg-user .msg-bubble {
+      --msg-color: #44ff44; background: #112211; color: #aaffaa;
+      border-left: none; border-right: 3px solid #44ff44;
+    }
+
+    /* Event message */
+    .msg-event {
+      text-align: center; color: #888; font-size: 11px;
+      padding: 6px 0; font-style: italic;
+    }
+
+    /* Quality indicator */
+    .quality-badge {
+      display: inline-block; font-size: 9px; padding: 1px 6px;
+      border-radius: 10px; margin-top: 4px;
+    }
+    .quality-badge.weak { background: #331111; color: #ff6644; }
+    .quality-badge.normal { background: #222211; color: #cccc44; }
+    .quality-badge.strong { background: #113311; color: #44ff44; }
+
+    /* Loading */
+    .typing-indicator {
+      display: none; text-align: center; color: #ff6644;
+      font-size: 12px; padding: 8px;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+    /* ─── Ending Modal ─── */
+    .ending-overlay {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.85); z-index: 100;
+      display: none; align-items: center; justify-content: center;
+    }
+
+    .ending-overlay.show { display: flex; }
+
+    .ending-card {
+      background: #111; border: 2px solid #ff4444; border-radius: 16px;
+      padding: 30px 40px; text-align: center; max-width: 420px;
+      animation: endingIn 0.5s ease-out;
+    }
+
+    @keyframes endingIn {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .ending-emoji { font-size: 60px; margin-bottom: 16px; }
+    .ending-title { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 10px; }
+    .ending-desc { color: #999; font-size: 13px; line-height: 1.6; margin-bottom: 20px; }
+
+    .ending-stats {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .ending-stat { text-align: center; }
+    .ending-stat-value { font-size: 20px; font-weight: 700; }
+    .ending-stat-value.stress { color: #ff4444; }
+    .ending-stat-value.confidence { color: #44ff44; }
+    .ending-stat-value.round { color: #4488ff; }
+    .ending-stat-label { color: #666; font-size: 10px; margin-top: 2px; }
+
+    .ending-actions { display: flex; gap: 10px; justify-content: center; }
+
+    .retry-btn {
+      padding: 10px 24px; background: #ff4444; border: none; border-radius: 8px;
+      color: white; font-family: inherit; font-size: 13px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s;
+    }
+
+    .retry-btn:hover { background: #ff6644; transform: translateY(-1px); }
+
+    .home-btn {
+      padding: 10px 24px; background: #222; border: 1px solid #444; border-radius: 8px;
+      color: #888; font-family: inherit; font-size: 13px; cursor: pointer;
+      transition: all 0.2s; text-decoration: none;
+    }
+
+    .home-btn:hover { border-color: #666; color: #ccc; }
+
+    /* ─── Input Area ─── */
+    .input-container {
+      display: flex; align-items: flex-end; padding: 10px 16px;
+      border-top: 1px solid #222; gap: 8px;
+    }
+
+    .input-prompt { color: #44ff44; white-space: pre; line-height: 36px; font-size: 13px; }
+
+    .input-field {
+      flex: 1; background: transparent; border: none; color: #ffffff;
+      font-family: inherit; font-size: 14px; outline: none;
+      caret-color: #44ff44; resize: none;
+      min-height: 24px; max-height: 120px; overflow-y: auto; line-height: 1.5;
+    }
+
+    .input-field::placeholder { color: #555; }
+
+    .send-btn {
+      background: #1a0000; border: 1px solid #333; color: #ff4444;
+      padding: 6px 14px; cursor: pointer; font-family: inherit; font-size: 14px;
+      transition: all 0.2s; min-height: 36px; flex-shrink: 0;
+    }
+
+    .send-btn:hover { background: #2a0000; border-color: #ff4444; }
+    .send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* ─── Status Bar ─── */
+    .status-bar {
+      background: #1a1a1a; padding: 6px 16px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-top: 1px solid #333; font-size: 11px;
+    }
+
+    .status-bar .left { color: #ff4444; }
+    .status-bar .right { color: #666; }
+    .status-bar a { color: #00ccff; text-decoration: none; transition: color 0.2s; }
+    .status-bar a:hover { color: #00ffff; }
+    .status-bar .sep { color: #444; margin: 0 6px; }
+
+    @media (max-width: 600px) {
+      .terminal { width: 95%; margin: 10px auto; height: calc(100vh - 20px); }
+      .terminal-body { padding: 12px; }
+      .position-grid, .interviewer-grid { grid-template-columns: 1fr; }
+      .severity-options { flex-direction: column; }
+      .ending-card { padding: 20px; margin: 0 16px; }
+      .ending-stats { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+      .msg-body { max-width: 85%; }
+      .status-bar { flex-direction: column; gap: 4px; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="terminal">
+    <div class="terminal-header">
+      <div class="terminal-buttons">
+        <div class="terminal-btn close"></div>
+        <div class="terminal-btn minimize"></div>
+        <div class="terminal-btn maximize"></div>
+      </div>
+      <div class="terminal-title">压力面试 — pua-cli</div>
+    </div>
+
+    <div class="terminal-body" id="terminalBody">
+      <!-- ═══ Setup View ═══ -->
+      <div class="setup-view" id="setupView">
+        <div class="setup-title">🎯 压力面试</div>
+        <div class="setup-subtitle">面对刁钻面试官的连环追问，坚持 10 轮拿到 Offer！</div>
+
+        <!-- Position Selection -->
+        <div class="setup-section">
+          <div class="setup-label">选择面试岗位</div>
+          <div class="position-grid" id="positionGrid">
+            <div class="position-card" data-position="frontend">
+              <div class="emoji">💻</div>
+              <div class="name">前端开发</div>
+              <div class="desc">React/Vue、CSS、性能优化</div>
+            </div>
+            <div class="position-card" data-position="backend">
+              <div class="emoji">⚙️</div>
+              <div class="name">后端开发</div>
+              <div class="desc">数据库、分布式、API设计</div>
+            </div>
+            <div class="position-card" data-position="product">
+              <div class="emoji">📋</div>
+              <div class="name">产品经理</div>
+              <div class="desc">需求分析、用户研究、商业模式</div>
+            </div>
+            <div class="position-card" data-position="design">
+              <div class="emoji">🎨</div>
+              <div class="name">UI/UX 设计师</div>
+              <div class="desc">设计规范、交互逻辑、用户体验</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interviewer Selection -->
+        <div class="setup-section">
+          <div class="setup-label">选择面试官（2-4 人，点击选择）</div>
+          <div class="interviewer-grid" id="interviewerGrid">
+            <div class="interviewer-card" data-role="techlead">
+              <div class="emoji">💻</div>
+              <div class="name">刘哥 - 技术总监</div>
+              <div class="tag">追问细节 / 嫌弃简历</div>
+            </div>
+            <div class="interviewer-card" data-role="boss">
+              <div class="emoji">👔</div>
+              <div class="name">张总 - CTO</div>
+              <div class="tag">画饼压价 / 质疑能力</div>
+            </div>
+            <div class="interviewer-card" data-role="hr">
+              <div class="emoji">💼</div>
+              <div class="name">陈姐 - HR 总监</div>
+              <div class="tag">套话压薪 / 问敏感问题</div>
+            </div>
+            <div class="interviewer-card" data-role="pm">
+              <div class="emoji">📊</div>
+              <div class="name">李姐 - 产品负责人</div>
+              <div class="tag">脑筋急转弯 / 考察沟通</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Severity Selection -->
+        <div class="setup-section">
+          <div class="setup-label">选择 PUA 强度</div>
+          <div class="severity-options" id="severityOptions">
+            <div class="severity-btn" data-severity="1">🟢 友好</div>
+            <div class="severity-btn selected" data-severity="2">🟡 标准</div>
+            <div class="severity-btn" data-severity="3">🔴 地狱</div>
+          </div>
+        </div>
+
+        <button class="start-btn" id="startBtn" disabled>开始面试</button>
+        <div style="text-align:center;margin-top:10px;">
+          <a href="/" style="color:#666;font-size:11px;text-decoration:none;">← 返回首页</a>
+          <span style="color:#333;margin:0 8px;">|</span>
+          <a href="/meeting.html" style="color:#666;font-size:11px;text-decoration:none;">会议室 →</a>
+        </div>
+      </div>
+
+      <!-- ═══ Interview View ═══ -->
+      <div class="interview-view" id="interviewView">
+        <!-- Status Panel -->
+        <div class="status-panel" id="statusPanel">
+          <div class="status-header">
+            <div class="status-round" id="roundDisplay">第 1/10 轮</div>
+            <div class="status-timer" id="timerDisplay">00:00</div>
+          </div>
+          <div class="meter">
+            <div class="meter-label">
+              <span class="meter-name">🔥 压力</span>
+              <span class="meter-value stress" id="stressValue">20%</span>
+            </div>
+            <div class="meter-bar">
+              <div class="meter-fill stress" id="stressFill" style="width:20%"></div>
+            </div>
+          </div>
+          <div class="meter">
+            <div class="meter-label">
+              <span class="meter-name">💪 自信</span>
+              <span class="meter-value confidence" id="confidenceValue">60%</span>
+            </div>
+            <div class="meter-bar">
+              <div class="meter-fill confidence" id="confidenceFill" style="width:60%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interviewer Chips -->
+        <div class="interviewer-chips" id="interviewerChips"></div>
+
+        <!-- Chat Area -->
+        <div class="chat-area" id="chatArea"></div>
+
+        <!-- Typing Indicator -->
+        <div class="typing-indicator" id="typingIndicator">面试官正在思考...</div>
+      </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="input-container" id="inputContainer" style="display:none;">
+      <span class="input-prompt">候选人 ❯</span>
+      <textarea class="input-field" id="inputField"
+        placeholder="输入你的回答..."
+        autocomplete="off" spellcheck="false" maxlength="500" rows="1"></textarea>
+      <button class="send-btn" id="sendBtn">➤</button>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div class="left">
+        <span id="statusLabel">🎯 压力面试</span>
+      </div>
+      <div class="right">
+        <a href="/">首页</a>
+        <span class="sep">|</span>
+        <a href="/meeting.html">会议室</a>
+        <span class="sep">|</span>
+        <a href="https://github.com/ava-agent/pua-cli" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ending Modal -->
+  <div class="ending-overlay" id="endingOverlay">
+    <div class="ending-card">
+      <div class="ending-emoji" id="endingEmoji">💀</div>
+      <div class="ending-title" id="endingTitle">面试结果</div>
+      <div class="ending-desc" id="endingDesc"></div>
+      <div class="ending-stats">
+        <div class="ending-stat">
+          <div class="ending-stat-value stress" id="endStress">0%</div>
+          <div class="ending-stat-label">最终压力</div>
+        </div>
+        <div class="ending-stat">
+          <div class="ending-stat-value confidence" id="endConfidence">0%</div>
+          <div class="ending-stat-label">最终自信</div>
+        </div>
+        <div class="ending-stat">
+          <div class="ending-stat-value round" id="endRound">0/10</div>
+          <div class="ending-stat-label">坚持轮次</div>
+        </div>
+      </div>
+      <div class="ending-actions">
+        <button class="retry-btn" id="retryBtn">重新面试</button>
+        <a class="home-btn" href="/">返回首页</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ═══ State ═══
+    let selectedPosition = null;
+    let selectedInterviewers = [];
+    let selectedSeverity = 2;
+    let interviewState = { stress: 20, confidence: 60, round: 1 };
+    let history = [];
+    let isLoading = false;
+    let timerInterval = null;
+    let timerSeconds = 0;
+
+    // ═══ Elements ═══
+    const setupView = document.getElementById('setupView');
+    const interviewView = document.getElementById('interviewView');
+    const inputContainer = document.getElementById('inputContainer');
+    const inputField = document.getElementById('inputField');
+    const sendBtn = document.getElementById('sendBtn');
+    const startBtn = document.getElementById('startBtn');
+    const chatArea = document.getElementById('chatArea');
+    const typingIndicator = document.getElementById('typingIndicator');
+    const terminalBody = document.getElementById('terminalBody');
+    const endingOverlay = document.getElementById('endingOverlay');
+
+    // Interviewer data
+    const INTERVIEWER_DATA = {
+      techlead: { emoji: '💻', name: '刘哥', title: '技术总监', color: '#4488ff' },
+      boss: { emoji: '👔', name: '张总', title: 'CTO', color: '#ff4444' },
+      hr: { emoji: '💼', name: '陈姐', title: 'HR 总监', color: '#cc44cc' },
+      pm: { emoji: '📊', name: '李姐', title: '产品负责人', color: '#44cccc' },
+    };
+
+    const MOOD_EMOJIS = {
+      sarcastic: '😏', pressing: '🤨', neutral: '😐', cold: '😶',
+    };
+
+    // ═══ Setup Logic ═══
+
+    // Position selection
+    document.getElementById('positionGrid').addEventListener('click', (e) => {
+      const card = e.target.closest('.position-card');
+      if (!card) return;
+
+      document.querySelectorAll('.position-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      selectedPosition = card.dataset.position;
+      updateStartBtn();
+    });
+
+    // Interviewer selection (toggle)
+    document.getElementById('interviewerGrid').addEventListener('click', (e) => {
+      const card = e.target.closest('.interviewer-card');
+      if (!card) return;
+
+      const role = card.dataset.role;
+      if (card.classList.contains('selected')) {
+        card.classList.remove('selected');
+        selectedInterviewers = selectedInterviewers.filter(r => r !== role);
+      } else {
+        if (selectedInterviewers.length >= 4) return;
+        card.classList.add('selected');
+        selectedInterviewers.push(role);
+      }
+      updateStartBtn();
+    });
+
+    // Severity selection
+    document.getElementById('severityOptions').addEventListener('click', (e) => {
+      const btn = e.target.closest('.severity-btn');
+      if (!btn) return;
+
+      document.querySelectorAll('.severity-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedSeverity = parseInt(btn.dataset.severity);
+    });
+
+    function updateStartBtn() {
+      startBtn.disabled = !selectedPosition || selectedInterviewers.length < 2;
+    }
+
+    // ═══ Start Interview ═══
+    startBtn.addEventListener('click', () => {
+      if (!selectedPosition || selectedInterviewers.length < 2) return;
+
+      setupView.style.display = 'none';
+      interviewView.style.display = 'block';
+      inputContainer.style.display = 'flex';
+
+      // Reset state
+      interviewState = { stress: 20, confidence: 60, round: 1 };
+      history = [];
+      chatArea.innerHTML = '';
+      timerSeconds = 0;
+
+      // Update UI
+      updateStatusPanel();
+      renderInterviewerChips();
+      startTimer();
+
+      // Send opening message
+      sendOpeningQuestion();
+
+      inputField.focus();
+    });
+
+    // ═══ Timer ═══
+    function startTimer() {
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timerSeconds++;
+        const min = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+        const sec = String(timerSeconds % 60).padStart(2, '0');
+        document.getElementById('timerDisplay').textContent = `${min}:${sec}`;
+      }, 1000);
+    }
+
+    // ═══ Status Panel ═══
+    function updateStatusPanel() {
+      document.getElementById('roundDisplay').textContent =
+        `第 ${interviewState.round}/10 轮`;
+      document.getElementById('stressValue').textContent = `${interviewState.stress}%`;
+      document.getElementById('confidenceValue').textContent = `${interviewState.confidence}%`;
+      document.getElementById('stressFill').style.width = `${interviewState.stress}%`;
+      document.getElementById('confidenceFill').style.width = `${interviewState.confidence}%`;
+    }
+
+    // ═══ Interviewer Chips ═══
+    function renderInterviewerChips() {
+      const container = document.getElementById('interviewerChips');
+      container.innerHTML = selectedInterviewers.map(role => {
+        const d = INTERVIEWER_DATA[role];
+        return `<div class="interviewer-chip" id="chip-${role}">
+          <span>${d.emoji}</span>
+          <span>${d.name}</span>
+        </div>`;
+      }).join('');
+    }
+
+    function setChipSpeaking(role) {
+      document.querySelectorAll('.interviewer-chip').forEach(c => c.classList.remove('speaking'));
+      const chip = document.getElementById(`chip-${role}`);
+      if (chip) chip.classList.add('speaking');
+    }
+
+    function clearChipSpeaking() {
+      document.querySelectorAll('.interviewer-chip').forEach(c => c.classList.remove('speaking'));
+    }
+
+    // ═══ Chat Messages ═══
+    function addInterviewerMessage(role, content, mood) {
+      const d = INTERVIEWER_DATA[role];
+      const moodEmoji = MOOD_EMOJIS[mood] || '';
+
+      const msgEl = document.createElement('div');
+      msgEl.className = `msg msg-${role}`;
+      msgEl.innerHTML = `
+        <div class="msg-avatar" style="border-color:${d.color}">${d.emoji}</div>
+        <div class="msg-body">
+          <div class="msg-name">${d.name} (${d.title}) ${moodEmoji}</div>
+          <div class="msg-bubble">${escapeHtml(content)}</div>
+        </div>
+      `;
+      chatArea.appendChild(msgEl);
+      scrollToBottom();
+    }
+
+    function addUserMessage(content, quality) {
+      const qualityLabels = { weak: '弱回答', normal: '普通', strong: '强回答' };
+      const qualityClass = quality || 'normal';
+
+      const msgEl = document.createElement('div');
+      msgEl.className = 'msg msg-user';
+      msgEl.innerHTML = `
+        <div class="msg-avatar" style="border-color:#44ff44">🙋</div>
+        <div class="msg-body">
+          <div class="msg-name">你 (候选人)</div>
+          <div class="msg-bubble">${escapeHtml(content)}</div>
+          ${quality ? `<span class="quality-badge ${qualityClass}">${qualityLabels[quality]}</span>` : ''}
+        </div>
+      `;
+      chatArea.appendChild(msgEl);
+      scrollToBottom();
+    }
+
+    function addEventMessage(text) {
+      const el = document.createElement('div');
+      el.className = 'msg-event';
+      el.textContent = text;
+      chatArea.appendChild(el);
+      scrollToBottom();
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function scrollToBottom() {
+      requestAnimationFrame(() => {
+        terminalBody.scrollTop = terminalBody.scrollHeight;
+        requestAnimationFrame(() => {
+          terminalBody.scrollTop = terminalBody.scrollHeight;
+        });
+      });
+    }
+
+    // ═══ Opening Question ═══
+    async function sendOpeningQuestion() {
+      isLoading = true;
+      sendBtn.disabled = true;
+      typingIndicator.style.display = 'block';
+
+      const firstRole = selectedInterviewers[0];
+      setChipSpeaking(firstRole);
+
+      try {
+        const response = await fetch('/api/interview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            answer: `（这是面试的第一轮。请向候选人提出第一个问题。候选人面试的是${getPositionName(selectedPosition)}岗位。）`,
+            interviewers: selectedInterviewers,
+            position: selectedPosition,
+            severity: selectedSeverity,
+            state: interviewState,
+            history: [],
+          }),
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+
+        typingIndicator.style.display = 'none';
+        clearChipSpeaking();
+
+        if (data.responses) {
+          for (const resp of data.responses) {
+            addInterviewerMessage(resp.role, resp.content, resp.mood);
+            history.push({ role: 'assistant', content: `（${resp.name}说："${resp.content}"）` });
+          }
+        }
+
+        if (data.state) {
+          interviewState = data.state;
+          updateStatusPanel();
+        }
+      } catch (err) {
+        typingIndicator.style.display = 'none';
+        clearChipSpeaking();
+        addInterviewerMessage(firstRole, '请先做个自我介绍吧。', 'cold');
+        history.push({ role: 'assistant', content: '（面试官说："请先做个自我介绍吧。"）' });
+      }
+
+      isLoading = false;
+      sendBtn.disabled = false;
+      inputField.focus();
+    }
+
+    // ═══ Send Answer ═══
+    async function sendAnswer() {
+      const content = inputField.value.trim();
+      if (!content || isLoading) return;
+
+      // Commands
+      if (content === '/quit' || content === '/exit') {
+        showEnding({
+          title: '面试中断', description: '你提前结束了面试。',
+          emoji: '🚪',
+        });
+        return;
+      }
+      if (content === '/help') {
+        addEventMessage('命令: /quit 放弃面试');
+        return;
+      }
+
+      isLoading = true;
+      inputField.value = '';
+      sendBtn.disabled = true;
+
+      // Show user message
+      addUserMessage(content);
+      history.push({ role: 'user', content });
+
+      // Show typing
+      typingIndicator.style.display = 'block';
+
+      // Highlight likely speaker
+      const likelyRole = selectedInterviewers[
+        (interviewState.round) % selectedInterviewers.length
+      ];
+      setChipSpeaking(likelyRole);
+
+      try {
+        const response = await fetch('/api/interview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            answer: content,
+            interviewers: selectedInterviewers,
+            position: selectedPosition,
+            severity: selectedSeverity,
+            state: interviewState,
+            history: history.slice(-8),
+          }),
+        });
+
+        if (!response.ok) {
+          if (response.status === 429) {
+            addEventMessage('⏳ 请求过于频繁，请稍后再试');
+          } else {
+            throw new Error(`HTTP ${response.status}`);
+          }
+          isLoading = false;
+          sendBtn.disabled = false;
+          typingIndicator.style.display = 'none';
+          clearChipSpeaking();
+          return;
+        }
+
+        const data = await response.json();
+
+        typingIndicator.style.display = 'none';
+        clearChipSpeaking();
+
+        // Update quality badge on user message
+        if (data.answerQuality) {
+          const userMsgs = chatArea.querySelectorAll('.msg-user');
+          const lastUserMsg = userMsgs[userMsgs.length - 1];
+          if (lastUserMsg) {
+            const qualityLabels = { weak: '弱回答', normal: '普通', strong: '强回答' };
+            const badge = lastUserMsg.querySelector('.quality-badge');
+            if (!badge) {
+              const newBadge = document.createElement('span');
+              newBadge.className = `quality-badge ${data.answerQuality}`;
+              newBadge.textContent = qualityLabels[data.answerQuality];
+              lastUserMsg.querySelector('.msg-body').appendChild(newBadge);
+            }
+          }
+        }
+
+        // Show event
+        if (data.event) {
+          addEventMessage(data.event);
+        }
+
+        // Update state
+        if (data.state) {
+          interviewState = data.state;
+          updateStatusPanel();
+        }
+
+        // Show responses
+        if (data.responses) {
+          for (const resp of data.responses) {
+            setChipSpeaking(resp.role);
+            addInterviewerMessage(resp.role, resp.content, resp.mood);
+            history.push({ role: 'assistant', content: `（${resp.name}说："${resp.content}"）` });
+          }
+          clearChipSpeaking();
+        }
+
+        // Check ending
+        if (data.endResult) {
+          clearInterval(timerInterval);
+          setTimeout(() => {
+            showEnding(data.endResult);
+          }, 500);
+          return;
+        }
+
+      } catch (err) {
+        typingIndicator.style.display = 'none';
+        clearChipSpeaking();
+        addEventMessage('❌ 请求失败: ' + err.message);
+      }
+
+      isLoading = false;
+      sendBtn.disabled = false;
+      inputField.focus();
+    }
+
+    // ═══ Ending ═══
+    function showEnding(result) {
+      clearInterval(timerInterval);
+      inputContainer.style.display = 'none';
+
+      document.getElementById('endingEmoji').textContent = result.emoji;
+      document.getElementById('endingTitle').textContent = result.title;
+      document.getElementById('endingDesc').textContent = result.description;
+      document.getElementById('endStress').textContent = `${interviewState.stress}%`;
+      document.getElementById('endConfidence').textContent = `${interviewState.confidence}%`;
+      document.getElementById('endRound').textContent = `${interviewState.round}/10`;
+
+      endingOverlay.classList.add('show');
+    }
+
+    document.getElementById('retryBtn').addEventListener('click', () => {
+      endingOverlay.classList.remove('show');
+      setupView.style.display = 'block';
+      interviewView.style.display = 'none';
+      inputContainer.style.display = 'none';
+      clearInterval(timerInterval);
+    });
+
+    // ═══ Input Handlers ═══
+    sendBtn.addEventListener('click', sendAnswer);
+
+    inputField.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendAnswer();
+      }
+    });
+
+    inputField.addEventListener('input', () => {
+      inputField.style.height = 'auto';
+      inputField.style.height = Math.min(inputField.scrollHeight, 120) + 'px';
+    });
+
+    // ═══ Helpers ═══
+    function getPositionName(pos) {
+      const names = {
+        frontend: '前端开发', backend: '后端开发',
+        product: '产品经理', design: 'UI/UX 设计师',
+      };
+      return names[pos] || pos;
+    }
+  </script>
+</body>
+</html>

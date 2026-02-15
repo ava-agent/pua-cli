@@ -9,6 +9,7 @@ import { createWeeklyCommand } from './commands/weekly';
 import { createEmailCommand } from './commands/email';
 import { createMeetingCommand } from './commands/meeting';
 import { createMeetingRoomCommand } from './commands/meeting-room';
+import { createInterviewCommand } from './commands/interview';
 import {
   loadConfig,
   needsOnboarding,
@@ -22,7 +23,7 @@ const program = new Command();
 program
   .name('pua')
   .description('Workplace PUA CLI - 一个趣味性 AI CLI 工具，具有 6 种角色模式')
-  .version('0.6.0');
+  .version('0.7.0');
 
 /**
  * Wrap command action with onboarding check
@@ -150,6 +151,9 @@ program.addCommand(createMeetingCommand());
 
 // Meeting Room command - 多角色会议室
 program.addCommand(createMeetingRoomCommand());
+
+// Interview command - 压力面试
+program.addCommand(createInterviewCommand());
 
 // Default command - show help
 program.action(() => {
