@@ -1,6 +1,6 @@
 {
   "name": "workplace-pua-cli",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "A fun AI CLI tool for workplace role-play with 6 personas (boss, employee, pm, hr, techlead, intern)",
   "main": "dist/index.js",
   "bin": {
@@ -25,10 +25,30 @@
     "ai",
     "glm",
     "zhipu",
-    "pua"
+    "pua",
+    "workplace",
+    "roleplay",
+    "interview",
+    "meeting",
+    "chatbot",
+    "simulation"
   ],
-  "author": "",
+  "author": "ava-agent",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ava-agent/pua-cli.git"
+  },
+  "homepage": "https://pua-cli.vercel.app",
+  "bugs": {
+    "url": "https://github.com/ava-agent/pua-cli/issues"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "engines": {
     "node": ">=18.0.0"
   },

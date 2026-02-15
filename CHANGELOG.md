@@ -4,6 +4,23 @@ All notable changes to PUA CLI will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.7.1] - 2026-02-15 - Polish & Publish Edition
+
+### Fixed
+- **文档**: 修复 README 命令名不一致（`workplace-pua-cli` → `pua`，与 bin 定义一致）
+- **Web**: 修复面试页面重试按钮不重置自定义面试官和候选人信息状态
+- **Web**: 修复 index.html/meeting.html 版本号不一致（统一为 v0.7.0）
+- **API**: 修复面试 API 速率限制错误提示（"3次" → "10次"，与实际限制一致）
+
+### Added
+- **npm 发布**: 完善 package.json 元数据（repository, homepage, bugs, author, files, keywords）
+- **LICENSE**: 添加 MIT 许可证文件
+
+### Contributors
+- @ava-agent (Claude Opus 4.6)
+
+---
+
 ## [0.7.0] - 2026-02-15 - Pressure Interview Edition
 
 ### Added

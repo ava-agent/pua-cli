@@ -1128,6 +1128,18 @@
       interviewView.style.display = 'none';
       inputContainer.style.display = 'none';
       clearInterval(timerInterval);
+      // Reset custom interviewer state
+      customInterviewers = [];
+      customCount = 0;
+      const addedCards = document.querySelectorAll('.custom-interviewer-added');
+      addedCards.forEach(card => card.remove());
+      // Reset candidate profile
+      candidateProfile = {};
+      resumeText = '';
+      const profileInputs = document.querySelectorAll('.candidate-section input');
+      profileInputs.forEach(input => input.value = '');
+      // Reset chat area
+      chatArea.innerHTML = '';
     });
 
     // ═══ Input Handlers ═══
