@@ -246,6 +246,7 @@
     .msg-boss .msg-bubble { color: #ffaaaa; }
     .msg-hr .msg-bubble { color: #eaaaee; }
     .msg-pm .msg-bubble { color: #aaeeff; }
+    .msg-custom .msg-bubble { --msg-color: #ff8844; background: #1a1511; color: #ffcc99; }
 
     /* User message */
     .msg-user { flex-direction: row-reverse; }
@@ -455,6 +456,47 @@
               <div class="tag">脑筋急转弯 / 考察沟通</div>
             </div>
           </div>
+          <!-- Custom Interviewer -->
+          <div style="margin-top:10px;">
+            <button id="addCustomBtn" style="background:#111;border:1px dashed #444;border-radius:8px;padding:10px;width:100%;cursor:pointer;color:#888;font-family:inherit;font-size:12px;transition:all 0.2s;" onmouseover="this.style.borderColor='#ff6644'" onmouseout="this.style.borderColor='#444'">
+              ＋ 添加自定义面试官
+            </button>
+            <div id="customForm" style="display:none;background:#111;border:1px solid #333;border-radius:8px;padding:12px;margin-top:8px;">
+              <div style="color:#ddd;font-size:12px;margin-bottom:8px;">自定义面试官</div>
+              <input id="customName" placeholder="名字（如：王总）" style="width:100%;background:#0a0a0a;border:1px solid #333;border-radius:4px;padding:6px 8px;color:#ddd;font-family:inherit;font-size:11px;margin-bottom:6px;outline:none;" maxlength="10">
+              <input id="customTitle" placeholder="职位（如：投资总监）" style="width:100%;background:#0a0a0a;border:1px solid #333;border-radius:4px;padding:6px 8px;color:#ddd;font-family:inherit;font-size:11px;margin-bottom:6px;outline:none;" maxlength="20">
+              <input id="customPersonality" placeholder="性格（如：质疑商业模式、追问数据）" style="width:100%;background:#0a0a0a;border:1px solid #333;border-radius:4px;padding:6px 8px;color:#ddd;font-family:inherit;font-size:11px;margin-bottom:6px;outline:none;" maxlength="100">
+              <input id="customTags" placeholder="标签（如：追问数据 / 质疑可行性）" style="width:100%;background:#0a0a0a;border:1px solid #333;border-radius:4px;padding:6px 8px;color:#ddd;font-family:inherit;font-size:11px;margin-bottom:8px;outline:none;" maxlength="40">
+              <div style="display:flex;gap:8px;">
+                <button id="confirmCustomBtn" style="flex:1;background:#1a0000;border:1px solid #ff4444;border-radius:4px;padding:6px;color:#ff4444;cursor:pointer;font-family:inherit;font-size:11px;">确认添加</button>
+                <button id="cancelCustomBtn" style="flex:1;background:#111;border:1px solid #333;border-radius:4px;padding:6px;color:#888;cursor:pointer;font-family:inherit;font-size:11px;">取消</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Candidate Profile (optional) -->
+        <div class="setup-section">
+          <div class="setup-label" style="cursor:pointer;" id="profileToggle">
+            候选人信息（可选，点击展开）▼
+          </div>
+          <div id="profileForm" style="display:none;background:#111;border:1px solid #333;border-radius:8px;padding:12px;">
+            <div style="color:#666;font-size:10px;margin-bottom:8px;">填写你的信息或上传简历，让面试更有针对性</div>
+            <!-- Resume Upload -->
+            <div style="margin-bottom:10px;padding:8px;border:1px dashed #333;border-radius:4px;text-align:center;">
+              <input type="file" id="resumeFile" accept=".pdf" style="display:none;">
+              <button id="uploadResumeBtn" style="background:transparent;border:1px solid #444;border-radius:4px;padding:6px 12px;color:#888;cursor:pointer;font-family:inherit;font-size:11px;">
+                📄 上传简历 PDF（自动解析）
+              </button>
+              <div id="resumeStatus" style="color:#666;font-size:10px;margin-top:4px;display:none;"></div>
+            </div>
+            <div style="color:#444;font-size:9px;text-align:center;margin-bottom:8px;">── 或手动填写 ──</div>
+            <input id="profileName" placeholder="你的名字" style="width:100%;background:#0a0a0a;border:1px solid #333;border-radius:4px;padding:6px 8px;color:#ddd;font-family:inherit;font-size:11px;margin-bottom:6px;outline:none;" maxlength="20">
+            <input id="profileExp" placeholder="工作年限（如：3）" style="width:100%;background:#0a0a0a;border:1px solid #333;border-radius:4px;padding:6px 8px;color:#ddd;font-family:inherit;font-size:11px;margin-bottom:6px;outline:none;" maxlength="5">
+            <input id="profileStack" placeholder="技术栈（如：React, TypeScript, Node.js）" style="width:100%;background:#0a0a0a;border:1px solid #333;border-radius:4px;padding:6px 8px;color:#ddd;font-family:inherit;font-size:11px;margin-bottom:6px;outline:none;" maxlength="100">
+            <input id="profileSalary" placeholder="期望薪资（如：25k-30k）" style="width:100%;background:#0a0a0a;border:1px solid #333;border-radius:4px;padding:6px 8px;color:#ddd;font-family:inherit;font-size:11px;margin-bottom:6px;outline:none;" maxlength="20">
+            <input id="profileBg" placeholder="简要背景（如：985本科，3年大厂经验）" style="width:100%;background:#0a0a0a;border:1px solid #333;border-radius:4px;padding:6px 8px;color:#ddd;font-family:inherit;font-size:11px;outline:none;" maxlength="100">
+          </div>
         </div>
 
         <!-- Severity Selection -->
@@ -576,6 +618,9 @@
     let isLoading = false;
     let timerInterval = null;
     let timerSeconds = 0;
+    let customInterviewers = [];
+    let customCount = 0;
+    let candidateProfile = null;
 
     // ═══ Elements ═══
     const setupView = document.getElementById('setupView');
@@ -659,6 +704,77 @@
       }
     }
 
+    // ═══ Custom Interviewer Logic ═══
+    document.getElementById('addCustomBtn').addEventListener('click', () => {
+      if (customCount >= 2) {
+        document.getElementById('addCustomBtn').textContent = '最多添加 2 个自定义面试官';
+        return;
+      }
+      document.getElementById('customForm').style.display = 'block';
+      document.getElementById('addCustomBtn').style.display = 'none';
+    });
+
+    document.getElementById('cancelCustomBtn').addEventListener('click', () => {
+      document.getElementById('customForm').style.display = 'none';
+      document.getElementById('addCustomBtn').style.display = 'block';
+    });
+
+    document.getElementById('confirmCustomBtn').addEventListener('click', () => {
+      const name = document.getElementById('customName').value.trim();
+      const title = document.getElementById('customTitle').value.trim();
+      const personality = document.getElementById('customPersonality').value.trim();
+      const tags = document.getElementById('customTags').value.trim();
+
+      if (!name || !title || !personality) {
+        alert('请至少填写名字、职位和性格描述');
+        return;
+      }
+
+      customCount++;
+      const customId = 'custom_' + customCount;
+      const custom = { id: customId, name, title, personality, tags: tags || personality, emoji: '🎤' };
+      customInterviewers.push(custom);
+
+      // Add to INTERVIEWER_DATA for rendering
+      INTERVIEWER_DATA[customId] = { emoji: '🎤', name, title, color: '#ff8844' };
+
+      // Add card to grid
+      const card = document.createElement('div');
+      card.className = 'interviewer-card';
+      card.dataset.role = customId;
+      card.innerHTML = `
+        <div class="emoji">🎤</div>
+        <div class="name">${escapeHtml(name)} - ${escapeHtml(title)}</div>
+        <div class="tag">${escapeHtml(tags || personality)}</div>
+      `;
+      document.getElementById('interviewerGrid').appendChild(card);
+
+      // Clear form
+      document.getElementById('customName').value = '';
+      document.getElementById('customTitle').value = '';
+      document.getElementById('customPersonality').value = '';
+      document.getElementById('customTags').value = '';
+      document.getElementById('customForm').style.display = 'none';
+      document.getElementById('addCustomBtn').style.display = 'block';
+      if (customCount >= 2) {
+        document.getElementById('addCustomBtn').textContent = '已添加 2 个自定义面试官';
+        document.getElementById('addCustomBtn').style.opacity = '0.5';
+      }
+    });
+
+    // ═══ Profile Toggle ═══
+    document.getElementById('profileToggle').addEventListener('click', () => {
+      const form = document.getElementById('profileForm');
+      const toggle = document.getElementById('profileToggle');
+      if (form.style.display === 'none') {
+        form.style.display = 'block';
+        toggle.textContent = '候选人信息（可选，点击收起）▲';
+      } else {
+        form.style.display = 'none';
+        toggle.textContent = '候选人信息（可选，点击展开）▼';
+      }
+    });
+
     // ═══ Start Interview ═══
     startBtn.addEventListener('click', () => {
       if (!selectedPosition || selectedInterviewers.length < 2) return;
@@ -666,6 +782,25 @@
       setupView.style.display = 'none';
       interviewView.style.display = 'block';
       inputContainer.style.display = 'flex';
+
+      // Collect candidate profile
+      const pName = document.getElementById('profileName')?.value?.trim();
+      const pExp = document.getElementById('profileExp')?.value?.trim();
+      const pStack = document.getElementById('profileStack')?.value?.trim();
+      const pSalary = document.getElementById('profileSalary')?.value?.trim();
+      const pBg = document.getElementById('profileBg')?.value?.trim();
+
+      if (pName || pExp || pStack || pSalary || pBg || resumeText) {
+        candidateProfile = {};
+        if (pName) candidateProfile.name = pName;
+        if (pExp) candidateProfile.experience = parseInt(pExp) || undefined;
+        if (pStack) candidateProfile.techStack = pStack;
+        if (pSalary) candidateProfile.targetSalary = pSalary;
+        if (pBg) candidateProfile.background = pBg;
+        if (resumeText) candidateProfile.resumeText = resumeText.slice(0, 1000);
+      } else {
+        candidateProfile = null;
+      }
 
       // Reset state
       interviewState = { stress: 20, confidence: 60, round: 1 };
@@ -709,7 +844,7 @@
     function renderInterviewerChips() {
       const container = document.getElementById('interviewerChips');
       container.innerHTML = selectedInterviewers.map(role => {
-        const d = INTERVIEWER_DATA[role];
+        const d = INTERVIEWER_DATA[role] || { emoji: '🎤', name: role };
         return `<div class="interviewer-chip" id="chip-${role}">
           <span>${d.emoji}</span>
           <span>${d.name}</span>
@@ -729,11 +864,13 @@
 
     // ═══ Chat Messages ═══
     function addInterviewerMessage(role, content, mood) {
-      const d = INTERVIEWER_DATA[role];
+      const d = INTERVIEWER_DATA[role] || { emoji: '🎤', name: role, title: '', color: '#ff8844' };
       const moodEmoji = MOOD_EMOJIS[mood] || '';
+      const isCustom = role.startsWith('custom_');
+      const cssClass = isCustom ? 'custom' : role;
 
       const msgEl = document.createElement('div');
-      msgEl.className = `msg msg-${role}`;
+      msgEl.className = `msg msg-${cssClass}`;
       msgEl.innerHTML = `
         <div class="msg-avatar" style="border-color:${d.color}">${d.emoji}</div>
         <div class="msg-body">
@@ -806,6 +943,8 @@
             severity: selectedSeverity,
             state: interviewState,
             history: [],
+            customInterviewers: customInterviewers.length > 0 ? customInterviewers : undefined,
+            candidateProfile: candidateProfile || undefined,
           }),
         });
 
@@ -884,6 +1023,8 @@
             severity: selectedSeverity,
             state: interviewState,
             history: history.slice(-8),
+            customInterviewers: customInterviewers.length > 0 ? customInterviewers : undefined,
+            candidateProfile: candidateProfile || undefined,
           }),
         });
 
@@ -1003,6 +1144,124 @@
       inputField.style.height = 'auto';
       inputField.style.height = Math.min(inputField.scrollHeight, 120) + 'px';
     });
+
+    // ═══ Resume Upload ═══
+    let resumeText = null;
+
+    document.getElementById('uploadResumeBtn').addEventListener('click', () => {
+      document.getElementById('resumeFile').click();
+    });
+
+    document.getElementById('resumeFile').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (!file.name.toLowerCase().endsWith('.pdf')) {
+        showResumeStatus('仅支持 PDF 格式', true);
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        showResumeStatus('文件太大（最大 5MB）', true);
+        return;
+      }
+
+      showResumeStatus('正在解析简历...', false);
+
+      try {
+        const text = await extractPDFText(file);
+        if (!text || text.trim().length === 0) {
+          showResumeStatus('无法提取文本（可能是扫描件）', true);
+          return;
+        }
+
+        resumeText = text.trim();
+        const profile = extractProfileFromText(resumeText);
+
+        // Fill form fields
+        if (profile.name) document.getElementById('profileName').value = profile.name;
+        if (profile.experience) document.getElementById('profileExp').value = String(profile.experience);
+        if (profile.techStack) document.getElementById('profileStack').value = profile.techStack;
+        if (profile.targetSalary) document.getElementById('profileSalary').value = profile.targetSalary;
+        if (profile.background) document.getElementById('profileBg').value = profile.background;
+
+        showResumeStatus(`解析成功！提取了 ${resumeText.length} 字`, false);
+      } catch (err) {
+        showResumeStatus('解析失败: ' + (err.message || '未知错误'), true);
+      }
+    });
+
+    function showResumeStatus(msg, isError) {
+      const el = document.getElementById('resumeStatus');
+      el.textContent = msg;
+      el.style.display = 'block';
+      el.style.color = isError ? '#ff4444' : '#44ff44';
+    }
+
+    // Simple PDF text extraction using pdf.js
+    async function extractPDFText(file) {
+      // Load pdf.js dynamically
+      if (!window.pdfjsLib) {
+        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+          'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      }
+
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let text = '';
+
+      for (let i = 1; i <= Math.min(pdf.numPages, 5); i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        text += content.items.map(item => item.str).join(' ') + '\n';
+      }
+
+      return text;
+    }
+
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+
+    // Extract profile from resume text (client-side)
+    function extractProfileFromText(text) {
+      const profile = {};
+      const lines = text.split('\n').filter(l => l.trim().length > 0);
+
+      // Name (first line, 2-4 Chinese chars)
+      if (lines.length > 0) {
+        const first = lines[0].trim();
+        if (/^[\u4e00-\u9fa5]{2,4}$/.test(first)) profile.name = first;
+      }
+
+      // Experience
+      const expMatch = text.match(/(\d{1,2})\s*[年年]\s*(?:工作|开发|从业|项目)/);
+      if (expMatch) profile.experience = parseInt(expMatch[1]);
+
+      // Tech stack
+      const techs = ['React','Vue','Angular','TypeScript','JavaScript','Node.js',
+        'Python','Java','Go','Rust','C++','MySQL','PostgreSQL','MongoDB','Redis',
+        'Docker','Kubernetes','AWS','Git','Webpack','Next.js','Spring','Django',
+        'Flask','Express','GraphQL','Figma','Sketch'];
+      const found = techs.filter(t => text.toLowerCase().includes(t.toLowerCase()));
+      if (found.length > 0) profile.techStack = found.slice(0, 10).join(', ');
+
+      // Salary
+      const salaryMatch = text.match(/(?:期望|目标|薪资|月薪)[：:]\s*(.{3,20})/);
+      if (salaryMatch) profile.targetSalary = salaryMatch[1].trim();
+
+      // Education
+      const eduMatch = text.match(/(本科|硕士|博士|985|211|Bachelor|Master|PhD).{0,30}/i);
+      if (eduMatch) profile.background = eduMatch[0].trim();
+
+      return profile;
+    }
 
     // ═══ Helpers ═══
     function getPositionName(pos) {

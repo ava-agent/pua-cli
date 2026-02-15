@@ -9,7 +9,7 @@ const ZHIPU_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
 const MAX_MESSAGE_LENGTH = 500;
 const MAX_INTERVIEW_REQUESTS_PER_MINUTE = 10;
 const FORBIDDEN_WORDS = ['<script>', 'javascript:', 'onerror=', 'onload=', 'eval(', 'document.cookie'];
-const VALID_INTERVIEWERS = ['techlead', 'boss', 'hr', 'pm'];
+const VALID_BUILTIN_INTERVIEWERS = ['techlead', 'boss', 'hr', 'pm'];
 const VALID_POSITIONS = ['frontend', 'backend', 'product', 'design'];
 
 // CORS 允许的域名
@@ -52,12 +52,31 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
+interface CustomInterviewerInput {
+  id: string;
+  name: string;
+  title: string;
+  personality: string;
+  tags?: string;
+  emoji?: string;
+}
+
+interface CandidateProfileInput {
+  name?: string;
+  experience?: number;
+  techStack?: string;
+  targetSalary?: string;
+  background?: string;
+  resumeText?: string;
+}
+
 function validateInput(
   answer: string,
   interviewers: string[],
   position: string,
   severity: number,
-  round: number
+  round: number,
+  customInterviewers?: CustomInterviewerInput[]
 ): { valid: boolean; error?: string } {
   if (!answer || answer.trim().length === 0) {
     return { valid: false, error: '回答不能为空' };
@@ -68,8 +87,10 @@ function validateInput(
   if (!Array.isArray(interviewers) || interviewers.length < 2 || interviewers.length > 4) {
     return { valid: false, error: '面试官需要 2-4 人' };
   }
+  const customIds = (customInterviewers || []).map(c => c.id);
+  const validIds = [...VALID_BUILTIN_INTERVIEWERS, ...customIds];
   for (const p of interviewers) {
-    if (!VALID_INTERVIEWERS.includes(p)) {
+    if (!validIds.includes(p)) {
       return { valid: false, error: `无效的面试官: ${p}` };
     }
   }
@@ -173,6 +194,18 @@ const SEVERITY_MODIFIERS: Record<number, string> = {
   3: '极度高压！连珠炮追问、冷嘲热讽、否定一切回答、故意打击信心！',
 };
 
+function getCustomInterviewerName(role: string, customs?: CustomInterviewerInput[]): string {
+  if (INTERVIEWER_NAMES[role]) return INTERVIEWER_NAMES[role];
+  const custom = customs?.find(c => c.id === role);
+  return custom?.name || role;
+}
+
+function getCustomInterviewerTitle(role: string, customs?: CustomInterviewerInput[]): string {
+  if (INTERVIEWER_TITLES[role]) return INTERVIEWER_TITLES[role];
+  const custom = customs?.find(c => c.id === role);
+  return custom?.title || '';
+}
+
 function buildInterviewPrompt(
   role: string,
   position: string,
@@ -180,16 +213,29 @@ function buildInterviewPrompt(
   round: number,
   totalRounds: number,
   stress: number,
-  interviewers: string[]
+  interviewers: string[],
+  customInterviewers?: CustomInterviewerInput[],
+  candidateProfile?: CandidateProfileInput
 ): string {
-  const rolePrompt = INTERVIEWER_PROMPTS[role] || INTERVIEWER_PROMPTS.techlead;
+  let rolePrompt = INTERVIEWER_PROMPTS[role];
+  if (!rolePrompt) {
+    const custom = customInterviewers?.find(c => c.id === role);
+    if (custom) {
+      rolePrompt = `你是${custom.name}，${custom.title}，正在面试一位候选人。
+性格：${custom.personality}
+面试风格：根据你的性格特点提问和评价。保持刁钻和专业。`;
+    } else {
+      rolePrompt = INTERVIEWER_PROMPTS.techlead;
+    }
+  }
+
   const positionFocus = POSITION_FOCUS[position] || '';
   const positionName = POSITION_NAMES[position] || '开发';
   const severityMod = SEVERITY_MODIFIERS[severity] || SEVERITY_MODIFIERS[2];
 
   const othersDesc = interviewers
     .filter(r => r !== role)
-    .map(r => `${INTERVIEWER_NAMES[r]}(${INTERVIEWER_TITLES[r]})`)
+    .map(r => `${getCustomInterviewerName(r, customInterviewers)}(${getCustomInterviewerTitle(r, customInterviewers)})`)
     .join('、');
 
   const stressHint = stress > 70
@@ -198,13 +244,27 @@ function buildInterviewPrompt(
       ? '候选人有些紧张，保持正常面试压力。'
       : '候选人目前还比较从容，可以适当抛出难题。';
 
+  let candidateHint = '';
+  if (candidateProfile) {
+    const parts: string[] = [];
+    if (candidateProfile.name) parts.push(`候选人名字：${candidateProfile.name}`);
+    if (candidateProfile.experience) parts.push(`工作经验：${candidateProfile.experience} 年`);
+    if (candidateProfile.techStack) parts.push(`技术栈：${candidateProfile.techStack}`);
+    if (candidateProfile.targetSalary) parts.push(`期望薪资：${candidateProfile.targetSalary}`);
+    if (candidateProfile.background) parts.push(`背景：${candidateProfile.background}`);
+    if (candidateProfile.resumeText) parts.push(`简历摘要：${candidateProfile.resumeText.slice(0, 500)}`);
+    if (parts.length > 0) {
+      candidateHint = `\n【候选人信息】\n${parts.join('\n')}\n请根据候选人的具体信息进行针对性提问和评价。`;
+    }
+  }
+
   return `${rolePrompt}
 
 【面试信息】正在面试${positionName}岗位候选人。当前第 ${round}/${totalRounds} 轮。
 ${othersDesc ? `同面面试官：${othersDesc}。` : ''}
 ${positionFocus}
 ${severityMod}
-${stressHint}
+${stressHint}${candidateHint}
 
 【输出规则 - 必须严格遵守】
 1. 每次只问 1 个问题或做 1 个点评
@@ -272,10 +332,12 @@ async function callZhipuAPI(
 }
 
 // 清理 AI 回复 - 去除叙述格式、嵌套引用、角色名前缀
-function cleanResponse(raw: string, currentRole: string): string {
+function cleanResponse(raw: string, currentRole: string, customInterviewers?: CustomInterviewerInput[]): string {
   let cleaned = raw.trim();
 
-  const allNames = Object.values(INTERVIEWER_NAMES);
+  const builtinNames = Object.values(INTERVIEWER_NAMES);
+  const customNames = (customInterviewers || []).map(c => c.name);
+  const allNames = [...builtinNames, ...customNames];
 
   // 去除嵌套的叙述格式 （名字说："..."） - 可能多层嵌套，循环剥离
   for (let i = 0; i < 5; i++) {
@@ -299,8 +361,9 @@ function cleanResponse(raw: string, currentRole: string): string {
   }
 
   // 去除回复中夹带的其他角色发言
+  const currentName = getCustomInterviewerName(currentRole, customInterviewers);
   for (const name of allNames) {
-    if (name === INTERVIEWER_NAMES[currentRole]) continue;
+    if (name === currentName) continue;
     cleaned = cleaned.replace(new RegExp(`\\s*\\[${name}\\][:：][^\\n]*`, 'g'), '');
   }
 
@@ -469,7 +532,28 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    const { answer, interviewers, position, severity, state, history } = req.body;
+    const { answer, interviewers, position, severity, state, history, customInterviewers, candidateProfile } = req.body;
+
+    // Sanitize custom interviewers
+    const safeCustomInterviewers: CustomInterviewerInput[] = Array.isArray(customInterviewers)
+      ? customInterviewers.slice(0, 2).filter((c: any) =>
+          c && typeof c.id === 'string' && typeof c.name === 'string' &&
+          typeof c.title === 'string' && typeof c.personality === 'string' &&
+          c.name.length <= 10 && c.title.length <= 20 && c.personality.length <= 100
+        )
+      : [];
+
+    // Sanitize candidate profile
+    const safeCandidateProfile: CandidateProfileInput | undefined = candidateProfile && typeof candidateProfile === 'object'
+      ? {
+          ...(typeof candidateProfile.name === 'string' && candidateProfile.name.length <= 20 ? { name: candidateProfile.name } : {}),
+          ...(typeof candidateProfile.experience === 'number' ? { experience: Math.min(50, Math.max(0, candidateProfile.experience)) } : {}),
+          ...(typeof candidateProfile.techStack === 'string' && candidateProfile.techStack.length <= 100 ? { techStack: candidateProfile.techStack } : {}),
+          ...(typeof candidateProfile.targetSalary === 'string' && candidateProfile.targetSalary.length <= 20 ? { targetSalary: candidateProfile.targetSalary } : {}),
+          ...(typeof candidateProfile.background === 'string' && candidateProfile.background.length <= 100 ? { background: candidateProfile.background } : {}),
+          ...(typeof candidateProfile.resumeText === 'string' ? { resumeText: candidateProfile.resumeText.slice(0, 1000) } : {}),
+        }
+      : undefined;
 
     const safeState = sanitizeState(state);
 
@@ -478,7 +562,8 @@ export default async function handler(req: any, res: any) {
       interviewers,
       position || 'frontend',
       severity || 2,
-      safeState.round
+      safeState.round,
+      safeCustomInterviewers
     );
     if (!validation.valid) {
       return res.status(400).json({ error: validation.error });
@@ -552,7 +637,9 @@ export default async function handler(req: any, res: any) {
         newRound,
         10,
         newStress,
-        interviewers
+        interviewers,
+        safeCustomInterviewers,
+        safeCandidateProfile
       );
 
       const prevSpeech = responses.map(r => `${r.name}说："${r.content}"`).join('\n');
@@ -563,7 +650,7 @@ export default async function handler(req: any, res: any) {
 
       try {
         const rawContent = await callZhipuAPI(apiKey, systemPrompt, currentContext);
-        const content = cleanResponse(rawContent, role);
+        const content = cleanResponse(rawContent, role, safeCustomInterviewers);
         const mood = analyzeInterviewerMood(content);
 
         // Interviewer mood affects stress
@@ -572,16 +659,15 @@ export default async function handler(req: any, res: any) {
 
         responses.push({
           role,
-          name: INTERVIEWER_NAMES[role] || role,
+          name: getCustomInterviewerName(role, safeCustomInterviewers),
           content,
           mood,
         });
       } catch (err: any) {
         if (err?.message === 'CONTENT_FILTERED') {
-          // 内容被过滤时，面试官给一个通用回复
           responses.push({
             role,
-            name: INTERVIEWER_NAMES[role] || role,
+            name: getCustomInterviewerName(role, safeCustomInterviewers),
             content: '请注意你的措辞，我们是正式面试。回到正题，你对这个岗位有什么了解？',
             mood: 'cold',
           });

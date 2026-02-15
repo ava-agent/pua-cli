@@ -20,13 +20,18 @@ import {
   INTERVIEW_EVENTS,
   getInterviewPrompt,
   getInterviewEnding,
+  getInterviewerName,
+  getInterviewerTitle,
   analyzeAnswer,
   analyzeInterviewerMood,
   type InterviewerRole,
   type InterviewPosition,
   type InterviewSeverity,
+  type CustomInterviewer,
+  type CandidateProfile,
 } from '../prompts/interview-prompts';
 import { logger } from '../utils/logger';
+import { parseResumePDF, extractProfileFromResume } from '../utils/resume-parser';
 
 interface InterviewState {
   interviewers: InterviewerRole[];
@@ -38,6 +43,8 @@ interface InterviewState {
   totalRounds: number; // 10
   messages: Array<{ role: InterviewerRole | 'user'; name: string; content: string }>;
   finished: boolean;
+  customInterviewers: CustomInterviewer[];
+  candidateProfile?: CandidateProfile;
 }
 
 const INTERVIEWER_COLORS: Record<InterviewerRole, (text: string) => string> = {
@@ -53,6 +60,60 @@ const INTERVIEWER_EMOJIS: Record<InterviewerRole, string> = {
   hr: '💼',
   pm: '📊',
 };
+
+const MOOD_EMOJIS: Record<string, string> = {
+  sarcastic: '😏',
+  pressing: '🤨',
+  neutral: '😐',
+  cold: '🥶',
+};
+
+const QUALITY_LABELS: Record<string, string> = {
+  weak: chalk.red('弱'),
+  normal: chalk.yellow('一般'),
+  strong: chalk.green('强'),
+};
+
+const MAX_ANSWER_LENGTH = 500;
+const FORBIDDEN_WORDS = ['<script>', 'javascript:', 'onerror=', 'onload=', 'eval(', 'document.cookie'];
+
+/**
+ * 分析面试官情绪标签
+ */
+function getInterviewerMood(content: string): string {
+  const sarcasm = ['呵呵', '有意思', '真的吗', '你确定', '就这？', '算了'];
+  const pressure = ['追问', '详细说说', '展开讲讲', '底层', '原理', '为什么'];
+  const positive = ['不错', '可以', '嗯', '好的', '理解了'];
+
+  let sarcasmScore = 0;
+  let pressureScore = 0;
+  let positiveScore = 0;
+
+  for (const kw of sarcasm) { if (content.includes(kw)) sarcasmScore++; }
+  for (const kw of pressure) { if (content.includes(kw)) pressureScore++; }
+  for (const kw of positive) { if (content.includes(kw)) positiveScore++; }
+
+  if (sarcasmScore > positiveScore) return 'sarcastic';
+  if (pressureScore > positiveScore) return 'pressing';
+  if (positiveScore > 0) return 'neutral';
+  return 'cold';
+}
+
+/**
+ * 验证用户输入
+ */
+function validateAnswer(input: string): { valid: boolean; error?: string } {
+  if (input.length > MAX_ANSWER_LENGTH) {
+    return { valid: false, error: `回答太长了（最多 ${MAX_ANSWER_LENGTH} 字）` };
+  }
+  const lower = input.toLowerCase();
+  for (const word of FORBIDDEN_WORDS) {
+    if (lower.includes(word)) {
+      return { valid: false, error: '输入包含不安全的内容' };
+    }
+  }
+  return { valid: true };
+}
 
 /**
  * 渲染压力条和自信条
@@ -81,13 +142,16 @@ function renderBar(value: number, max: number, width: number, color: string): st
 /**
  * 渲染面试官消息
  */
-function renderInterviewerMessage(role: InterviewerRole, content: string): void {
-  const emoji = INTERVIEWER_EMOJIS[role];
-  const name = INTERVIEWER_NAMES[role];
-  const title = INTERVIEWER_TITLES[role];
-  const colorFn = INTERVIEWER_COLORS[role];
+function renderInterviewerMessage(role: InterviewerRole, content: string, mood?: string, customInterviewers?: CustomInterviewer[]): void {
+  const builtinEmoji = INTERVIEWER_EMOJIS[role as keyof typeof INTERVIEWER_EMOJIS];
+  const custom = customInterviewers?.find(c => c.id === role);
+  const emoji = builtinEmoji || custom?.emoji || '🎤';
+  const name = getInterviewerName(role, customInterviewers);
+  const title = getInterviewerTitle(role, customInterviewers);
+  const colorFn = INTERVIEWER_COLORS[role as keyof typeof INTERVIEWER_COLORS] || chalk.white;
+  const moodEmoji = mood ? (MOOD_EMOJIS[mood] || '') : '';
 
-  const header = `${emoji} ${name} (${title})`;
+  const header = `${emoji} ${name} (${title})${moodEmoji ? ' ' + moodEmoji : ''}`;
   const width = 50;
   const topLine = colorFn(`┌─ ${header} ${'─'.repeat(Math.max(0, width - header.length - 4))}┐`);
   const bottomLine = colorFn(`└${'─'.repeat(width - 1)}┘`);
@@ -159,10 +223,12 @@ function renderEnding(state: InterviewState): void {
 /**
  * 清理 AI 回复 - 去除叙述格式、嵌套引用、角色名前缀
  */
-function cleanInterviewResponse(raw: string, currentRole: InterviewerRole): string {
+function cleanInterviewResponse(raw: string, currentRole: InterviewerRole, customInterviewers?: CustomInterviewer[]): string {
   let cleaned = raw.trim();
 
-  const allNames = Object.values(INTERVIEWER_NAMES);
+  const builtinNames = Object.values(INTERVIEWER_NAMES);
+  const customNames = customInterviewers?.map(c => c.name) || [];
+  const allNames = [...builtinNames, ...customNames];
 
   // 去除嵌套的叙述格式 （名字说："..."） - 循环剥离多层
   for (let i = 0; i < 5; i++) {
@@ -185,8 +251,9 @@ function cleanInterviewResponse(raw: string, currentRole: InterviewerRole): stri
   }
 
   // 去除回复中夹带的其他角色发言
+  const currentName = getInterviewerName(currentRole, customInterviewers);
   for (const name of allNames) {
-    if (name === INTERVIEWER_NAMES[currentRole]) continue;
+    if (name === currentName) continue;
     cleaned = cleaned.replace(new RegExp(`\\s*\\[${name}\\][:：][^\\n]*`, 'g'), '');
   }
 
@@ -232,7 +299,8 @@ export function createInterviewCommand(): Command {
   const command = new Command('interview')
     .description('压力面试 - 10轮问答制，挺住压力拿到Offer')
     .option('-p, --provider <zhipu|openai>', 'AI 服务提供商')
-    .option('-m, --model <model>', '模型名称');
+    .option('-m, --model <model>', '模型名称')
+    .option('--resume <path>', '简历PDF路径，解析后定制面试内容');
 
   command.action(async (options) => {
     try {
@@ -253,13 +321,62 @@ export function createInterviewCommand(): Command {
         })),
       }) as InterviewPosition;
 
-      // Step 2: Select interviewers
+      // Step 2: Ask if user wants custom interviewers
+      const customInterviewers: CustomInterviewer[] = [];
+      const wantCustom = await select({
+        message: '是否添加自定义面试官？',
+        choices: [
+          { name: '不需要，使用内置面试官', value: 'no' },
+          { name: '添加自定义面试官', value: 'yes' },
+        ],
+      });
+
+      if (wantCustom === 'yes') {
+        const { input: inputPrompt } = await import('@inquirer/prompts');
+        let addMore = true;
+        let customCount = 0;
+        while (addMore && customCount < 2) {
+          const cName = await inputPrompt({ message: '面试官名字（如：王总）' });
+          const cTitle = await inputPrompt({ message: '面试官职位（如：投资总监）' });
+          const cPersonality = await inputPrompt({ message: '性格描述（如：质疑商业模式、追问数据、不相信PPT）' });
+          const cTags = await inputPrompt({ message: '标签（如：追问数据 / 质疑可行性）' });
+
+          customInterviewers.push({
+            id: `custom_${customCount + 1}`,
+            name: cName.trim(),
+            title: cTitle.trim(),
+            personality: cPersonality.trim(),
+            tags: cTags.trim(),
+            emoji: '🎤',
+          });
+          customCount++;
+
+          if (customCount < 2) {
+            const more = await select({
+              message: '继续添加自定义面试官？',
+              choices: [
+                { name: '不了', value: 'no' },
+                { name: '再加一个', value: 'yes' },
+              ],
+            });
+            addMore = more === 'yes';
+          }
+        }
+      }
+
+      // Step 3: Select interviewers (built-in + custom)
+      const builtinChoices = (['techlead', 'boss', 'hr', 'pm'] as InterviewerRole[]).map(role => ({
+        name: `${INTERVIEWER_EMOJIS[role]} ${INTERVIEWER_NAMES[role]} (${INTERVIEWER_TITLES[role]}) - ${INTERVIEWER_TAGS[role]}`,
+        value: role,
+      }));
+      const customChoices = customInterviewers.map(c => ({
+        name: `🎤 ${c.name} (${c.title}) - ${c.tags}`,
+        value: c.id,
+      }));
+
       const interviewers = await checkbox({
         message: '选择面试官（空格选择，2-4 人）',
-        choices: (['techlead', 'boss', 'hr', 'pm'] as InterviewerRole[]).map(role => ({
-          name: `${INTERVIEWER_EMOJIS[role]} ${INTERVIEWER_NAMES[role]} (${INTERVIEWER_TITLES[role]}) - ${INTERVIEWER_TAGS[role]}`,
-          value: role,
-        })),
+        choices: [...builtinChoices, ...customChoices],
       }) as InterviewerRole[];
 
       if (interviewers.length < 2) {
@@ -271,7 +388,7 @@ export function createInterviewCommand(): Command {
         return;
       }
 
-      // Step 3: Select severity
+      // Step 4: Select severity
       const severity = await select({
         message: '选择 PUA 强度',
         choices: [
@@ -280,6 +397,63 @@ export function createInterviewCommand(): Command {
           { name: '🔴 地狱 - 连珠炮追问，冷嘲热讽', value: 3 },
         ],
       }) as InterviewSeverity;
+
+      // Step 5: Optional candidate profile (from resume or manual input)
+      let candidateProfile: CandidateProfile | undefined;
+
+      // Check if --resume flag was provided
+      if (options.resume) {
+        const resumeSpinner = ora({ text: '正在解析简历...', spinner: 'dots' }).start();
+        try {
+          const resumeText = await parseResumePDF(options.resume);
+          candidateProfile = extractProfileFromResume(resumeText);
+          resumeSpinner.succeed('简历解析成功！');
+
+          // Show extracted info
+          console.log(chalk.gray('  提取到的信息:'));
+          if (candidateProfile.name) console.log(chalk.gray(`    姓名: ${candidateProfile.name}`));
+          if (candidateProfile.experience) console.log(chalk.gray(`    工作年限: ${candidateProfile.experience} 年`));
+          if (candidateProfile.techStack) console.log(chalk.gray(`    技术栈: ${candidateProfile.techStack}`));
+          if (candidateProfile.targetSalary) console.log(chalk.gray(`    期望薪资: ${candidateProfile.targetSalary}`));
+          if (candidateProfile.background) console.log(chalk.gray(`    背景: ${candidateProfile.background}`));
+          console.log();
+        } catch (err) {
+          resumeSpinner.fail(`简历解析失败: ${err instanceof Error ? err.message : String(err)}`);
+          console.log(chalk.gray('  将使用手动输入模式'));
+          console.log();
+        }
+      }
+
+      // If no resume or resume parsing failed, offer manual input
+      if (!candidateProfile) {
+        const wantProfile = await select({
+          message: '是否填写候选人信息？（让面试更有针对性）',
+          choices: [
+            { name: '跳过，直接开始', value: 'no' },
+            { name: '填写我的信息', value: 'yes' },
+          ],
+        });
+
+        if (wantProfile === 'yes') {
+          const { input: inputPrompt } = await import('@inquirer/prompts');
+          const pName = await inputPrompt({ message: '你的名字（可选，直接回车跳过）', default: '' });
+          const pExp = await inputPrompt({ message: '工作年限（如：3）', default: '' });
+          const pStack = await inputPrompt({ message: '技术栈（如：React, TypeScript, Node.js）', default: '' });
+          const pSalary = await inputPrompt({ message: '期望薪资（如：25k-30k）', default: '' });
+          const pBg = await inputPrompt({ message: '简要背景（如：985本科，3年大厂经验）', default: '' });
+
+          candidateProfile = {
+            ...(pName ? { name: pName } : {}),
+            ...(pExp ? { experience: parseInt(pExp) || undefined } : {}),
+            ...(pStack ? { techStack: pStack } : {}),
+            ...(pSalary ? { targetSalary: pSalary } : {}),
+            ...(pBg ? { background: pBg } : {}),
+          };
+          if (Object.keys(candidateProfile).length === 0) {
+            candidateProfile = undefined;
+          }
+        }
+      }
 
       // Load config
       const config = loadConfig(options);
@@ -300,11 +474,19 @@ export function createInterviewCommand(): Command {
         totalRounds: 10,
         messages: [],
         finished: false,
+        customInterviewers,
+        candidateProfile,
       };
 
       // Print interview header
       const positionName = POSITION_NAMES[position];
-      const interviewerNames = interviewers.map(r => `${INTERVIEWER_EMOJIS[r]} ${INTERVIEWER_NAMES[r]}`).join('  ');
+      const interviewerNames = interviewers.map(r => {
+        const builtinEmoji = INTERVIEWER_EMOJIS[r as keyof typeof INTERVIEWER_EMOJIS];
+        const custom = customInterviewers.find(c => c.id === r);
+        const emoji = builtinEmoji || custom?.emoji || '🎤';
+        const name = getInterviewerName(r, customInterviewers);
+        return `${emoji} ${name}`;
+      }).join('  ');
       const severityLabels: Record<number, string> = { 1: '友好', 2: '标准', 3: '地狱' };
 
       console.log();
@@ -327,7 +509,8 @@ export function createInterviewCommand(): Command {
       const openingInterviewer = interviewers[0];
       const openingPrompt = getInterviewPrompt(
         openingInterviewer, position, severity,
-        state.round, state.totalRounds, state.stress, interviewers
+        state.round, state.totalRounds, state.stress, interviewers,
+        customInterviewers, candidateProfile
       );
 
       try {
@@ -337,13 +520,15 @@ export function createInterviewCommand(): Command {
         ]);
         spinner.stop();
 
-        const cleaned = cleanInterviewResponse(openingMsg, openingInterviewer);
-        renderInterviewerMessage(openingInterviewer, cleaned);
-        state.messages.push({ role: openingInterviewer, name: INTERVIEWER_NAMES[openingInterviewer], content: cleaned });
+        const cleaned = cleanInterviewResponse(openingMsg, openingInterviewer, customInterviewers);
+        const mood = getInterviewerMood(cleaned);
+        renderInterviewerMessage(openingInterviewer, cleaned, mood, customInterviewers);
+        state.messages.push({ role: openingInterviewer, name: getInterviewerName(openingInterviewer, customInterviewers), content: cleaned });
       } catch {
         spinner.stop();
-        renderInterviewerMessage(openingInterviewer, '请先做个自我介绍吧。');
-        state.messages.push({ role: openingInterviewer, name: INTERVIEWER_NAMES[openingInterviewer], content: '请先做个自我介绍吧。' });
+        const fallback = '请先做个自我介绍吧。';
+        renderInterviewerMessage(openingInterviewer, fallback, 'cold', customInterviewers);
+        state.messages.push({ role: openingInterviewer, name: getInterviewerName(openingInterviewer, customInterviewers), content: fallback });
       }
 
       // Start interactive loop
@@ -382,6 +567,14 @@ export function createInterviewCommand(): Command {
           return;
         }
 
+        // Validate input
+        const validation = validateAnswer(trimmed);
+        if (!validation.valid) {
+          console.log(chalk.red(`  ⚠ ${validation.error}`));
+          rl.prompt();
+          return;
+        }
+
         // Add user answer
         state.messages.push({ role: 'user', name: '你', content: trimmed });
 
@@ -389,6 +582,10 @@ export function createInterviewCommand(): Command {
         const analysis = analyzeAnswer(trimmed);
         state.stress = Math.max(0, Math.min(100, state.stress + analysis.stressChange));
         state.confidence = Math.max(0, Math.min(100, state.confidence + analysis.confidenceChange));
+
+        // Show answer quality badge
+        const qualityLabel = QUALITY_LABELS[analysis.quality] || analysis.quality;
+        console.log(chalk.gray(`  回答质量: ${qualityLabel}  |  压力 ${analysis.stressChange >= 0 ? '+' : ''}${analysis.stressChange}  自信 ${analysis.confidenceChange >= 0 ? '+' : ''}${analysis.confidenceChange}`));
 
         // Check if stress hit 100
         if (state.stress >= 100) {
@@ -425,12 +622,13 @@ export function createInterviewCommand(): Command {
 
         const interviewSpinner = ora({ text: '面试官正在思考...', spinner: 'dots' }).start();
 
-        const respondentResults: Array<{ role: InterviewerRole; name: string; content: string }> = [];
+        const respondentResults: Array<{ role: InterviewerRole; name: string; content: string; mood?: string }> = [];
 
         for (const role of respondents) {
           const systemPrompt = getInterviewPrompt(
             role, position, severity,
-            state.round, state.totalRounds, state.stress, interviewers
+            state.round, state.totalRounds, state.stress, interviewers,
+            state.customInterviewers, state.candidateProfile
           );
 
           const prevSpeech = respondentResults.map(r => `${r.name}说："${r.content}"`).join('\n');
@@ -446,19 +644,33 @@ export function createInterviewCommand(): Command {
 
           try {
             const rawReply = await llm.chat(messages);
-            const reply = cleanInterviewResponse(rawReply, role);
+            const reply = cleanInterviewResponse(rawReply, role, state.customInterviewers);
 
             // Interviewer mood affects stress
+            const mood = getInterviewerMood(reply);
             const moodStress = analyzeInterviewerMood(reply);
             state.stress = Math.max(0, Math.min(100, state.stress + moodStress));
 
             respondentResults.push({
               role,
-              name: INTERVIEWER_NAMES[role],
+              name: getInterviewerName(role, state.customInterviewers),
               content: reply,
+              mood,
             });
-          } catch {
-            logger.warning(`${INTERVIEWER_NAMES[role]} 回复失败`);
+          } catch (err: unknown) {
+            const errMsg = err instanceof Error ? err.message : String(err);
+            // Content filter fallback
+            if (errMsg.includes('sensitive') || errMsg.includes('content') || errMsg.includes('400')) {
+              const fallbackContent = '请注意你的措辞，我们是正式面试。回到正题吧。';
+              respondentResults.push({
+                role,
+                name: getInterviewerName(role, state.customInterviewers),
+                content: fallbackContent,
+                mood: 'cold',
+              });
+            } else {
+              logger.warning(`${INTERVIEWER_NAMES[role]} 回复失败`);
+            }
           }
         }
 
@@ -471,7 +683,7 @@ export function createInterviewCommand(): Command {
           renderStatusBar(state);
 
           for (const result of respondentResults) {
-            renderInterviewerMessage(result.role, result.content);
+            renderInterviewerMessage(result.role, result.content, result.mood, state.customInterviewers);
             state.messages.push({
               role: result.role,
               name: result.name,

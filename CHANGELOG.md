@@ -4,6 +4,71 @@ All notable changes to PUA CLI will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.7.0] - 2026-02-15 - Pressure Interview Edition
+
+### Added
+- **压力面试功能（核心）**: 10 轮问答制面试模拟
+  - 4 种面试岗位选择：前端开发、后端开发、产品经理、UI/UX 设计师
+  - 4 个内置面试官角色：技术总监(刘哥)、CTO(张总)、HR总监(陈姐)、产品负责人(李姐)
+  - 压力值 (0-100%) + 自信值 (0-100%) 双指标系统
+  - 3 档 PUA 强度：友好、标准、地狱
+  - 14 种随机面试事件（白板编码、面试官接电话等）
+  - 4 种面试结局：拿到Offer / 等通知 / 感谢参与 / 面试PUA
+  - 回答质量分析（强/一般/弱）+ 面试官情绪检测（讽刺/追问/中性/冷淡）
+- **自定义面试官系统**: CLI + Web 均支持创建最多 2 个自定义面试官
+  - 自定义名字、职位、性格描述、标签
+  - 可与内置面试官混合选择
+- **候选人信息定制**: 填写个人背景让 AI 针对性提问
+  - 支持姓名、工作年限、技术栈、期望薪资、教育背景
+  - 注入 system prompt 实现定制化 PUA
+- **简历 PDF 解析**: CLI `--resume` 参数 + Web 文件上传
+  - CLI: `pua interview --resume ./resume.pdf`
+  - Web: pdf.js 客户端解析（无需上传到服务器）
+  - 自动提取姓名、工作年限、技术栈、教育背景等
+  - 解析结果自动填充候选人信息表单
+- **CLI-Web 功能对齐**:
+  - CLI 新增回答质量展示（强/一般/弱 + 分数变化）
+  - CLI 新增面试官情绪 emoji 显示（😏🤨😐🥶）
+  - CLI 新增输入长度验证（500 字限制）和安全词过滤
+  - CLI 新增内容安全过滤降级处理（Zhipu 过滤时返回通用回复）
+- **Web 压力面试** (`web/interview.html`):
+  - 独立 SPA，暗色终端主题
+  - 面试设置视图：岗位/面试官/强度/候选人信息
+  - 面试进行视图：状态面板 + 面试官头像条 + 对话区
+  - 计时器显示、随机事件弹窗、结局弹窗
+  - 自定义面试官创建表单
+  - 候选人信息展开表单 + PDF 简历上传
+- **Web API** (`web/api/interview.ts`):
+  - Vercel serverless 端点
+  - 速率限制 10 次/分钟
+  - 完整输入验证 + 历史消息清理
+  - 内容安全过滤降级
+  - 支持自定义面试官和候选人信息
+
+### Fixed
+- 修复 Web 面试启动按钮无反馈问题（添加动态提示文本）
+- 修复 AI 回复嵌套叙述格式（循环剥离最多5层嵌套）
+- 修复 Web 客户端历史消息格式（存储清理后内容，服务端转叙述格式）
+- 修复内容安全过滤导致 "Failed to fetch" 崩溃
+
+### Technical Details
+- **新增文件**:
+  - `src/prompts/interview-prompts.ts` - 面试 prompt + 回答分析 + 事件 + 结局
+  - `src/commands/interview.ts` - CLI 面试命令
+  - `src/utils/resume-parser.ts` - PDF 简历解析工具
+  - `web/interview.html` - 面试 Web SPA
+  - `web/api/interview.ts` - 面试 API 端点
+- **修改文件**:
+  - `src/index.ts` - 注册 interview 命令
+  - `web/index.html` - 添加面试入口
+  - `package.json` - 版本 0.7.0，添加 pdf-parse 依赖
+- **新增依赖**: `pdf-parse` (v2.4.5)
+
+### Contributors
+- @ava-agent (Claude Opus 4.6)
+
+---
+
 ## [0.6.0] - 2026-02-14 - Meeting Room Edition
 
 ### Added

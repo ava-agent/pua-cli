@@ -17,9 +17,33 @@ export type InterviewPosition = 'frontend' | 'backend' | 'product' | 'design';
 export type InterviewSeverity = 1 | 2 | 3;
 
 /**
- * 面试官角色（复用 RoleType 中的 4 个）
+ * 面试官角色（内置 4 个 + 自定义）
  */
-export type InterviewerRole = 'techlead' | 'boss' | 'hr' | 'pm';
+export type InterviewerRole = 'techlead' | 'boss' | 'hr' | 'pm' | string;
+
+/**
+ * 自定义面试官
+ */
+export interface CustomInterviewer {
+  id: string;        // 唯一标识，如 'custom_1'
+  name: string;      // 名字，如 '王总'
+  title: string;     // 职位，如 '投资总监'
+  personality: string; // 性格描述，如 '质疑商业模式、追问数据'
+  tags: string;      // 标签，如 '追问数据 / 质疑可行性'
+  emoji?: string;    // 可选 emoji
+}
+
+/**
+ * 用户画像（候选人信息）
+ */
+export interface CandidateProfile {
+  name?: string;           // 名字
+  experience?: number;     // 工作年限
+  techStack?: string;      // 技术栈
+  targetSalary?: string;   // 期望薪资
+  background?: string;     // 教育/工作背景
+  resumeText?: string;     // 简历解析文本
+}
 
 /**
  * 面试岗位中文名
@@ -104,6 +128,37 @@ const SEVERITY_MODIFIERS: Record<InterviewSeverity, string> = {
 };
 
 /**
+ * 生成自定义面试官的 prompt
+ */
+export function buildCustomInterviewerPrompt(custom: CustomInterviewer): string {
+  return `你是${custom.name}，${custom.title}，正在面试一位候选人。
+性格：${custom.personality}
+面试风格：根据你的性格特点提问和评价。保持刁钻和专业。`;
+}
+
+/**
+ * 获取面试官名字（支持自定义）
+ */
+export function getInterviewerName(role: InterviewerRole, customInterviewers?: CustomInterviewer[]): string {
+  if (INTERVIEWER_NAMES[role as keyof typeof INTERVIEWER_NAMES]) {
+    return INTERVIEWER_NAMES[role as keyof typeof INTERVIEWER_NAMES];
+  }
+  const custom = customInterviewers?.find(c => c.id === role);
+  return custom?.name || role;
+}
+
+/**
+ * 获取面试官标题（支持自定义）
+ */
+export function getInterviewerTitle(role: InterviewerRole, customInterviewers?: CustomInterviewer[]): string {
+  if (INTERVIEWER_TITLES[role as keyof typeof INTERVIEWER_TITLES]) {
+    return INTERVIEWER_TITLES[role as keyof typeof INTERVIEWER_TITLES];
+  }
+  const custom = customInterviewers?.find(c => c.id === role);
+  return custom?.title || '';
+}
+
+/**
  * 获取面试官系统提示词
  */
 export function getInterviewPrompt(
@@ -113,16 +168,28 @@ export function getInterviewPrompt(
   round: number,
   totalRounds: number,
   stress: number,
-  otherInterviewers: InterviewerRole[]
+  otherInterviewers: InterviewerRole[],
+  customInterviewers?: CustomInterviewer[],
+  candidateProfile?: CandidateProfile
 ): string {
-  const rolePrompt = INTERVIEWER_PROMPTS[role];
+  // 尝试内置 prompt，否则用自定义
+  let rolePrompt = INTERVIEWER_PROMPTS[role as keyof typeof INTERVIEWER_PROMPTS];
+  if (!rolePrompt) {
+    const custom = customInterviewers?.find(c => c.id === role);
+    rolePrompt = custom ? buildCustomInterviewerPrompt(custom) : '你是面试官，正在面试一位候选人。';
+  }
+
   const positionFocus = POSITION_FOCUS[position];
   const positionName = POSITION_NAMES[position];
   const severityMod = SEVERITY_MODIFIERS[severity];
 
   const othersDesc = otherInterviewers
     .filter(r => r !== role)
-    .map(r => `${INTERVIEWER_NAMES[r]}(${INTERVIEWER_TITLES[r]})`)
+    .map(r => {
+      const name = getInterviewerName(r, customInterviewers);
+      const title = getInterviewerTitle(r, customInterviewers);
+      return `${name}(${title})`;
+    })
     .join('、');
 
   // 压力值高时，面试官加大攻击
@@ -132,13 +199,28 @@ export function getInterviewPrompt(
       ? '候选人有些紧张，保持正常面试压力。'
       : '候选人目前还比较从容，可以适当抛出难题。';
 
+  // 候选人信息（可选）
+  let candidateHint = '';
+  if (candidateProfile) {
+    const parts: string[] = [];
+    if (candidateProfile.name) parts.push(`候选人名字：${candidateProfile.name}`);
+    if (candidateProfile.experience) parts.push(`工作经验：${candidateProfile.experience} 年`);
+    if (candidateProfile.techStack) parts.push(`技术栈：${candidateProfile.techStack}`);
+    if (candidateProfile.targetSalary) parts.push(`期望薪资：${candidateProfile.targetSalary}`);
+    if (candidateProfile.background) parts.push(`背景：${candidateProfile.background}`);
+    if (candidateProfile.resumeText) parts.push(`简历摘要：${candidateProfile.resumeText.slice(0, 500)}`);
+    if (parts.length > 0) {
+      candidateHint = `\n【候选人信息】\n${parts.join('\n')}\n请根据候选人的具体信息进行针对性提问和评价。`;
+    }
+  }
+
   return `${rolePrompt}
 
 【面试信息】正在面试${positionName}岗位候选人。当前第 ${round}/${totalRounds} 轮。
 ${othersDesc ? `同面面试官：${othersDesc}。` : ''}
 ${positionFocus}
 ${severityMod}
-${stressHint}
+${stressHint}${candidateHint}
 
 【输出规则 - 必须严格遵守】
 1. 每次只问 1 个问题或做 1 个点评

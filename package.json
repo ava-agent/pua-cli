@@ -38,6 +38,7 @@
     "commander": "^12.1.0",
     "dotenv": "^16.4.5",
     "ora": "^8.1.0",
+    "pdf-parse": "^2.4.5",
     "zhipuai-sdk-nodejs-v4": "^0.1.12"
   },
   "devDependencies": {

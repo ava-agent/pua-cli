@@ -29,6 +29,8 @@
 | 🧠 **对话记忆** | 自动记住最近 50 条对话历史 |
 | 📊 **数据统计** | 访问次数、消息数量（本地持久化） |
 | 🔒 **API 安全防护** | 速率限制、输入验证、XSS 防护 |
+| 🎯 **压力面试模拟** | 10轮问答制，面对2-4个刁钻面试官 |
+| 📄 **简历解析** | 上传 PDF 简历，AI 针对性提问 |
 | 🎨 **多种使用场景** | 趣味对话、职场黑话生成、周报生成、邮件语气转换、会议发言建议 |
 | 🌍 **跨平台支持** | Windows、macOS、Linux |
 | 🎯 **多 AI 供应商** | 智谱 AI、OpenAI |
@@ -48,12 +50,16 @@
 ```
 pua-cli/
 ├── src/              # 源码目录
-│   ├── commands/     # 命令实现
-│   ├── prompts/      # Prompt 模板
-│   ├── utils/        # 工具函数
+│   ├── commands/     # 命令实现（chat, prompt, interview, meeting-room 等）
+│   ├── prompts/      # Prompt 模板（角色、面试、会议等）
+│   ├── config/       # 配置管理（多层级配置）
+│   ├── llm/          # LLM 抽象层（智谱AI/OpenAI）
+│   ├── utils/        # 工具函数（简历解析、日志等）
 │   └── index.ts      # 入口文件
 ├── web/             # Web 体验版
-│   ├── index.html    # 单页应用
+│   ├── index.html    # 首页 + 1v1 对话
+│   ├── meeting.html  # 多角色会议室
+│   ├── interview.html # 压力面试
 │   └── api/          # Vercel API 路由
 ├── docs/            # 技术文档
 ├── tests/           # 测试文件
@@ -135,7 +141,7 @@ pua-cli/
 
 ### 🌐 在线体验（无需安装）
 
-**Workplace PUA CLI Web v0.5.0** - 直接在浏览器中使用，体验完整的职场角色扮演功能：
+**Workplace PUA CLI Web v0.7.0** - 直接在浏览器中使用，体验完整的职场角色扮演功能：
 
 | 功能 | 说明 |
 |------|------|
@@ -221,6 +227,7 @@ echo "加班" | workplace-pua-cli prompt --role employee
 | `workplace-pua-cli email` | 邮件语气转换 | `workplace-pua-cli email --from pm --to dev "你好"` |
 | `workplace-pua-cli meeting` | 会议发言建议 | `workplace-pua-cli meeting --role hr --scenario standup` |
 | `workplace-pua-cli meeting-room` | **会议室** - 多角色会议模拟 | `workplace-pua-cli meeting-room` |
+| `workplace-pua-cli interview` | **压力面试** - 10轮问答制 | `workplace-pua-cli interview --resume ./resume.pdf` |
 
 ### 交互模式内命令
 
@@ -380,6 +387,41 @@ workplace-pua-cli meeting-room
 | HR | 陈姐 | 公司就是家 |
 | 技术主管 | 刘哥 | 重构狂人 |
 | 实习生 | 小赵 | 卑微求学者 |
+
+### 压力面试模式（v0.7.0 新增）
+
+10 轮问答制的压力面试模拟，面对 2-4 个刁钻面试官：
+
+```bash
+# 启动压力面试（交互式选择岗位、面试官、强度）
+workplace-pua-cli interview
+
+# 带简历启动（AI 根据简历内容针对性提问）
+workplace-pua-cli interview --resume ./my-resume.pdf
+
+# Web 版本
+# 访问 https://pua-cli.vercel.app/interview.html
+```
+
+**面试特色功能：**
+- 压力值 (0-100%) + 自信值 (0-100%) 双指标系统
+- 4 种面试岗位：前端开发、后端开发、产品经理、UI/UX 设计师
+- 4 个内置面试官 + 最多 2 个自定义面试官
+- 简历 PDF 解析，AI 根据你的技术栈和经验针对性提问
+- 候选人信息定制（姓名、工作年限、技术栈、期望薪资）
+- 随机面试事件（白板编码、面试官接电话等）
+- 回答质量分析（强/一般/弱）+ 面试官情绪检测
+- 4 种结局：拿到 Offer / 等通知 / 感谢参与 / 面试 PUA
+
+**面试官阵容：**
+
+| 面试官 | 角色 | 风格 |
+|--------|------|------|
+| 刘哥 | 技术总监 | 追问细节 / 嫌弃简历 |
+| 张总 | CTO | 画饼压价 / 质疑能力 |
+| 陈姐 | HR 总监 | 套话压薪 / 问敏感问题 |
+| 李姐 | 产品负责人 | 脑筋急转弯 / 考察沟通 |
+| 自定义 | 任意 | 自由配置性格和风格 |
 
 ### AI 工作流
 
