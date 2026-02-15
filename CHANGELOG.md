@@ -4,6 +4,33 @@ All notable changes to PUA CLI will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.8.0] - 2026-02-15 - Multi-Scenario Web Edition
+
+### Added
+- **职场黑话生成器 Web 页面** (`web/jargon.html`)
+  - 两种模式：黑话词库浏览 + 文本翻译为黑话
+  - 4 种类型（会议/报告/邮件/聊天）、3 种强度（轻度/中度/重度）
+  - 完全客户端运行，无需 API
+- **周报生成器 Web 页面** (`web/weekly.html`)
+  - 6 种角色风格周报一键生成
+  - 自动周数计算、4 个内容板块（本周工作/下周计划/风险/数据）
+  - 支持复制到剪贴板
+- **邮件语气转换器 Web 页面** (`web/email.html`)
+  - 发送者/接收者角色选择 + 4 种语气（礼貌/紧急/随意/委婉）
+  - 支持 PM↔员工、HR↔员工 方向转换
+  - 原文 vs 转换后对比展示
+- **会议发言建议 Web 页面** (`web/meeting-suggest.html`)
+  - 6 种角色 × 5 种会议场景组合
+  - 角色色彩编码的发言卡片展示
+  - 支持一键复制所有建议
+
+### Changed
+- **Web 导航**: 所有 7 个 Web 页面互相链接，统一导航栏
+- **首页**: 添加 4 个新工具入口卡片（2×2 网格布局）
+- **会议室/面试页面**: 状态栏添加新页面快捷链接
+
+---
+
 ## [0.7.1] - 2026-02-15 - Polish & Publish Edition
 
 ### Fixed

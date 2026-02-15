@@ -1,6 +1,6 @@
 {
   "name": "workplace-pua-cli",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "description": "A fun AI CLI tool for workplace role-play with 6 personas (boss, employee, pm, hr, techlead, intern)",
   "main": "dist/index.js",
   "bin": {

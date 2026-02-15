@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>邮件语气转换器 - PUA CLI</title>
+  <meta name="description" content="邮件语气转换器 - 一键转换职场邮件的语气和风格，支持多角色多语气">
+  <meta property="og:title" content="邮件语气转换器 - PUA CLI">
+  <meta property="og:description" content="一键转换职场邮件的语气和风格，支持PM、员工、HR等角色间的邮件转换">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#0a0a0a">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📧</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'JetBrains Mono', 'Consolas', monospace;
+      background: #0a0a0a;
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: #e0e0e0;
+    }
+
+    /* === Nav Bar === */
+    .nav-bar {
+      width: 94%;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 10px 0 0;
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      font-size: 11px;
+    }
+
+    .nav-bar a {
+      color: #666;
+      text-decoration: none;
+      padding: 5px 10px;
+      border: 1px solid transparent;
+      border-radius: 4px 4px 0 0;
+      transition: all 0.2s;
+    }
+
+    .nav-bar a:hover {
+      color: #00ccff;
+      border-color: #333;
+      background: #111;
+    }
+
+    .nav-bar a.active {
+      color: #00ccff;
+      border-color: #333;
+      border-bottom-color: #0a0a0a;
+      background: #0a0a0a;
+    }
+
+    /* === Terminal Shell === */
+    .terminal {
+      width: 94%;
+      max-width: 960px;
+      margin: 0 auto 20px;
+      background: #0a0a0a;
+      border: 1px solid #333;
+      border-radius: 0 8px 8px 8px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      min-height: calc(100vh - 80px);
+      overflow: hidden;
+    }
+
+    .terminal-header {
+      padding: 10px 16px;
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #333;
+    }
+
+    .terminal-buttons { display: flex; gap: 8px; }
+    .terminal-btn { width: 12px; height: 12px; border-radius: 50%; }
+    .terminal-btn.close { background: #ff5f56; }
+    .terminal-btn.minimize { background: #ffbd2e; }
+    .terminal-btn.maximize { background: #27ca3f; }
+    .terminal-title { color: #888; font-size: 12px; flex: 1; text-align: center; }
+
+    /* === Main Content === */
+    .terminal-body {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background: #0a0a0a;
+      scroll-behavior: smooth;
+    }
+
+    .terminal-body::-webkit-scrollbar { width: 8px; }
+    .terminal-body::-webkit-scrollbar-track { background: #0a0a0a; }
+    .terminal-body::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+    .terminal-body::-webkit-scrollbar-thumb:hover { background: #444; }
+
+    /* === Setup Header === */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; }
+    }
+
+    .setup-view { animation: fadeIn 0.3s ease-out; }
+
+    .setup-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .setup-header .logo-emoji {
+      font-size: 48px;
+      display: block;
+      margin-bottom: 8px;
+      animation: floatBounce 3s ease-in-out infinite;
+    }
+
+    @keyframes floatBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .setup-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      background: linear-gradient(90deg, #00ccff, #aa44ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .setup-subtitle {
+      color: #666;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    /* === Section Labels === */
+    .section-label {
+      color: #888;
+      font-size: 13px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-label .badge {
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: 700;
+    }
+
+    .section-label .badge-from {
+      background: #0a1122;
+      color: #4488ff;
+      border: 1px solid #4488ff;
+    }
+
+    .section-label .badge-to {
+      background: #1a1108;
+      color: #ff8844;
+      border: 1px solid #ff8844;
+    }
+
+    /* === Setup Sections === */
+    .setup-section {
+      margin-bottom: 22px;
+    }
+
+    /* === Role Cards Grid === */
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .role-card {
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 12px 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s;
+      user-select: none;
+      position: relative;
+    }
+
+    .role-card:hover {
+      border-color: #555;
+      transform: translateY(-1px);
+    }
+
+    .role-card .emoji { font-size: 22px; display: block; margin-bottom: 4px; }
+    .role-card .name { color: #ddd; font-size: 12px; font-weight: 500; }
+    .role-card .desc { color: #555; font-size: 9px; margin-top: 3px; }
+
+    /* From card selected */
+    .role-card.from-selected {
+      border-color: #4488ff;
+      background: #0a1122;
+      box-shadow: 0 0 16px rgba(68, 136, 255, 0.1);
+    }
+
+    .role-card.from-selected .name { color: #4488ff; }
+
+    .role-card.from-selected::after {
+      content: 'FROM';
+      position: absolute;
+      top: 4px;
+      right: 6px;
+      font-size: 8px;
+      font-weight: 700;
+      color: #4488ff;
+      background: #0a1133;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+
+    /* To card selected */
+    .role-card.to-selected {
+      border-color: #ff8844;
+      background: #1a1108;
+      box-shadow: 0 0 16px rgba(255, 136, 68, 0.1);
+    }
+
+    .role-card.to-selected .name { color: #ff8844; }
+
+    .role-card.to-selected::after {
+      content: 'TO';
+      position: absolute;
+      top: 4px;
+      right: 6px;
+      font-size: 8px;
+      font-weight: 700;
+      color: #ff8844;
+      background: #1a1108;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+
+    /* === Direction Arrow === */
+    .direction-display {
+      text-align: center;
+      margin: 4px 0 16px;
+      font-size: 12px;
+      color: #555;
+      min-height: 24px;
+      transition: all 0.2s;
+    }
+
+    .direction-display .arrow { color: #00ccff; margin: 0 8px; }
+    .direction-display .from-name { color: #4488ff; }
+    .direction-display .to-name { color: #ff8844; }
+    .direction-display .unsupported { color: #ff4444; font-size: 11px; }
+
+    /* === Tone Cards === */
+    .tone-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .tone-card {
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 12px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s;
+      user-select: none;
+    }
+
+    .tone-card:hover {
+      border-color: #555;
+      transform: translateY(-1px);
+    }
+
+    .tone-card .emoji { font-size: 20px; display: block; margin-bottom: 4px; }
+    .tone-card .name { color: #ddd; font-size: 12px; font-weight: 500; }
+    .tone-card .desc { color: #555; font-size: 9px; margin-top: 3px; }
+
+    .tone-card.selected {
+      border-color: #00ccff;
+      background: #0a1a22;
+      box-shadow: 0 0 16px rgba(0, 204, 255, 0.1);
+    }
+
+    .tone-card.selected .name { color: #00ccff; }
+
+    /* === Content Input === */
+    .content-area {
+      width: 100%;
+      min-height: 100px;
+      max-height: 200px;
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 12px 14px;
+      color: #e0e0e0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .content-area:focus {
+      border-color: #00ccff;
+    }
+
+    .content-area::placeholder {
+      color: #444;
+    }
+
+    /* === Convert Button === */
+    .convert-btn {
+      width: 100%;
+      padding: 14px;
+      margin-top: 8px;
+      background: linear-gradient(135deg, #006688, #00ccff);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 2px;
+    }
+
+    .convert-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(0, 204, 255, 0.3);
+    }
+
+    .convert-btn:active {
+      transform: translateY(0);
+    }
+
+    .convert-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* === Result Area === */
+    .result-area {
+      margin-top: 24px;
+      animation: fadeIn 0.3s ease-out;
+      display: none;
+    }
+
+    .result-area.visible { display: block; }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .result-header-title {
+      color: #888;
+      font-size: 13px;
+    }
+
+    .result-info {
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 14px;
+      font-size: 11px;
+      color: #666;
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .result-info .info-label { color: #888; }
+    .result-info .info-value { color: #00ccff; }
+
+    .result-boxes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .result-box {
+      background: #111;
+      border-radius: 8px;
+      padding: 14px 16px;
+      min-height: 80px;
+    }
+
+    .result-box-original {
+      border-left: 3px solid #555;
+    }
+
+    .result-box-transformed {
+      border-left: 3px solid #00ccff;
+    }
+
+    .result-box-label {
+      font-size: 12px;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .result-box-original .result-box-label { color: #888; }
+    .result-box-transformed .result-box-label { color: #00ccff; }
+
+    .result-box-content {
+      font-size: 13px;
+      line-height: 1.7;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    .result-box-original .result-box-content { color: #999; }
+
+    .result-box-transformed .result-box-content {
+      color: #e0e0e0;
+      background: rgba(0, 204, 255, 0.03);
+      padding: 8px;
+      border-radius: 4px;
+    }
+
+    /* Unsupported message */
+    .result-unsupported {
+      background: #1a1111;
+      border: 1px solid #441111;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      color: #ff6644;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    .result-unsupported .supported-list {
+      color: #888;
+      font-size: 11px;
+      margin-top: 8px;
+    }
+
+    .result-unsupported .supported-list span { color: #666; }
+
+    /* Action buttons row */
+    .result-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .action-btn {
+      flex: 1;
+      padding: 10px;
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #888;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .action-btn:hover {
+      border-color: #00ccff;
+      color: #00ccff;
+      background: #0a1a22;
+    }
+
+    .action-btn.copied {
+      border-color: #00ff00;
+      color: #00ff00;
+      background: #002200;
+    }
+
+    /* === Status Bar === */
+    .status-bar {
+      background: #1a1a1a;
+      padding: 6px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #333;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    .status-bar .left { color: #00ccff; }
+    .status-bar .right { color: #666; display: flex; gap: 4px; align-items: center; }
+    .status-bar .sep { color: #333; margin: 0 4px; }
+    .status-bar a {
+      color: #666;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .status-bar a:hover { color: #00ccff; }
+
+    /* === Responsive === */
+    @media (max-width: 700px) {
+      .nav-bar { font-size: 10px; gap: 2px; }
+      .nav-bar a { padding: 4px 6px; }
+
+      .terminal-body { padding: 16px 12px; }
+
+      .role-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .tone-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .result-boxes {
+        grid-template-columns: 1fr;
+      }
+
+      .setup-title { font-size: 18px; }
+      .setup-header .logo-emoji { font-size: 36px; }
+
+      .status-bar {
+        flex-direction: column;
+        gap: 4px;
+        align-items: flex-start;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .role-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .tone-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .result-actions {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="nav-bar">
+    <a href="index.html">首页</a>
+    <a href="jargon.html">黑话生成</a>
+    <a href="weekly.html">周报生成</a>
+    <a href="email.html" class="active">邮件转换</a>
+    <a href="meeting-suggest.html">会议发言</a>
+    <a href="meeting.html">会议室</a>
+    <a href="interview.html">压力面试</a>
+  </nav>
+
+  <div class="terminal">
+    <!-- Terminal Header -->
+    <div class="terminal-header">
+      <div class="terminal-buttons">
+        <div class="terminal-btn close"></div>
+        <div class="terminal-btn minimize"></div>
+        <div class="terminal-btn maximize"></div>
+      </div>
+      <div class="terminal-title">email-tone-converter -- pua-cli</div>
+    </div>
+
+    <!-- Terminal Body -->
+    <div class="terminal-body">
+      <div class="setup-view">
+
+        <!-- Header -->
+        <div class="setup-header">
+          <span class="logo-emoji">📧</span>
+          <div class="setup-title">邮件语气转换器</div>
+          <div class="setup-subtitle">一键转换职场邮件的语气和风格</div>
+        </div>
+
+        <!-- From Role Selection -->
+        <div class="setup-section">
+          <div class="section-label">
+            发送者角色 (From)
+            <span class="badge badge-from">FROM</span>
+          </div>
+          <div class="role-grid" id="fromGrid">
+            <div class="role-card" data-role="boss">
+              <span class="emoji">👔</span>
+              <div class="name">Boss</div>
+              <div class="desc">老板/总监</div>
+            </div>
+            <div class="role-card" data-role="employee">
+              <span class="emoji">😓</span>
+              <div class="name">Employee</div>
+              <div class="desc">普通员工</div>
+            </div>
+            <div class="role-card" data-role="pm">
+              <span class="emoji">📋</span>
+              <div class="name">PM</div>
+              <div class="desc">产品经理</div>
+            </div>
+            <div class="role-card" data-role="hr">
+              <span class="emoji">💼</span>
+              <div class="name">HR</div>
+              <div class="desc">人力资源</div>
+            </div>
+            <div class="role-card" data-role="techlead">
+              <span class="emoji">👨‍💻</span>
+              <div class="name">TechLead</div>
+              <div class="desc">技术主管</div>
+            </div>
+            <div class="role-card" data-role="intern">
+              <span class="emoji">🌱</span>
+              <div class="name">Intern</div>
+              <div class="desc">实习生</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Direction Display -->
+        <div class="direction-display" id="directionDisplay">
+          <span style="color:#444;">请选择发送者和接收者</span>
+        </div>
+
+        <!-- To Role Selection -->
+        <div class="setup-section">
+          <div class="section-label">
+            接收者角色 (To)
+            <span class="badge badge-to">TO</span>
+          </div>
+          <div class="role-grid" id="toGrid">
+            <div class="role-card" data-role="boss">
+              <span class="emoji">👔</span>
+              <div class="name">Boss</div>
+              <div class="desc">老板/总监</div>
+            </div>
+            <div class="role-card" data-role="employee">
+              <span class="emoji">😓</span>
+              <div class="name">Employee</div>
+              <div class="desc">普通员工</div>
+            </div>
+            <div class="role-card" data-role="pm">
+              <span class="emoji">📋</span>
+              <div class="name">PM</div>
+              <div class="desc">产品经理</div>
+            </div>
+            <div class="role-card" data-role="hr">
+              <span class="emoji">💼</span>
+              <div class="name">HR</div>
+              <div class="desc">人力资源</div>
+            </div>
+            <div class="role-card" data-role="techlead">
+              <span class="emoji">👨‍💻</span>
+              <div class="name">TechLead</div>
+              <div class="desc">技术主管</div>
+            </div>
+            <div class="role-card" data-role="intern">
+              <span class="emoji">🌱</span>
+              <div class="name">Intern</div>
+              <div class="desc">实习生</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tone Selection -->
+        <div class="setup-section">
+          <div class="section-label">语气 (Tone)</div>
+          <div class="tone-grid" id="toneGrid">
+            <div class="tone-card selected" data-tone="polite">
+              <span class="emoji">🎩</span>
+              <div class="name">礼貌</div>
+              <div class="desc">正式商务</div>
+            </div>
+            <div class="tone-card" data-tone="urgent">
+              <span class="emoji">🔥</span>
+              <div class="name">紧急</div>
+              <div class="desc">催促施压</div>
+            </div>
+            <div class="tone-card" data-tone="casual">
+              <span class="emoji">😎</span>
+              <div class="name">随意</div>
+              <div class="desc">轻松自在</div>
+            </div>
+            <div class="tone-card" data-tone="passive">
+              <span class="emoji">🌊</span>
+              <div class="name">委婉</div>
+              <div class="desc">含蓄表达</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Content Input -->
+        <div class="setup-section">
+          <div class="section-label">邮件内容 (Content)</div>
+          <textarea class="content-area" id="contentInput"
+            placeholder="输入你的邮件内容..."
+            maxlength="500"
+            rows="4"></textarea>
+        </div>
+
+        <!-- Convert Button -->
+        <button class="convert-btn" id="convertBtn" disabled>转换语气</button>
+
+        <!-- Result Area -->
+        <div class="result-area" id="resultArea">
+          <div class="result-header">
+            <div class="result-header-title">转换结果</div>
+          </div>
+
+          <!-- Conversion Info -->
+          <div class="result-info" id="resultInfo"></div>
+
+          <!-- Result Content (two-column or unsupported message) -->
+          <div id="resultContent"></div>
+
+          <!-- Actions -->
+          <div class="result-actions" id="resultActions" style="display:none;">
+            <button class="action-btn" id="copyBtn">📋 复制结果</button>
+            <button class="action-btn" id="regenerateBtn">🔄 重新生成</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div class="left">
+        <span>📧 邮件语气转换器</span>
+      </div>
+      <div class="right">
+        <a href="index.html">首页</a>
+        <span class="sep">|</span>
+        <a href="meeting.html">会议室</a>
+        <span class="sep">|</span>
+        <a href="interview.html">面试</a>
+        <span class="sep">|</span>
+        <a href="https://github.com/ava-agent/pua-cli" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // Data: Email Templates (from CLI source)
+    // ============================================
+
+    const EMAIL_TEMPLATES = {
+      'pm-employee': {
+        polite: [
+          '辛苦处理一下{content}，谢谢',
+          '麻烦处理并跟进，祝好',
+          '团队好，请处理{content}'
+        ],
+        urgent: [
+          '【紧急】请立即处理{content}',
+          '请尽快处理，这个很紧急',
+          '这个今天要处理完，辛苦一下'
+        ],
+        casual: [
+          '{content}，麻烦搞一下',
+          '帮我看下{content}，谢啦',
+          '{content}搞完跟我说声'
+        ],
+        passive: [
+          '如果方便的话，请处理{content}',
+          '不好意思打扰，想处理一下{content}',
+          '什么时候有时间处理一下{content}'
+        ]
+      },
+      'employee-pm': {
+        polite: [
+          '{content}已处理，请review',
+          '附件已上传，请review',
+          '{content}已完成，请确认'
+        ],
+        urgent: [
+          '{content}可能需要支持，请确认',
+          '这个{content}有点复杂，需要讨论',
+          '时间可能延期，请调整'
+        ],
+        casual: [
+          '{content}OK了，你看看',
+          '{content}搞定，你review一下',
+          '{content}没问题了'
+        ],
+        passive: [
+          '{content}应该处理完了，请确认',
+          '我觉得{content}这样行，你觉得呢',
+          '{content}暂时这样，有问题讨论'
+        ]
+      },
+      'hr-employee': {
+        polite: [
+          '{content}（收到请回复）',
+          '请查收{content}，祝好',
+          '麻烦处理一下{content}'
+        ],
+        urgent: [
+          '【重要】请及时处理{content}',
+          '请务必处理，后果自负',
+          '今天下班前请处理'
+        ],
+        casual: [
+          '{content}啊',
+          '{content}哈，有空处理一下',
+          '{content}~'
+        ],
+        passive: [
+          '如果方便的话请处理{content}',
+          '不好意思，想处理一下{content}',
+          '请问什么时候方便处理{content}'
+        ]
+      },
+      'employee-hr': {
+        polite: [
+          '好的，我马上处理',
+          '收到，我会尽快处理',
+          '{content}，我明白了'
+        ],
+        urgent: [
+          '立即处理',
+          '马上处理',
+          '处理中'
+        ],
+        casual: [
+          'OK',
+          '行',
+          '好的'
+        ],
+        passive: [
+          '我看看时间安排处理',
+          '应该可以处理吧',
+          '我尽量处理'
+        ]
+      }
+    };
+
+    const TONE_MODIFIERS = {
+      polite: {
+        prefix: ['麻烦', '辛苦', '劳烦', '望'],
+        suffix: ['谢谢', '为盼', '顺颂商祺', '祝好']
+      },
+      urgent: {
+        prefix: ['请立即', '请尽快', '请务必', '【紧急】', '【重要】'],
+        suffix: ['谢谢配合', '辛苦了', '请支持']
+      },
+      casual: {
+        prefix: ['嘿', '哈', '啦', '呗'],
+        suffix: ['谢啦', 'OK', '搞定']
+      },
+      passive: {
+        prefix: ['如果方便', '有空的话', '什么时候', '可能的话'],
+        suffix: ['你觉得呢', '吧', '看看', '考虑一下']
+      }
+    };
+
+    // Role display info
+    const ROLE_INFO = {
+      boss:     { name: '老板', emoji: '👔' },
+      employee: { name: '员工', emoji: '😓' },
+      pm:       { name: '产品经理', emoji: '📋' },
+      hr:       { name: 'HR', emoji: '💼' },
+      techlead: { name: '技术主管', emoji: '👨‍💻' },
+      intern:   { name: '实习生', emoji: '🌱' }
+    };
+
+    const TONE_INFO = {
+      polite:  { name: '礼貌', desc: '正式商务' },
+      urgent:  { name: '紧急', desc: '催促施压' },
+      casual:  { name: '随意', desc: '轻松自在' },
+      passive: { name: '委婉', desc: '含蓄表达' }
+    };
+
+    // Role aliases (dev/developer/team -> employee, manager -> pm, lead -> techlead)
+    const ROLE_ALIASES = {
+      dev: 'employee',
+      developer: 'employee',
+      team: 'employee',
+      manager: 'pm',
+      lead: 'techlead'
+    };
+
+    // Supported directions
+    const SUPPORTED_DIRECTIONS = [
+      'pm-employee',
+      'employee-pm',
+      'hr-employee',
+      'employee-hr'
+    ];
+
+    // ============================================
+    // State
+    // ============================================
+
+    let selectedFrom = null;
+    let selectedTo = null;
+    let selectedTone = 'polite';
+    let lastResult = null;
+
+    // ============================================
+    // DOM Elements
+    // ============================================
+
+    const fromGrid = document.getElementById('fromGrid');
+    const toGrid = document.getElementById('toGrid');
+    const toneGrid = document.getElementById('toneGrid');
+    const contentInput = document.getElementById('contentInput');
+    const convertBtn = document.getElementById('convertBtn');
+    const resultArea = document.getElementById('resultArea');
+    const resultInfo = document.getElementById('resultInfo');
+    const resultContent = document.getElementById('resultContent');
+    const resultActions = document.getElementById('resultActions');
+    const copyBtn = document.getElementById('copyBtn');
+    const regenerateBtn = document.getElementById('regenerateBtn');
+    const directionDisplay = document.getElementById('directionDisplay');
+
+    // ============================================
+    // Utility
+    // ============================================
+
+    function randomPick(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function resolveRole(role) {
+      return ROLE_ALIASES[role] || role;
+    }
+
+    function getDirectionKey(from, to) {
+      const resolvedFrom = resolveRole(from);
+      const resolvedTo = resolveRole(to);
+      return resolvedFrom + '-' + resolvedTo;
+    }
+
+    function isDirectionSupported(from, to) {
+      const key = getDirectionKey(from, to);
+      return SUPPORTED_DIRECTIONS.includes(key);
+    }
+
+    // ============================================
+    // Transformation Logic
+    // ============================================
+
+    function transformEmail(content, from, to, tone) {
+      const directionKey = getDirectionKey(from, to);
+      const templates = EMAIL_TEMPLATES[directionKey];
+
+      if (!templates) {
+        return { success: false, directionKey: directionKey };
+      }
+
+      const toneTemplates = templates[tone] || templates.polite;
+      const template = randomPick(toneTemplates);
+
+      // Replace {content} placeholder
+      let transformed = template.replace(/{content}/g, content);
+
+      // Add tone modifiers
+      const modifier = TONE_MODIFIERS[tone] || TONE_MODIFIERS.polite;
+
+      if (modifier.prefix && modifier.prefix.length > 0) {
+        const prefix = randomPick(modifier.prefix);
+        transformed = prefix + '，' + transformed;
+      }
+
+      if (modifier.suffix && modifier.suffix.length > 0) {
+        const suffix = randomPick(modifier.suffix);
+        transformed = transformed + suffix;
+      }
+
+      return {
+        success: true,
+        transformed: transformed,
+        directionKey: directionKey
+      };
+    }
+
+    // ============================================
+    // UI Updates
+    // ============================================
+
+    function updateDirectionDisplay() {
+      if (!selectedFrom && !selectedTo) {
+        directionDisplay.innerHTML = '<span style="color:#444;">请选择发送者和接收者</span>';
+        return;
+      }
+
+      let html = '';
+
+      if (selectedFrom) {
+        const fromInfo = ROLE_INFO[selectedFrom];
+        html += '<span class="from-name">' + fromInfo.emoji + ' ' + fromInfo.name + '</span>';
+      } else {
+        html += '<span style="color:#444;">???</span>';
+      }
+
+      html += '<span class="arrow"> → </span>';
+
+      if (selectedTo) {
+        const toInfo = ROLE_INFO[selectedTo];
+        html += '<span class="to-name">' + toInfo.emoji + ' ' + toInfo.name + '</span>';
+      } else {
+        html += '<span style="color:#444;">???</span>';
+      }
+
+      if (selectedFrom && selectedTo) {
+        if (isDirectionSupported(selectedFrom, selectedTo)) {
+          html += ' <span style="color:#00ff00;font-size:10px;margin-left:8px;">✓ 支持</span>';
+        } else {
+          html += ' <span class="unsupported" style="margin-left:8px;">✗ 暂不支持</span>';
+        }
+      }
+
+      directionDisplay.innerHTML = html;
+    }
+
+    function updateConvertButton() {
+      const hasContent = contentInput.value.trim().length > 0;
+      const hasFrom = selectedFrom !== null;
+      const hasTo = selectedTo !== null;
+      convertBtn.disabled = !(hasContent && hasFrom && hasTo);
+    }
+
+    function showResult(content, from, to, tone) {
+      const result = transformEmail(content, from, to, tone);
+      lastResult = { content: content, from: from, to: to, tone: tone, result: result };
+
+      const fromInfo = ROLE_INFO[resolveRole(from)] || { name: from, emoji: '' };
+      const toInfo = ROLE_INFO[resolveRole(to)] || { name: to, emoji: '' };
+      const toneInfo = TONE_INFO[tone] || { name: tone, desc: '' };
+
+      // Show info bar
+      resultInfo.innerHTML =
+        '<span><span class="info-label">方向: </span><span class="info-value">' +
+        fromInfo.emoji + ' ' + fromInfo.name + ' → ' + toInfo.emoji + ' ' + toInfo.name +
+        '</span></span>' +
+        '<span><span class="info-label">语气: </span><span class="info-value">' +
+        toneInfo.name + ' (' + toneInfo.desc + ')' +
+        '</span></span>';
+
+      if (result.success) {
+        resultContent.innerHTML =
+          '<div class="result-boxes">' +
+            '<div class="result-box result-box-original">' +
+              '<div class="result-box-label">📝 原文</div>' +
+              '<div class="result-box-content">' + escapeHtml(content) + '</div>' +
+            '</div>' +
+            '<div class="result-box result-box-transformed">' +
+              '<div class="result-box-label">✨ 转换后</div>' +
+              '<div class="result-box-content">' + escapeHtml(result.transformed) + '</div>' +
+            '</div>' +
+          '</div>';
+        resultActions.style.display = 'flex';
+      } else {
+        resultContent.innerHTML =
+          '<div class="result-unsupported">' +
+            '暂不支持 ' + fromInfo.emoji + ' ' + fromInfo.name +
+            ' → ' + toInfo.emoji + ' ' + toInfo.name + ' 的邮件转换' +
+            '<div class="supported-list">' +
+              '目前支持: <span>PM ↔ 员工</span>, <span>HR ↔ 员工</span>' +
+            '</div>' +
+          '</div>';
+        resultActions.style.display = 'none';
+      }
+
+      resultArea.classList.add('visible');
+
+      // Scroll result into view
+      requestAnimationFrame(function() {
+        resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    }
+
+    function escapeHtml(text) {
+      var div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ============================================
+    // Event Handlers
+    // ============================================
+
+    // From role selection
+    fromGrid.addEventListener('click', function(e) {
+      var card = e.target.closest('.role-card');
+      if (!card) return;
+
+      var role = card.dataset.role;
+
+      // Deselect if clicking same card
+      if (selectedFrom === role) {
+        card.classList.remove('from-selected');
+        selectedFrom = null;
+      } else {
+        // Clear previous selection
+        fromGrid.querySelectorAll('.role-card').forEach(function(c) {
+          c.classList.remove('from-selected');
+        });
+        card.classList.add('from-selected');
+        selectedFrom = role;
+      }
+
+      updateDirectionDisplay();
+      updateConvertButton();
+    });
+
+    // To role selection
+    toGrid.addEventListener('click', function(e) {
+      var card = e.target.closest('.role-card');
+      if (!card) return;
+
+      var role = card.dataset.role;
+
+      if (selectedTo === role) {
+        card.classList.remove('to-selected');
+        selectedTo = null;
+      } else {
+        toGrid.querySelectorAll('.role-card').forEach(function(c) {
+          c.classList.remove('to-selected');
+        });
+        card.classList.add('to-selected');
+        selectedTo = role;
+      }
+
+      updateDirectionDisplay();
+      updateConvertButton();
+    });
+
+    // Tone selection
+    toneGrid.addEventListener('click', function(e) {
+      var card = e.target.closest('.tone-card');
+      if (!card) return;
+
+      toneGrid.querySelectorAll('.tone-card').forEach(function(c) {
+        c.classList.remove('selected');
+      });
+      card.classList.add('selected');
+      selectedTone = card.dataset.tone;
+    });
+
+    // Content input
+    contentInput.addEventListener('input', function() {
+      updateConvertButton();
+    });
+
+    // Convert button
+    convertBtn.addEventListener('click', function() {
+      var content = contentInput.value.trim();
+      if (!content || !selectedFrom || !selectedTo) return;
+      showResult(content, selectedFrom, selectedTo, selectedTone);
+    });
+
+    // Allow Ctrl+Enter to submit
+    contentInput.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (!convertBtn.disabled) {
+          convertBtn.click();
+        }
+      }
+    });
+
+    // Copy button
+    copyBtn.addEventListener('click', function() {
+      if (!lastResult || !lastResult.result.success) return;
+
+      var text = lastResult.result.transformed;
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function() {
+          showCopied();
+        }).catch(function() {
+          fallbackCopy(text);
+        });
+      } else {
+        fallbackCopy(text);
+      }
+    });
+
+    function fallbackCopy(text) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        showCopied();
+      } catch (err) {
+        // Silently fail
+      }
+      document.body.removeChild(ta);
+    }
+
+    function showCopied() {
+      copyBtn.classList.add('copied');
+      copyBtn.textContent = '✓ 已复制';
+      setTimeout(function() {
+        copyBtn.classList.remove('copied');
+        copyBtn.textContent = '📋 复制结果';
+      }, 2000);
+    }
+
+    // Regenerate button
+    regenerateBtn.addEventListener('click', function() {
+      if (!lastResult) return;
+      showResult(
+        lastResult.content,
+        lastResult.from,
+        lastResult.to,
+        lastResult.tone
+      );
+    });
+
+  </script>
+</body>
+</html>

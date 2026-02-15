@@ -23,7 +23,7 @@ const program = new Command();
 program
   .name('pua')
   .description('Workplace PUA CLI - 一个趣味性 AI CLI 工具，具有 6 种角色模式')
-  .version('0.7.1');
+  .version('0.8.0');
 
 /**
  * Wrap command action with onboarding check

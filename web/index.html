@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Workplace PUA CLI v0.7.0 - 职场角色扮演助手</title>
+  <title>Workplace PUA CLI v0.8.0 - 职场角色扮演助手</title>
   <meta name="description" content="Workplace PUA CLI - 趣味职场角色扮演助手，支持6种角色和3种强度等级，在线体验无需安装">
   <meta property="og:title" content="Workplace PUA CLI - 职场角色扮演助手">
   <meta property="og:description" content="趣味性 AI CLI 工具，6种职场角色（老板、员工、产品经理、HR、技术主管、实习生），3种强度等级">
@@ -674,7 +674,7 @@
         </div>
         <div class="prompt-line">
           <span class="prompt-symbol success">✓</span>
-          <span class="prompt-text">PUA CLI v0.7.0 - 职场角色扮演助手</span>
+          <span class="prompt-text">PUA CLI v0.8.0 - 职场角色扮演助手</span>
         </div>
         <div class="prompt-line">
           <span class="prompt-symbol system">ℹ</span>
@@ -715,6 +715,38 @@
         </div>
         <span class="meeting-banner-badge" style="background:#cc0000;">NEW</span>
       </a>
+
+      <!-- Tool Banners -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+        <a class="meeting-banner" href="/jargon.html" style="background:linear-gradient(135deg,#0a1a2a,#112233);border-color:#1a3355;margin:0;padding:10px 14px;">
+          <span class="meeting-banner-icon" style="font-size:20px;">🗣️</span>
+          <div class="meeting-banner-body">
+            <div class="meeting-banner-title" style="color:#00ccff;font-size:12px;">职场黑话生成</div>
+            <div class="meeting-banner-desc" style="font-size:10px;">生成黑话词汇、翻译普通文本</div>
+          </div>
+        </a>
+        <a class="meeting-banner" href="/weekly.html" style="background:linear-gradient(135deg,#0a1a1a,#112222);border-color:#1a3333;margin:0;padding:10px 14px;">
+          <span class="meeting-banner-icon" style="font-size:20px;">📋</span>
+          <div class="meeting-banner-body">
+            <div class="meeting-banner-title" style="color:#00ff88;font-size:12px;">周报生成器</div>
+            <div class="meeting-banner-desc" style="font-size:10px;">一键生成各角色风格周报</div>
+          </div>
+        </a>
+        <a class="meeting-banner" href="/email.html" style="background:linear-gradient(135deg,#1a0a2a,#221133);border-color:#331a55;margin:0;padding:10px 14px;">
+          <span class="meeting-banner-icon" style="font-size:20px;">📧</span>
+          <div class="meeting-banner-body">
+            <div class="meeting-banner-title" style="color:#aa44ff;font-size:12px;">邮件语气转换</div>
+            <div class="meeting-banner-desc" style="font-size:10px;">转换职场邮件的语气风格</div>
+          </div>
+        </a>
+        <a class="meeting-banner" href="/meeting-suggest.html" style="background:linear-gradient(135deg,#1a1a0a,#222211);border-color:#333311;margin:0;padding:10px 14px;">
+          <span class="meeting-banner-icon" style="font-size:20px;">🎤</span>
+          <div class="meeting-banner-body">
+            <div class="meeting-banner-title" style="color:#ffcc00;font-size:12px;">会议发言建议</div>
+            <div class="meeting-banner-desc" style="font-size:10px;">根据角色和场景生成发言</div>
+          </div>
+        </a>
+      </div>
 
       <!-- Stats Display -->
       <div class="stats-display" id="statsDisplay">
@@ -818,13 +850,19 @@
         <span class="key">POS</span>
         <span class="value" id="cursorPos">1:1</span>
         <span class="separator">|</span>
-        <a href="/meeting.html" title="Meeting Room">Meeting Room</a>
+        <a href="/jargon.html" title="黑话">黑话</a>
         <span class="separator">|</span>
-        <a href="/interview.html" title="Interview">Interview</a>
+        <a href="/weekly.html" title="周报">周报</a>
+        <span class="separator">|</span>
+        <a href="/email.html" title="邮件">邮件</a>
+        <span class="separator">|</span>
+        <a href="/meeting-suggest.html" title="发言">发言</a>
+        <span class="separator">|</span>
+        <a href="/meeting.html" title="会议室">会议室</a>
+        <span class="separator">|</span>
+        <a href="/interview.html" title="面试">面试</a>
         <span class="separator">|</span>
         <a href="https://github.com/ava-agent/pua-cli" target="_blank" rel="noopener" title="GitHub">GitHub</a>
-        <span class="separator">|</span>
-        <a href="https://www.npmjs.com/package/workplace-pua-cli" target="_blank" rel="noopener" title="npm">npm</a>
       </div>
     </div>
   </div>

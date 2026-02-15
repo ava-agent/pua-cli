@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>职场黑话生成器 - PUA CLI</title>
+  <meta name="description" content="职场黑话生成器 - 让你的表达更有职场范儿，黑话词库浏览与文本翻译">
+  <meta property="og:title" content="职场黑话生成器 - PUA CLI">
+  <meta property="og:description" content="一键生成职场黑话，支持会议、报告、邮件、聊天四种场景">
+  <meta name="theme-color" content="#0a0a0a">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗣️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'JetBrains Mono', 'Consolas', monospace;
+      background: #0a0a0a;
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: #e0e0e0;
+    }
+
+    /* === Terminal Shell === */
+    .terminal {
+      width: 90%;
+      max-width: 900px;
+      margin: 40px auto;
+      background: #0a0a0a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 80px);
+      overflow: hidden;
+    }
+
+    .terminal-header {
+      padding: 10px 16px;
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #333;
+    }
+
+    .terminal-buttons { display: flex; gap: 8px; }
+    .terminal-btn { width: 12px; height: 12px; border-radius: 50%; }
+    .terminal-btn.close { background: #ff5f56; }
+    .terminal-btn.minimize { background: #ffbd2e; }
+    .terminal-btn.maximize { background: #27ca3f; }
+
+    .terminal-title { color: #888; font-size: 12px; flex: 1; text-align: center; }
+
+    .terminal-body {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background: #0a0a0a;
+      scroll-behavior: smooth;
+      min-height: 0;
+    }
+
+    .terminal-body::-webkit-scrollbar { width: 8px; }
+    .terminal-body::-webkit-scrollbar-track { background: #0a0a0a; }
+    .terminal-body::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+    .terminal-body::-webkit-scrollbar-thumb:hover { background: #444; }
+
+    /* === Nav Bar === */
+    .nav-bar {
+      display: flex;
+      gap: 6px;
+      padding: 10px 0 16px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid #222;
+      margin-bottom: 20px;
+    }
+
+    .nav-link {
+      color: #666;
+      text-decoration: none;
+      font-size: 11px;
+      padding: 5px 10px;
+      border: 1px solid #333;
+      border-radius: 4px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .nav-link:hover {
+      color: #00ccff;
+      border-color: #00ccff;
+      background: #0a1a2a;
+    }
+
+    .nav-link.active {
+      color: #00ccff;
+      border-color: #00ccff;
+      background: #0a1a2a;
+    }
+
+    /* === Setup Area === */
+    .setup-area {
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; }
+    }
+
+    .page-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      background: linear-gradient(90deg, #00ccff, #4488ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .page-subtitle {
+      color: #666;
+      font-size: 12px;
+      margin-bottom: 24px;
+    }
+
+    /* === Mode Tabs === */
+    .mode-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 24px;
+      border: 1px solid #333;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .mode-tab {
+      flex: 1;
+      padding: 12px 16px;
+      background: #111;
+      color: #666;
+      font-family: inherit;
+      font-size: 13px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .mode-tab:first-child { border-right: 1px solid #333; }
+
+    .mode-tab:hover {
+      color: #00ccff;
+      background: #0a1520;
+    }
+
+    .mode-tab.active {
+      color: #00ccff;
+      background: #0a1a2a;
+      font-weight: 700;
+    }
+
+    /* === Mode Panels === */
+    .mode-panel { display: none; }
+    .mode-panel.active { display: block; }
+
+    /* === Section Labels === */
+    .section-label {
+      color: #888;
+      font-size: 12px;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    /* === Type Cards (2x2 Grid) === */
+    .type-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .type-card {
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      position: relative;
+    }
+
+    .type-card:hover {
+      border-color: #00ccff;
+      background: #0a1520;
+      box-shadow: 0 0 16px rgba(0, 204, 255, 0.08);
+    }
+
+    .type-card.selected {
+      border-color: #00ccff;
+      background: #0a1a2a;
+      box-shadow: 0 0 20px rgba(0, 204, 255, 0.12);
+    }
+
+    .type-card.selected::after {
+      content: '\2713';
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      color: #00ccff;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .type-card .emoji { font-size: 24px; margin-bottom: 6px; }
+    .type-card .name { color: #ddd; font-size: 13px; font-weight: 500; }
+    .type-card .desc { color: #555; font-size: 10px; margin-top: 4px; }
+
+    /* === Intensity Selector === */
+    .intensity-options {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .intensity-btn {
+      flex: 1;
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      font-family: inherit;
+      font-size: 12px;
+      color: #888;
+    }
+
+    .intensity-btn:hover { border-color: #00ccff; color: #00ccff; }
+
+    .intensity-btn.selected {
+      border-color: #00ccff;
+      background: #0a1a2a;
+      color: #00ccff;
+      font-weight: 700;
+    }
+
+    /* === Generate Button === */
+    .generate-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #0088cc, #00aaff);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 20px;
+    }
+
+    .generate-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(0, 170, 255, 0.3);
+    }
+
+    .generate-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* === Result Area === */
+    .result-area {
+      display: none;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .result-area.visible { display: block; }
+
+    .result-section-title {
+      color: #00ccff;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* === Jargon Tags === */
+    .jargon-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .jargon-tag {
+      background: #1a2a3a;
+      border: 1px solid #00ccff;
+      color: #00ccff;
+      padding: 6px 14px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-family: inherit;
+      transition: all 0.2s;
+      cursor: default;
+      animation: tagIn 0.3s ease-out backwards;
+    }
+
+    .jargon-tag:hover {
+      background: #0a3050;
+      box-shadow: 0 0 10px rgba(0, 204, 255, 0.2);
+    }
+
+    @keyframes tagIn {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* === Example Sentence Box === */
+    .example-box {
+      background: #111;
+      border: 1px solid #333;
+      border-left: 3px solid #00ccff;
+      border-radius: 4px 8px 8px 4px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      color: #ccc;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .example-box .example-label {
+      color: #00ccff;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    /* === Translation Panel === */
+    .translate-input {
+      width: 100%;
+      min-height: 100px;
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 14px;
+      color: #e0e0e0;
+      font-family: inherit;
+      font-size: 13px;
+      resize: vertical;
+      margin-bottom: 16px;
+      transition: border-color 0.2s;
+      line-height: 1.6;
+    }
+
+    .translate-input:focus {
+      outline: none;
+      border-color: #00ccff;
+      box-shadow: 0 0 8px rgba(0, 204, 255, 0.15);
+    }
+
+    .translate-input::placeholder { color: #444; }
+
+    /* === Translation Comparison === */
+    .translation-compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .compare-panel {
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .compare-panel .compare-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .compare-panel.original .compare-label { color: #888; }
+    .compare-panel.translated .compare-label { color: #00ccff; }
+
+    .compare-panel.translated {
+      border-color: #00ccff;
+      background: #0a1520;
+    }
+
+    .compare-text {
+      color: #ccc;
+      font-size: 13px;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+
+    /* === Action Buttons (Bottom) === */
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .action-btn {
+      flex: 1;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .action-btn.regenerate {
+      background: #111;
+      border: 1px solid #333;
+      color: #888;
+    }
+
+    .action-btn.regenerate:hover {
+      border-color: #00ccff;
+      color: #00ccff;
+      background: #0a1520;
+    }
+
+    .action-btn.copy {
+      background: #0a1a2a;
+      border: 1px solid #00ccff;
+      color: #00ccff;
+    }
+
+    .action-btn.copy:hover {
+      background: #0a3050;
+      box-shadow: 0 0 12px rgba(0, 204, 255, 0.2);
+    }
+
+    .action-btn.copy.copied {
+      background: #0a2a1a;
+      border-color: #00ff88;
+      color: #00ff88;
+    }
+
+    /* === Toast === */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #1a2a3a;
+      border: 1px solid #00ccff;
+      color: #00ccff;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 12px;
+      opacity: 0;
+      transition: all 0.3s ease-out;
+      pointer-events: none;
+      z-index: 200;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* === Status Bar === */
+    .status-bar {
+      background: #1a1a1a;
+      padding: 6px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #333;
+      font-size: 11px;
+    }
+
+    .status-bar .left { color: #00ccff; }
+
+    .status-bar .right {
+      color: #666;
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    .status-bar a {
+      color: #00ccff;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .status-bar a:hover { color: #00ffff; }
+
+    .status-bar .sep { color: #444; margin: 0 6px; }
+
+    /* === Responsive === */
+    @media (max-width: 600px) {
+      .terminal {
+        width: 95%;
+        margin: 10px auto;
+        height: calc(100vh - 20px);
+      }
+
+      .terminal-body { padding: 12px; }
+
+      .type-grid { grid-template-columns: 1fr; }
+
+      .intensity-options { flex-direction: column; }
+
+      .translation-compare {
+        grid-template-columns: 1fr;
+      }
+
+      .nav-bar { gap: 4px; }
+
+      .nav-link {
+        font-size: 10px;
+        padding: 4px 7px;
+      }
+
+      .status-bar {
+        flex-direction: column;
+        gap: 4px;
+        align-items: flex-start;
+      }
+
+      .page-title { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="terminal">
+    <!-- Terminal Header -->
+    <div class="terminal-header">
+      <div class="terminal-buttons">
+        <div class="terminal-btn close"></div>
+        <div class="terminal-btn minimize"></div>
+        <div class="terminal-btn maximize"></div>
+      </div>
+      <div class="terminal-title">职场黑话生成器 — pua-cli</div>
+    </div>
+
+    <!-- Terminal Body -->
+    <div class="terminal-body" id="terminalBody">
+      <!-- Nav Bar -->
+      <nav class="nav-bar">
+        <a class="nav-link" href="index.html">首页</a>
+        <a class="nav-link active" href="jargon.html">黑话生成</a>
+        <a class="nav-link" href="weekly.html">周报生成</a>
+        <a class="nav-link" href="email.html">邮件转换</a>
+        <a class="nav-link" href="meeting-suggest.html">会议发言</a>
+        <a class="nav-link" href="meeting.html">会议室</a>
+        <a class="nav-link" href="interview.html">压力面试</a>
+      </nav>
+
+      <!-- Setup Area -->
+      <div class="setup-area">
+        <div class="page-title">🗣️ 职场黑话生成器</div>
+        <div class="page-subtitle">让你的表达更有"职场范儿"</div>
+
+        <!-- Mode Tabs -->
+        <div class="mode-tabs">
+          <button class="mode-tab active" data-mode="dictionary" id="tabDictionary">📚 黑话词库</button>
+          <button class="mode-tab" data-mode="translate" id="tabTranslate">🔄 文本翻译</button>
+        </div>
+
+        <!-- ====== Mode 1: Dictionary Browse ====== -->
+        <div class="mode-panel active" id="panelDictionary">
+          <!-- Type Selection -->
+          <div class="section-label">选择黑话类型</div>
+          <div class="type-grid" id="typeGrid">
+            <div class="type-card" data-type="meeting">
+              <div class="emoji">🏢</div>
+              <div class="name">会议</div>
+              <div class="desc">对齐、拉通、闭环...</div>
+            </div>
+            <div class="type-card" data-type="report">
+              <div class="emoji">📊</div>
+              <div class="name">报告</div>
+              <div class="desc">复盘、迭代、赋能...</div>
+            </div>
+            <div class="type-card" data-type="email">
+              <div class="emoji">📧</div>
+              <div class="name">邮件</div>
+              <div class="desc">望、妥否、商祺...</div>
+            </div>
+            <div class="type-card" data-type="chat">
+              <div class="emoji">💬</div>
+              <div class="name">聊天</div>
+              <div class="desc">颗粒度、护城河、OKR...</div>
+            </div>
+          </div>
+
+          <!-- Intensity Selection -->
+          <div class="section-label">选择强度</div>
+          <div class="intensity-options" id="intensityOptions">
+            <button class="intensity-btn" data-intensity="light">🟢 轻度 (5个)</button>
+            <button class="intensity-btn selected" data-intensity="medium">🟡 中度 (10个)</button>
+            <button class="intensity-btn" data-intensity="heavy">🔴 重度 (全部)</button>
+          </div>
+
+          <!-- Generate Button -->
+          <button class="generate-btn" id="generateBtn" disabled>生成黑话</button>
+          <div id="generateHint" style="color:#00aacc;font-size:11px;text-align:center;margin-bottom:16px;margin-top:-12px;">请先选择黑话类型</div>
+
+          <!-- Dictionary Result Area -->
+          <div class="result-area" id="dictResult">
+            <div class="result-section-title"><span>📋</span> 黑话词汇</div>
+            <div class="jargon-tags" id="jargonTags"></div>
+
+            <div class="result-section-title"><span>💡</span> 例句</div>
+            <div class="example-box" id="exampleBox">
+              <span class="example-label">Example Sentence</span>
+              <span id="exampleText"></span>
+            </div>
+
+            <div class="action-buttons">
+              <button class="action-btn regenerate" id="regenerateDict">🔄 重新生成</button>
+              <button class="action-btn copy" id="copyDict">📋 复制全部</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== Mode 2: Text Translation ====== -->
+        <div class="mode-panel" id="panelTranslate">
+          <!-- Input Area -->
+          <div class="section-label">输入普通文本</div>
+          <textarea class="translate-input" id="translateInput"
+            placeholder="输入你想说的话，比如：&#10;我们需要讨论一下这个项目的进展&#10;这个方案还需要想想&#10;请帮忙做一下这个任务"
+            maxlength="500"></textarea>
+
+          <!-- Intensity Selection (for translate) -->
+          <div class="section-label">翻译强度</div>
+          <div class="intensity-options" id="translateIntensityOptions">
+            <button class="intensity-btn" data-intensity="light">🟢 轻度</button>
+            <button class="intensity-btn selected" data-intensity="medium">🟡 中度</button>
+            <button class="intensity-btn" data-intensity="heavy">🔴 重度</button>
+          </div>
+
+          <!-- Translate Button -->
+          <button class="generate-btn" id="translateBtn">翻译为黑话</button>
+
+          <!-- Translation Result -->
+          <div class="result-area" id="translateResult">
+            <div class="result-section-title"><span>🔄</span> 翻译结果</div>
+            <div class="translation-compare">
+              <div class="compare-panel original">
+                <span class="compare-label">原文</span>
+                <div class="compare-text" id="originalText"></div>
+              </div>
+              <div class="compare-panel translated">
+                <span class="compare-label">黑话版</span>
+                <div class="compare-text" id="translatedText"></div>
+              </div>
+            </div>
+
+            <div class="action-buttons">
+              <button class="action-btn regenerate" id="regenerateTranslate">🔄 重新翻译</button>
+              <button class="action-btn copy" id="copyTranslate">📋 复制译文</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div class="left">
+        <span>🗣️ 职场黑话生成器</span>
+      </div>
+      <div class="right">
+        <a href="index.html">首页</a>
+        <span class="sep">|</span>
+        <a href="meeting.html">会议室</a>
+        <span class="sep">|</span>
+        <a href="interview.html">面试</a>
+        <span class="sep">|</span>
+        <a href="https://github.com/ava-agent/pua-cli" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ================================================
+    // Data
+    // ================================================
+    const JARGON_DICT = {
+      meeting: [
+        '对齐', '拉通', '沉淀', '赋能', '闭环', '抓手', '打法',
+        '组合拳', '矩阵', '协同', '联动', '共振', '裂变',
+        '渗透', '击穿', '落地', '复盘', '迭代', '敏捷',
+        '颗粒度', '链路', '痛点', '痒点', '抓手', '底座',
+        '中台', '前端', '后端', '全链路', '端到端', '生命周期'
+      ],
+      report: [
+        '复盘', '迭代', '裂变', '矩阵', '组合拳', '深挖',
+        '赋能', '加持', '维度', '视角', '赛道', '锚点', '支点', '杠杆', '撬动', '辐射', '覆盖',
+        '渗透', '下沉', '上行', '输出', '交付', '闭环',
+        '认知', '心智', '感知', '体感', '触点', '路径', '打法', '模型', '范式', '体系', '方法论'
+      ],
+      email: [
+        '望', '谢谢', '辛苦了', '劳烦', '敬请',
+        '妥否', '收到', '请回复', '为盼', '顺颂', '商祺',
+        '尽快', '方便', '麻烦', '协助', '支持', '配合',
+        '推进', '落实', '完成', '跟进', '反馈', '确认',
+        '抄送', '呈报', '汇报', '同步', '对齐', '拉通'
+      ],
+      chat: [
+        '颗粒度', '护城河', '降本增效', '天花板', '瓶颈',
+        '赋能', '迭代', '敏捷', '瀑布', 'Scrum', 'Daily',
+        'OKR', 'KPI', 'GMV', 'DAU', 'MAU',
+        '转化', '留存', '促活', '召回', '裂变', '传播',
+        '痛点', '爽点', '场景', '案例', '方法论', '最佳实践'
+      ]
+    };
+
+    const TYPE_NAMES = {
+      meeting: '会议',
+      report: '报告',
+      email: '邮件',
+      chat: '聊天'
+    };
+
+    const SENTENCE_TEMPLATES = {
+      meeting: [
+        '我们来{action}一下{topic}的{aspect}',
+        '需要{action}一下{topic}',
+        '今天主要{action}关于{topic}的{aspect}',
+        '这个事情需要大家一起来{action}一下{topic}',
+        '请各团队{action}一下{topic}的{aspect}'
+      ],
+      report: [
+        '本周{action}了{number}个{topic}',
+        '完成了{number}个{topic}的{action}',
+        '下周将继续{action}{number}个{topic}的{aspect}',
+        '在{topic}方面已经{action}了{number}个{aspect}'
+      ],
+      email: [
+        '辛苦{action}一下{topic}',
+        '麻烦{action}一下{topic}',
+        '请{action}一下关于{topic}的事项，为盼',
+        '劳烦{action}一下{topic}，顺颂商祺'
+      ],
+      chat: [
+        '需要在{topic}方面{action}',
+        '关于{topic}的{aspect}',
+        '{topic}的{aspect}需要进一步{action}',
+        '我们在{topic}赛道上需要{action}一下{aspect}'
+      ]
+    };
+
+    const TEMPLATE_VARS = {
+      action: ['对齐', '拉通', '赋能', '沉淀', '复盘', '迭代', '闭环', '落地'],
+      number: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      topic: ['业务', '产品', '项目', '需求', '用户增长', '商业化', '技术债', '组织架构'],
+      aspect: ['颗粒度', '护城河', '闭环', '抓手', '链路', '打法', '方法论', '底层逻辑']
+    };
+
+    // Translation replacement map
+    const TRANSLATION_MAP = [
+      { pattern: /讨论/g, replacements: ['对齐', '拉通'] },
+      { pattern: /做/g, replacements: ['赋能', '落地', '交付'] },
+      { pattern: /想想/g, replacements: ['沉淀', '复盘', '深挖'] },
+      { pattern: /想一想/g, replacements: ['沉淀一下', '复盘一下'] },
+      { pattern: /连接/g, replacements: ['打通', '拉通', '联动'] },
+      { pattern: /改进/g, replacements: ['迭代', '优化升级'] },
+      { pattern: /问题/g, replacements: ['痛点', '卡点', '瓶颈'] },
+      { pattern: /优点/g, replacements: ['护城河', '核心竞争力'] },
+      { pattern: /方法/g, replacements: ['打法', '方法论', '最佳实践'] },
+      { pattern: /帮忙/g, replacements: ['赋能', '支持', '协同'] },
+      { pattern: /目标/g, replacements: ['北极星指标', 'OKR'] },
+      { pattern: /用户/g, replacements: ['C端用户', '目标人群'] },
+      { pattern: /数据/g, replacements: ['数据维度', '数据抓手'] },
+      { pattern: /合作/g, replacements: ['协同', '联动', '共振'] },
+      { pattern: /分析/g, replacements: ['拆解', '深挖', '洞察'] },
+      { pattern: /计划/g, replacements: ['规划', '路线图', 'Roadmap'] },
+      { pattern: /开始/g, replacements: ['启动', 'Kick Off'] },
+      { pattern: /结束/g, replacements: ['收口', '闭环'] },
+      { pattern: /完成/g, replacements: ['交付', '落地', '闭环'] },
+      { pattern: /报告/g, replacements: ['输出', '交付物'] },
+      { pattern: /能力/g, replacements: ['抓手', '核心能力'] },
+      { pattern: /结果/g, replacements: ['产出', '成果物'] },
+      { pattern: /需要/g, replacements: ['需要从底层逻辑上', '需要从方法论上'] },
+      { pattern: /进展/g, replacements: ['进度', '里程碑'] },
+      { pattern: /范围/g, replacements: ['边界', '颗粒度'] },
+      { pattern: /影响/g, replacements: ['辐射', '渗透', '触达'] },
+      { pattern: /提高/g, replacements: ['拉升', '提振', '赋能'] },
+      { pattern: /减少/g, replacements: ['降本增效', '收敛'] }
+    ];
+
+    const JARGON_SUFFIXES = [
+      '{jargon}到位', '把{jargon}打透', '{jargon}要做到极致',
+      '从{jargon}的维度来看', '以{jargon}为抓手',
+      '在{jargon}层面实现闭环', '用{jargon}赋能整个链路'
+    ];
+
+    const ALL_JARGON_WORDS = [
+      '对齐', '拉通', '赋能', '沉淀', '闭环', '抓手',
+      '颗粒度', '底层逻辑', '顶层设计', '方法论', '组合拳',
+      '护城河', '全链路', '端到端', '降本增效'
+    ];
+
+    // ================================================
+    // State
+    // ================================================
+    let selectedType = null;
+    let dictIntensity = 'medium';
+    let translateIntensity = 'medium';
+    let currentMode = 'dictionary';
+    let lastDictResult = null;
+    let lastTranslateResult = null;
+
+    // ================================================
+    // Elements
+    // ================================================
+    const tabDictionary = document.getElementById('tabDictionary');
+    const tabTranslate = document.getElementById('tabTranslate');
+    const panelDictionary = document.getElementById('panelDictionary');
+    const panelTranslate = document.getElementById('panelTranslate');
+    const typeGrid = document.getElementById('typeGrid');
+    const generateBtn = document.getElementById('generateBtn');
+    const generateHint = document.getElementById('generateHint');
+    const dictResult = document.getElementById('dictResult');
+    const jargonTags = document.getElementById('jargonTags');
+    const exampleText = document.getElementById('exampleText');
+    const translateInput = document.getElementById('translateInput');
+    const translateBtn = document.getElementById('translateBtn');
+    const translateResult = document.getElementById('translateResult');
+    const originalText = document.getElementById('originalText');
+    const translatedText = document.getElementById('translatedText');
+    const toastEl = document.getElementById('toast');
+
+    // ================================================
+    // Mode Switching
+    // ================================================
+    tabDictionary.addEventListener('click', () => switchMode('dictionary'));
+    tabTranslate.addEventListener('click', () => switchMode('translate'));
+
+    function switchMode(mode) {
+      currentMode = mode;
+
+      tabDictionary.classList.toggle('active', mode === 'dictionary');
+      tabTranslate.classList.toggle('active', mode === 'translate');
+      panelDictionary.classList.toggle('active', mode === 'dictionary');
+      panelTranslate.classList.toggle('active', mode === 'translate');
+    }
+
+    // ================================================
+    // Type Selection
+    // ================================================
+    typeGrid.addEventListener('click', (e) => {
+      const card = e.target.closest('.type-card');
+      if (!card) return;
+
+      document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      selectedType = card.dataset.type;
+
+      generateBtn.disabled = false;
+      generateHint.style.display = 'none';
+    });
+
+    // ================================================
+    // Intensity Selection (Dictionary)
+    // ================================================
+    document.getElementById('intensityOptions').addEventListener('click', (e) => {
+      const btn = e.target.closest('.intensity-btn');
+      if (!btn) return;
+
+      document.querySelectorAll('#intensityOptions .intensity-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      dictIntensity = btn.dataset.intensity;
+    });
+
+    // ================================================
+    // Intensity Selection (Translate)
+    // ================================================
+    document.getElementById('translateIntensityOptions').addEventListener('click', (e) => {
+      const btn = e.target.closest('.intensity-btn');
+      if (!btn) return;
+
+      document.querySelectorAll('#translateIntensityOptions .intensity-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      translateIntensity = btn.dataset.intensity;
+    });
+
+    // ================================================
+    // Dictionary Generation
+    // ================================================
+    generateBtn.addEventListener('click', generateDictionary);
+    document.getElementById('regenerateDict').addEventListener('click', generateDictionary);
+
+    function generateDictionary() {
+      if (!selectedType) return;
+
+      const allWords = JARGON_DICT[selectedType];
+      if (!allWords || allWords.length === 0) return;
+
+      // Determine count based on intensity
+      let count;
+      switch (dictIntensity) {
+        case 'light': count = 5; break;
+        case 'medium': count = 10; break;
+        case 'heavy': count = allWords.length; break;
+        default: count = 10;
+      }
+
+      // Get words (shuffle for variety, then take the slice)
+      const shuffled = shuffleArray([...allWords]);
+      const selectedWords = shuffled.slice(0, Math.min(count, allWords.length));
+
+      // Render jargon tags
+      jargonTags.innerHTML = '';
+      selectedWords.forEach((word, index) => {
+        const tag = document.createElement('span');
+        tag.className = 'jargon-tag';
+        tag.textContent = word;
+        tag.style.animationDelay = `${index * 0.05}s`;
+        jargonTags.appendChild(tag);
+      });
+
+      // Generate example sentence
+      const sentence = generateSentence(selectedType);
+      exampleText.textContent = sentence;
+
+      // Store result for copy
+      lastDictResult = {
+        type: TYPE_NAMES[selectedType],
+        words: selectedWords,
+        sentence: sentence
+      };
+
+      // Show result
+      dictResult.classList.add('visible');
+
+      // Scroll to result
+      requestAnimationFrame(() => {
+        dictResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    }
+
+    function generateSentence(type) {
+      const templates = SENTENCE_TEMPLATES[type];
+      if (!templates || templates.length === 0) return '';
+
+      const template = templates[Math.floor(Math.random() * templates.length)];
+
+      return template.replace(/\{(\w+)\}/g, (match, key) => {
+        const options = TEMPLATE_VARS[key];
+        if (!options || options.length === 0) return match;
+        return String(options[Math.floor(Math.random() * options.length)]);
+      });
+    }
+
+    // ================================================
+    // Text Translation
+    // ================================================
+    translateBtn.addEventListener('click', translateText);
+    document.getElementById('regenerateTranslate').addEventListener('click', translateText);
+
+    function translateText() {
+      const input = translateInput.value.trim();
+      if (!input) {
+        showToast('请先输入要翻译的文本');
+        return;
+      }
+
+      let result = input;
+
+      // Determine replacement intensity
+      let replacementChance;
+      switch (translateIntensity) {
+        case 'light': replacementChance = 0.4; break;
+        case 'medium': replacementChance = 0.7; break;
+        case 'heavy': replacementChance = 1.0; break;
+        default: replacementChance = 0.7;
+      }
+
+      // Apply replacements
+      for (const rule of TRANSLATION_MAP) {
+        if (Math.random() < replacementChance) {
+          const replacement = rule.replacements[Math.floor(Math.random() * rule.replacements.length)];
+          result = result.replace(rule.pattern, replacement);
+        }
+      }
+
+      // Append jargon phrase based on intensity
+      const suffixCount = translateIntensity === 'light' ? 1
+        : translateIntensity === 'medium' ? 2 : 3;
+
+      const usedSuffixes = [];
+      for (let i = 0; i < suffixCount; i++) {
+        const suffix = JARGON_SUFFIXES[Math.floor(Math.random() * JARGON_SUFFIXES.length)];
+        const jargon = ALL_JARGON_WORDS[Math.floor(Math.random() * ALL_JARGON_WORDS.length)];
+        const rendered = suffix.replace('{jargon}', jargon);
+        if (!usedSuffixes.includes(rendered)) {
+          usedSuffixes.push(rendered);
+        }
+      }
+
+      if (usedSuffixes.length > 0) {
+        result = result + '，' + usedSuffixes.join('，') + '。';
+      }
+
+      // Display result
+      originalText.textContent = input;
+      translatedText.textContent = result;
+
+      lastTranslateResult = result;
+
+      // Show result
+      translateResult.classList.add('visible');
+
+      // Scroll to result
+      requestAnimationFrame(() => {
+        translateResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    }
+
+    // ================================================
+    // Copy Functions
+    // ================================================
+    document.getElementById('copyDict').addEventListener('click', () => {
+      if (!lastDictResult) return;
+
+      const text = `【${lastDictResult.type}黑话】\n`
+        + `词汇：${lastDictResult.words.join('、')}\n`
+        + `例句：${lastDictResult.sentence}`;
+
+      copyToClipboard(text, document.getElementById('copyDict'));
+    });
+
+    document.getElementById('copyTranslate').addEventListener('click', () => {
+      if (!lastTranslateResult) return;
+      copyToClipboard(lastTranslateResult, document.getElementById('copyTranslate'));
+    });
+
+    function copyToClipboard(text, btnEl) {
+      navigator.clipboard.writeText(text).then(() => {
+        btnEl.classList.add('copied');
+        btnEl.textContent = '✓ 已复制';
+        showToast('已复制到剪贴板');
+        setTimeout(() => {
+          btnEl.classList.remove('copied');
+          btnEl.textContent = '📋 复制全部';
+        }, 2000);
+      }).catch(() => {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          document.execCommand('copy');
+          btnEl.classList.add('copied');
+          btnEl.textContent = '✓ 已复制';
+          showToast('已复制到剪贴板');
+          setTimeout(() => {
+            btnEl.classList.remove('copied');
+            btnEl.textContent = '📋 复制全部';
+          }, 2000);
+        } catch (err) {
+          showToast('复制失败，请手动复制');
+        }
+        document.body.removeChild(textarea);
+      });
+    }
+
+    // ================================================
+    // Toast
+    // ================================================
+    function showToast(message) {
+      toastEl.textContent = message;
+      toastEl.classList.add('show');
+      setTimeout(() => {
+        toastEl.classList.remove('show');
+      }, 2000);
+    }
+
+    // ================================================
+    // Utilities
+    // ================================================
+    function shuffleArray(arr) {
+      const result = [...arr];
+      for (let i = result.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = result[i];
+        result[i] = result[j];
+        result[j] = temp;
+      }
+      return result;
+    }
+
+    // ================================================
+    // Keyboard Shortcuts
+    // ================================================
+    document.addEventListener('keydown', (e) => {
+      // Enter to generate/translate when focused on translate input
+      if (e.key === 'Enter' && !e.shiftKey && document.activeElement === translateInput) {
+        e.preventDefault();
+        translateText();
+      }
+    });
+  </script>
+</body>
+</html>

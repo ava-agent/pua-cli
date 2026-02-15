@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>周报生成器 - PUA CLI</title>
+  <meta name="description" content="周报生成器 - 一键生成各角色风格的职场周报，6种角色任选">
+  <meta property="og:title" content="周报生成器 - PUA CLI">
+  <meta property="og:description" content="一键生成各角色风格的职场周报，支持老板、员工、产品经理、HR、技术主管、实习生">
+  <meta name="theme-color" content="#0a0a0a">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'JetBrains Mono', 'Consolas', monospace;
+      background: #0a0a0a;
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: #e0e0e0;
+    }
+
+    /* === Nav Bar === */
+    .nav-bar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: #111;
+      border-bottom: 1px solid #222;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .nav-bar::-webkit-scrollbar { height: 0; }
+
+    .nav-link {
+      color: #666;
+      text-decoration: none;
+      font-size: 12px;
+      padding: 10px 14px;
+      white-space: nowrap;
+      transition: all 0.2s;
+      border-bottom: 2px solid transparent;
+      flex-shrink: 0;
+    }
+
+    .nav-link:hover {
+      color: #ccc;
+      background: #1a1a1a;
+    }
+
+    .nav-link.active {
+      color: #00ccff;
+      border-bottom-color: #00ccff;
+    }
+
+    /* === Terminal Shell === */
+    .terminal {
+      width: 90%;
+      max-width: 900px;
+      margin: 30px auto 40px;
+      background: #0a0a0a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+    }
+
+    .terminal-header {
+      padding: 10px 16px;
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #333;
+    }
+
+    .terminal-buttons { display: flex; gap: 8px; }
+    .terminal-btn { width: 12px; height: 12px; border-radius: 50%; }
+    .terminal-btn.close { background: #ff5f56; }
+    .terminal-btn.minimize { background: #ffbd2e; }
+    .terminal-btn.maximize { background: #27ca3f; }
+    .terminal-title { color: #888; font-size: 12px; flex: 1; text-align: center; }
+
+    .terminal-body {
+      padding: 24px;
+      overflow-y: auto;
+      background: #0a0a0a;
+    }
+
+    .terminal-body::-webkit-scrollbar { width: 8px; }
+    .terminal-body::-webkit-scrollbar-track { background: #0a0a0a; }
+    .terminal-body::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+    .terminal-body::-webkit-scrollbar-thumb:hover { background: #444; }
+
+    /* === Setup Header === */
+    .setup-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .setup-header .logo-emoji {
+      font-size: 48px;
+      display: block;
+      margin-bottom: 8px;
+      animation: floatBounce 3s ease-in-out infinite;
+    }
+
+    @keyframes floatBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .setup-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      background: linear-gradient(90deg, #00ccff, #00ff88);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .setup-subtitle {
+      color: #666;
+      font-size: 12px;
+    }
+
+    /* === Section Labels === */
+    .section-label {
+      color: #888;
+      font-size: 13px;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    /* === Role Grid === */
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .role-card {
+      background: #111;
+      border: 2px solid #333;
+      border-radius: 12px;
+      padding: 16px 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s;
+      user-select: none;
+      position: relative;
+    }
+
+    .role-card:hover {
+      border-color: #555;
+      transform: translateY(-2px);
+    }
+
+    .role-card.selected {
+      border-color: #00ccff;
+      background: #0a1a2a;
+      box-shadow: 0 0 20px rgba(0, 204, 255, 0.15);
+    }
+
+    .role-card.selected .role-check {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .role-check {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #00ccff;
+      color: #000;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: scale(0);
+      transition: all 0.25s;
+    }
+
+    .role-emoji {
+      font-size: 32px;
+      margin-bottom: 6px;
+    }
+
+    .role-name {
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .role-desc {
+      color: #666;
+      font-size: 10px;
+      margin-top: 4px;
+    }
+
+    /* === Week Selector === */
+    .week-selector {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .week-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #111;
+      border: 1px solid #333;
+      color: #00ccff;
+      font-size: 18px;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .week-btn:hover {
+      border-color: #00ccff;
+      background: #0a1a2a;
+    }
+
+    .week-display {
+      font-size: 16px;
+      color: #e0e0e0;
+      min-width: 120px;
+      text-align: center;
+    }
+
+    .week-display .number {
+      color: #00ccff;
+      font-weight: 700;
+      font-size: 20px;
+    }
+
+    /* === Generate Button === */
+    .generate-btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #0088cc, #00aaff);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 8px;
+    }
+
+    .generate-btn:hover {
+      background: linear-gradient(135deg, #00aaff, #00ccff);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(0, 204, 255, 0.3);
+    }
+
+    .generate-btn:disabled {
+      background: #333;
+      color: #666;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .generate-hint {
+      color: #555;
+      font-size: 11px;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    /* === Report Container === */
+    .report-container {
+      display: none;
+      animation: fadeSlideIn 0.4s ease-out;
+    }
+
+    .report-container.visible {
+      display: block;
+    }
+
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* === Report Box === */
+    .report-box {
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .report-header {
+      text-align: center;
+      padding-bottom: 16px;
+      margin-bottom: 20px;
+      border-bottom: 1px dashed #333;
+    }
+
+    .report-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #00ccff;
+      margin-bottom: 4px;
+    }
+
+    .report-meta {
+      color: #666;
+      font-size: 11px;
+    }
+
+    /* Report Sections */
+    .report-section {
+      margin-bottom: 20px;
+    }
+
+    .report-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .report-section-title {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #222;
+    }
+
+    .report-section-title.highlights { color: #44ff44; }
+    .report-section-title.plans { color: #ffcc00; }
+    .report-section-title.risks { color: #ff4444; }
+    .report-section-title.data { color: #4488ff; }
+
+    .report-item {
+      color: #b8b8b8;
+      font-size: 13px;
+      line-height: 1.8;
+      padding-left: 4px;
+    }
+
+    .report-item .ordinal {
+      color: #888;
+      margin-right: 6px;
+    }
+
+    /* === Action Buttons === */
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .action-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .action-btn.copy {
+      background: #0a1a2a;
+      border: 1px solid #00ccff;
+      color: #00ccff;
+    }
+
+    .action-btn.copy:hover {
+      background: #0d2040;
+      box-shadow: 0 0 12px rgba(0, 204, 255, 0.2);
+    }
+
+    .action-btn.copy.copied {
+      background: #0a2a0a;
+      border-color: #44ff44;
+      color: #44ff44;
+    }
+
+    .action-btn.regenerate {
+      background: #111;
+      border: 1px solid #333;
+      color: #888;
+    }
+
+    .action-btn.regenerate:hover {
+      border-color: #666;
+      color: #ccc;
+    }
+
+    /* === Status Bar === */
+    .status-bar {
+      padding: 6px 16px;
+      background: #111;
+      border-top: 1px solid #333;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: #555;
+    }
+
+    .status-bar .left { color: #00ccff; }
+    .status-bar .right { color: #666; }
+    .status-bar a { color: #00ccff; text-decoration: none; transition: color 0.2s; }
+    .status-bar a:hover { color: #00ffff; }
+    .status-bar .sep { color: #444; margin: 0 6px; }
+
+    /* === Responsive === */
+    @media (max-width: 600px) {
+      .terminal {
+        width: 95%;
+        margin: 15px auto 30px;
+      }
+
+      .terminal-body {
+        padding: 16px;
+      }
+
+      .role-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+
+      .role-emoji { font-size: 26px; }
+      .role-name { font-size: 12px; }
+      .role-card { padding: 12px 8px; }
+
+      .setup-title { font-size: 18px; }
+
+      .report-box { padding: 16px; }
+
+      .action-buttons { flex-direction: column; }
+
+      .nav-link { padding: 8px 10px; font-size: 11px; }
+
+      .status-bar {
+        flex-direction: column;
+        gap: 4px;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Nav Bar -->
+<nav class="nav-bar">
+  <a class="nav-link" href="index.html">首页</a>
+  <a class="nav-link" href="jargon.html">黑话生成</a>
+  <a class="nav-link active" href="weekly.html">周报生成</a>
+  <a class="nav-link" href="email.html">邮件转换</a>
+  <a class="nav-link" href="meeting-suggest.html">会议发言</a>
+  <a class="nav-link" href="meeting.html">会议室</a>
+  <a class="nav-link" href="interview.html">压力面试</a>
+</nav>
+
+<div class="terminal">
+  <div class="terminal-header">
+    <div class="terminal-buttons">
+      <span class="terminal-btn close"></span>
+      <span class="terminal-btn minimize"></span>
+      <span class="terminal-btn maximize"></span>
+    </div>
+    <div class="terminal-title">周报生成器 — pua-cli</div>
+  </div>
+
+  <div class="terminal-body" id="terminalBody">
+    <!-- Setup Header -->
+    <div class="setup-header">
+      <span class="logo-emoji">📋</span>
+      <div class="setup-title">周报生成器</div>
+      <div class="setup-subtitle">一键生成各角色风格的职场周报</div>
+    </div>
+
+    <!-- Role Selection -->
+    <span class="section-label">选择角色</span>
+    <div class="role-grid" id="roleGrid">
+      <div class="role-card" data-role="boss">
+        <span class="role-check">✓</span>
+        <div class="role-emoji">👔</div>
+        <div class="role-name">老板</div>
+        <div class="role-desc">指导监督 / 管理层视角</div>
+      </div>
+      <div class="role-card" data-role="employee">
+        <span class="role-check">✓</span>
+        <div class="role-emoji">😓</div>
+        <div class="role-name">员工</div>
+        <div class="role-desc">完成任务 / 打工人日常</div>
+      </div>
+      <div class="role-card" data-role="pm">
+        <span class="role-check">✓</span>
+        <div class="role-emoji">📋</div>
+        <div class="role-name">产品经理</div>
+        <div class="role-desc">需求评审 / 产品迭代</div>
+      </div>
+      <div class="role-card" data-role="hr">
+        <span class="role-check">✓</span>
+        <div class="role-emoji">💼</div>
+        <div class="role-name">HR</div>
+        <div class="role-desc">团队建设 / 企业文化</div>
+      </div>
+      <div class="role-card" data-role="techlead">
+        <span class="role-check">✓</span>
+        <div class="role-emoji">💻</div>
+        <div class="role-name">技术主管</div>
+        <div class="role-desc">代码审查 / 架构重构</div>
+      </div>
+      <div class="role-card" data-role="intern">
+        <span class="role-check">✓</span>
+        <div class="role-emoji">🌱</div>
+        <div class="role-name">实习生</div>
+        <div class="role-desc">学习成长 / 虚心请教</div>
+      </div>
+    </div>
+
+    <!-- Week Selector -->
+    <span class="section-label">选择周数</span>
+    <div class="week-selector">
+      <button class="week-btn" id="weekMinus" title="上一周">-</button>
+      <div class="week-display">第 <span class="number" id="weekNumber">1</span> 周</div>
+      <button class="week-btn" id="weekPlus" title="下一周">+</button>
+    </div>
+
+    <!-- Generate Button -->
+    <button class="generate-btn" id="generateBtn" disabled>生成周报</button>
+    <div class="generate-hint" id="generateHint">请先选择一个角色</div>
+
+    <!-- Report Result -->
+    <div class="report-container" id="reportContainer">
+      <div class="report-box" id="reportBox">
+        <!-- Filled by JS -->
+      </div>
+      <div class="action-buttons">
+        <button class="action-btn copy" id="copyBtn">📋 复制到剪贴板</button>
+        <button class="action-btn regenerate" id="regenerateBtn">🔄 重新生成</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <div class="left">
+      <span>📋 周报生成器</span>
+    </div>
+    <div class="right">
+      <a href="index.html">首页</a>
+      <span class="sep">|</span>
+      <a href="meeting.html">会议室</a>
+      <span class="sep">|</span>
+      <a href="interview.html">压力面试</a>
+      <span class="sep">|</span>
+      <a href="https://github.com/ava-agent/pua-cli" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== DATA ====================
+const WEEKLY_TEMPLATES = {
+  boss: {
+    highlights: [
+      '本周对{X}个下属的工作进行了指导和监督',
+      '与{X}位员工进行了1对1沟通',
+      '参加了{X}场管理层会议',
+      '对团队工作状态进行了{X}次检查'
+    ],
+    plans: [
+      '下周计划重点关注{X}个项目的推进',
+      '计划进行{X}次团队培训',
+      '准备与{X}位核心员工进行深入沟通',
+      '计划召开{X}场部门协调会'
+    ],
+    risks: [
+      '可能存在{X}个项目进度风险',
+      '需要注意{X}位员工的绩效问题',
+      '资源可能存在{X}%的缺口',
+      '可能面临{X}个外部挑战'
+    ],
+    data: [
+      '本周团队产出提升{X}%',
+      '完成{X}个关键里程碑',
+      '团队加班时长{X}小时',
+      '客户满意度{X}%'
+    ]
+  },
+  employee: {
+    highlights: [
+      '完成了{X}个分配任务',
+      '参与了{X}个项目会议',
+      '处理了{X}个工单/问题',
+      '学习了{X}项新技术/业务知识'
+    ],
+    plans: [
+      '下周计划完成{X}个待办任务',
+      '准备{X}个文档/报告',
+      '计划学习{X}项新技能',
+      '跟进{X}个问题处理进度'
+    ],
+    risks: [
+      '可能存在{X}个技术难点',
+      '{X}个任务可能时间紧张',
+      '需要等待{X}个依赖/支持',
+      '个人技能可能存在{X}个不足'
+    ],
+    data: [
+      '完成任务{X}个',
+      '代码提交{X}次',
+      '修复Bug{X}个',
+      '参加培训{X}小时'
+    ]
+  },
+  pm: {
+    highlights: [
+      '完成了{X}个需求的评审和确认',
+      '与{X}个干系人对齐了产品方向',
+      '进行了{X}场用户调研/数据分析',
+      '输出了{X}份产品文档/原型'
+    ],
+    plans: [
+      '下周计划上线{X}个新功能',
+      '准备进行{X}场产品宣讲',
+      '计划优化{X}个核心流程',
+      '准备{X}个版本的迭代规划'
+    ],
+    risks: [
+      '{X}个需求可能存在变更风险',
+      '开发资源可能存在{X}%的缺口',
+      '{X}个功能可能延期上线',
+      '用户反馈可能存在{X}个不确定性'
+    ],
+    data: [
+      '需求完成率{X}%',
+      '需求评审{X}场',
+      '文档输出{X}份',
+      '干系人对齐{X}次'
+    ]
+  },
+  hr: {
+    highlights: [
+      '组织了{X}场团队建设活动',
+      '完成了{X}位员工的入职/离职手续',
+      '处理了{X}个员工关系/问题',
+      '推进了{X}项企业文化建设工作'
+    ],
+    plans: [
+      '下周计划组织{X}场培训活动',
+      '准备进行{X}次员工访谈',
+      '计划优化{X}项HR流程制度',
+      '准备{X}场团建/文化活动'
+    ],
+    risks: [
+      '员工满意度可能存在{X}%的波动',
+      '{X}位核心员工可能存在离职风险',
+      '招聘计划可能存在{X}%的缺口',
+      '文化建设可能存在{X}个阻力'
+    ],
+    data: [
+      '新入职员工{X}人',
+      '离职员工{X}人',
+      '培训覆盖率{X}%',
+      '员工满意度{X}%'
+    ]
+  },
+  techlead: {
+    highlights: [
+      '完成了{X}次代码审查',
+      '处理了{X}个技术债务',
+      '进行了{X}场技术分享会',
+      '重构了{X}个核心模块'
+    ],
+    plans: [
+      '下周计划优化{X}个性能瓶颈',
+      '准备进行{X}项技术调研',
+      '计划重构{X}个遗留模块',
+      '准备输出{X}份技术文档'
+    ],
+    risks: [
+      '{X}个系统可能存在稳定性风险',
+      '{X}个技术债务可能影响交付',
+      '团队技能可能存在{X}个短板',
+      '{X}个依赖项可能存在兼容性问题'
+    ],
+    data: [
+      '代码审查{X}次',
+      'Bug修复{X}个',
+      '性能优化{X}项',
+      '技术分享{X}场'
+    ]
+  },
+  intern: {
+    highlights: [
+      '完成了{X}个分配的学习任务',
+      '参与了{X}个项目会议',
+      '向{X}位同事请教了问题',
+      '学习了{X}项新技能'
+    ],
+    plans: [
+      '下周计划学习{X}项新内容',
+      '准备参与{X}个项目',
+      '计划请教{X}位资深同事',
+      '计划阅读{X}篇技术文档'
+    ],
+    risks: [
+      '可能存在{X}个知识盲区',
+      '{X}个任务可能超出能力范围',
+      '需要依赖{X}位同事的指导',
+      '学习曲线可能存在{X}个挑战'
+    ],
+    data: [
+      '学习时长{X}小时',
+      '完成任务{X}个',
+      '提问{X}次',
+      '文档阅读{X}篇'
+    ]
+  }
+};
+
+const ROLE_NAMES = {
+  boss: '老板',
+  employee: '员工',
+  pm: '产品经理',
+  hr: 'HR',
+  techlead: '技术主管',
+  intern: '实习生'
+};
+
+const CHINESE_ORDINALS = ['一', '二', '三', '四', '五'];
+
+// ==================== STATE ====================
+let selectedRole = null;
+let currentWeek = getWeekNumber(new Date());
+
+// ==================== WEEK CALCULATION ====================
+function getWeekNumber(date) {
+  const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+  const pastDaysOfYear = (date.getTime() - firstDayOfYear.getTime()) / 86400000;
+  return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+}
+
+// ==================== HELPERS ====================
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function fillPlaceholder(template) {
+  return template.replace(/\{X\}/g, () => String(randomInt(1, 5)));
+}
+
+function shuffleArray(arr) {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function pickRandom(arr, min, max) {
+  const count = randomInt(min, max);
+  const shuffled = shuffleArray(arr);
+  return shuffled.slice(0, Math.min(count, arr.length));
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ==================== GENERATION ====================
+function generateReport(role, week) {
+  const template = WEEKLY_TEMPLATES[role];
+  if (!template) return null;
+
+  const highlights = pickRandom(template.highlights, 3, 5).map(fillPlaceholder);
+  const plans = pickRandom(template.plans, 2, 4).map(fillPlaceholder);
+  const risks = pickRandom(template.risks, 1, 2).map(fillPlaceholder);
+  const data = template.data.map(fillPlaceholder);
+
+  return {
+    role,
+    roleName: ROLE_NAMES[role],
+    week,
+    highlights,
+    plans,
+    risks,
+    data
+  };
+}
+
+function renderReport(report) {
+  const reportBox = document.getElementById('reportBox');
+
+  const buildItems = (items) => {
+    return items.map((item, i) => {
+      const ordinal = CHINESE_ORDINALS[i] || String(i + 1);
+      return `<div class="report-item"><span class="ordinal">${escapeHtml(ordinal)}、</span>${escapeHtml(item)}</div>`;
+    }).join('');
+  };
+
+  reportBox.innerHTML = `
+    <div class="report-header">
+      <div class="report-title">周报 - ${escapeHtml(report.roleName)} - 第${report.week}周</div>
+      <div class="report-meta">生成时间: ${new Date().toLocaleString('zh-CN')}</div>
+    </div>
+
+    <div class="report-section">
+      <div class="report-section-title highlights">📌 本周工作</div>
+      ${buildItems(report.highlights)}
+    </div>
+
+    <div class="report-section">
+      <div class="report-section-title plans">📅 下周计划</div>
+      ${buildItems(report.plans)}
+    </div>
+
+    <div class="report-section">
+      <div class="report-section-title risks">⚠️ 风险与问题</div>
+      ${buildItems(report.risks)}
+    </div>
+
+    <div class="report-section">
+      <div class="report-section-title data">📊 数据统计</div>
+      ${buildItems(report.data)}
+    </div>
+  `;
+
+  const container = document.getElementById('reportContainer');
+  container.classList.remove('visible');
+  // Trigger reflow for animation
+  void container.offsetWidth;
+  container.classList.add('visible');
+
+  // Scroll to report
+  requestAnimationFrame(() => {
+    container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+}
+
+// ==================== COPY TO CLIPBOARD ====================
+function getReportPlainText() {
+  const reportBox = document.getElementById('reportBox');
+
+  const title = reportBox.querySelector('.report-title').textContent;
+  const sections = reportBox.querySelectorAll('.report-section');
+
+  let text = title + '\n';
+  text += '='.repeat(title.length * 2) + '\n\n';
+
+  sections.forEach(section => {
+    const sectionTitle = section.querySelector('.report-section-title').textContent;
+    text += sectionTitle + '\n';
+
+    const items = section.querySelectorAll('.report-item');
+    items.forEach(item => {
+      text += item.textContent + '\n';
+    });
+
+    text += '\n';
+  });
+
+  return text.trim();
+}
+
+// ==================== INIT ====================
+function init() {
+  // Set week display
+  updateWeekDisplay();
+
+  // Role selection
+  const roleGrid = document.getElementById('roleGrid');
+  roleGrid.addEventListener('click', (e) => {
+    const card = e.target.closest('.role-card');
+    if (!card) return;
+
+    document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    selectedRole = card.dataset.role;
+    updateGenerateButton();
+  });
+
+  // Week buttons
+  document.getElementById('weekMinus').addEventListener('click', () => {
+    if (currentWeek > 1) {
+      currentWeek--;
+      updateWeekDisplay();
+    }
+  });
+
+  document.getElementById('weekPlus').addEventListener('click', () => {
+    if (currentWeek < 53) {
+      currentWeek++;
+      updateWeekDisplay();
+    }
+  });
+
+  // Generate button
+  document.getElementById('generateBtn').addEventListener('click', () => {
+    if (!selectedRole) return;
+    const report = generateReport(selectedRole, currentWeek);
+    if (report) {
+      renderReport(report);
+    }
+  });
+
+  // Copy button
+  document.getElementById('copyBtn').addEventListener('click', () => {
+    const text = getReportPlainText();
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = '✓ 已复制';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = '📋 复制到剪贴板';
+        btn.classList.remove('copied');
+      }, 2000);
+    }).catch(() => {
+      // Fallback for older browsers
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        const btn = document.getElementById('copyBtn');
+        btn.textContent = '✓ 已复制';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = '📋 复制到剪贴板';
+          btn.classList.remove('copied');
+        }, 2000);
+      } catch (err) {
+        // Silently fail
+      }
+      document.body.removeChild(textarea);
+    });
+  });
+
+  // Regenerate button
+  document.getElementById('regenerateBtn').addEventListener('click', () => {
+    if (!selectedRole) return;
+    const report = generateReport(selectedRole, currentWeek);
+    if (report) {
+      renderReport(report);
+    }
+  });
+}
+
+function updateWeekDisplay() {
+  document.getElementById('weekNumber').textContent = currentWeek;
+}
+
+function updateGenerateButton() {
+  const btn = document.getElementById('generateBtn');
+  const hint = document.getElementById('generateHint');
+
+  if (selectedRole) {
+    btn.disabled = false;
+    hint.textContent = `当前角色: ${ROLE_NAMES[selectedRole]}`;
+  } else {
+    btn.disabled = true;
+    hint.textContent = '请先选择一个角色';
+  }
+}
+
+// Start
+init();
+</script>
+
+</body>
+</html>
