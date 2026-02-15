@@ -7,7 +7,7 @@ const ZHIPU_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
 
 // 安全配置
 const MAX_MESSAGE_LENGTH = 500;
-const MAX_INTERVIEW_REQUESTS_PER_MINUTE = 3;
+const MAX_INTERVIEW_REQUESTS_PER_MINUTE = 10;
 const FORBIDDEN_WORDS = ['<script>', 'javascript:', 'onerror=', 'onload=', 'eval(', 'document.cookie'];
 const VALID_INTERVIEWERS = ['techlead', 'boss', 'hr', 'pm'];
 const VALID_POSITIONS = ['frontend', 'backend', 'product', 'design'];
@@ -209,11 +209,12 @@ ${stressHint}
 【输出规则 - 必须严格遵守】
 1. 每次只问 1 个问题或做 1 个点评
 2. 绝对不要用 [名字]: 格式，直接说话
-3. 回复 30-60 字，像真正面试官说的话
-4. 保持你的面试官性格
-5. 不要说"作为AI"或暴露技术身份
-6. 根据候选人回答追问或转换话题
-7. 如果其他面试官发言了，你可以补刀或追问`;
+3. 绝对不要用（名字说："..."）这种叙述格式，直接说你要说的话
+4. 回复 30-60 字，像真正面试官说的话
+5. 保持你的面试官性格
+6. 不要说"作为AI"或暴露技术身份
+7. 根据候选人回答追问或转换话题
+8. 不要复述或转述上下文中的格式，只输出你自己的话`;
 }
 
 // 调用 Zhipu API
@@ -254,29 +255,57 @@ async function callZhipuAPI(
   if (!response.ok) {
     const errorData = await response.text();
     console.error('Zhipu API error:', errorData);
+    // 内容安全过滤
+    if (response.status === 400 && errorData.includes('sensitive')) {
+      throw new Error('CONTENT_FILTERED');
+    }
     throw new Error('AI 服务暂时不可用');
   }
 
   const data = await response.json();
-  return data.choices?.[0]?.message?.content || '...';
+  const content = data.choices?.[0]?.message?.content || '';
+  // Zhipu 有时返回空内容表示过滤
+  if (!content || content.trim().length === 0) {
+    throw new Error('CONTENT_FILTERED');
+  }
+  return content;
 }
 
-// 清理 AI 回复
+// 清理 AI 回复 - 去除叙述格式、嵌套引用、角色名前缀
 function cleanResponse(raw: string, currentRole: string): string {
   let cleaned = raw.trim();
 
   const allNames = Object.values(INTERVIEWER_NAMES);
+
+  // 去除嵌套的叙述格式 （名字说："..."） - 可能多层嵌套，循环剥离
+  for (let i = 0; i < 5; i++) {
+    let changed = false;
+    for (const name of allNames) {
+      const narrativePattern = new RegExp(`[（(]${name}说[：:]\\s*[""](.+?)[""][）)]`, 'gs');
+      const newCleaned = cleaned.replace(narrativePattern, '$1');
+      if (newCleaned !== cleaned) { cleaned = newCleaned; changed = true; }
+    }
+    // 通用叙述格式（面试官说："..."）
+    const genericPattern = /[（(](?:面试官|其他面试官的发言)[：:]?\s*[""]?(.+?)[""]?[）)]/gs;
+    const newCleaned2 = cleaned.replace(genericPattern, '$1');
+    if (newCleaned2 !== cleaned) { cleaned = newCleaned2; changed = true; }
+    if (!changed) break;
+  }
+
+  // 去除 [角色名]: 或 角色名: 格式
   for (const name of allNames) {
     cleaned = cleaned.replace(new RegExp(`^\\[${name}\\][:：]\\s*`, 'g'), '');
     cleaned = cleaned.replace(new RegExp(`^${name}[:：]\\s*`, 'g'), '');
   }
 
+  // 去除回复中夹带的其他角色发言
   for (const name of allNames) {
     if (name === INTERVIEWER_NAMES[currentRole]) continue;
     cleaned = cleaned.replace(new RegExp(`\\s*\\[${name}\\][:：][^\\n]*`, 'g'), '');
   }
 
-  cleaned = cleaned.replace(/^["「](.+)["」]$/, '$1');
+  // 去除多余的引号包裹
+  cleaned = cleaned.replace(/^["「""](.+)["」""]$/, '$1');
   cleaned = cleaned.trim();
 
   if (cleaned.length < 2 || cleaned === '...' || cleaned === '……') {
@@ -503,8 +532,13 @@ export default async function handler(req: any, res: any) {
     const respondents = selectInterviewers(interviewers, newRound, severity || 2);
 
     // 5. Build context and call AI
+    // 将历史消息全部转为 user 角色的叙述格式，避免 AI 混淆角色
+    const narrativeHistory = safeHistory.map(m => ({
+      role: 'user' as const,
+      content: m.role === 'user' ? m.content : `（面试官回复：${m.content}）`,
+    }));
     const contextMessages: Array<{ role: string; content: string }> = [
-      ...safeHistory,
+      ...narrativeHistory,
       { role: 'user', content: answer },
     ];
 
@@ -542,8 +576,18 @@ export default async function handler(req: any, res: any) {
           content,
           mood,
         });
-      } catch (err) {
-        console.error(`Failed to get response for ${role}:`, err);
+      } catch (err: any) {
+        if (err?.message === 'CONTENT_FILTERED') {
+          // 内容被过滤时，面试官给一个通用回复
+          responses.push({
+            role,
+            name: INTERVIEWER_NAMES[role] || role,
+            content: '请注意你的措辞，我们是正式面试。回到正题，你对这个岗位有什么了解？',
+            mood: 'cold',
+          });
+        } else {
+          console.error(`Failed to get response for ${role}:`, err);
+        }
       }
     }
 

@@ -818,7 +818,7 @@
         if (data.responses) {
           for (const resp of data.responses) {
             addInterviewerMessage(resp.role, resp.content, resp.mood);
-            history.push({ role: 'assistant', content: `（${resp.name}说："${resp.content}"）` });
+            history.push({ role: 'assistant', content: resp.content });
           }
         }
 
@@ -830,7 +830,7 @@
         typingIndicator.style.display = 'none';
         clearChipSpeaking();
         addInterviewerMessage(firstRole, '请先做个自我介绍吧。', 'cold');
-        history.push({ role: 'assistant', content: '（面试官说："请先做个自我介绍吧。"）' });
+        history.push({ role: 'assistant', content: '请先做个自我介绍吧。' });
       }
 
       isLoading = false;
@@ -937,7 +937,7 @@
           for (const resp of data.responses) {
             setChipSpeaking(resp.role);
             addInterviewerMessage(resp.role, resp.content, resp.mood);
-            history.push({ role: 'assistant', content: `（${resp.name}说："${resp.content}"）` });
+            history.push({ role: 'assistant', content: resp.content });
           }
           clearChipSpeaking();
         }
@@ -954,7 +954,11 @@
       } catch (err) {
         typingIndicator.style.display = 'none';
         clearChipSpeaking();
-        addEventMessage('❌ 请求失败: ' + err.message);
+        if (err.message && err.message.includes('Failed to fetch')) {
+          addEventMessage('⚠️ 网络连接失败，请检查网络后重试');
+        } else {
+          addEventMessage('❌ 请求失败: ' + (err.message || '未知错误'));
+        }
       }
 
       isLoading = false;

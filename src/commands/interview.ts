@@ -157,23 +157,40 @@ function renderEnding(state: InterviewState): void {
 }
 
 /**
- * 清理 AI 回复
+ * 清理 AI 回复 - 去除叙述格式、嵌套引用、角色名前缀
  */
 function cleanInterviewResponse(raw: string, currentRole: InterviewerRole): string {
   let cleaned = raw.trim();
 
   const allNames = Object.values(INTERVIEWER_NAMES);
+
+  // 去除嵌套的叙述格式 （名字说："..."） - 循环剥离多层
+  for (let i = 0; i < 5; i++) {
+    let changed = false;
+    for (const name of allNames) {
+      const narrativePattern = new RegExp(`[（(]${name}说[：:]\\s*[""\u201C](.+?)[""\u201D][）)]`, 'gs');
+      const newCleaned = cleaned.replace(narrativePattern, '$1');
+      if (newCleaned !== cleaned) { cleaned = newCleaned; changed = true; }
+    }
+    const genericPattern = /[（(](?:面试官|其他面试官的发言)[：:]?\s*[""\u201C]?(.+?)[""\u201D]?[）)]/gs;
+    const newCleaned2 = cleaned.replace(genericPattern, '$1');
+    if (newCleaned2 !== cleaned) { cleaned = newCleaned2; changed = true; }
+    if (!changed) break;
+  }
+
+  // 去除 [角色名]: 或 角色名: 格式
   for (const name of allNames) {
     cleaned = cleaned.replace(new RegExp(`^\\[${name}\\][:：]\\s*`, 'g'), '');
     cleaned = cleaned.replace(new RegExp(`^${name}[:：]\\s*`, 'g'), '');
   }
 
+  // 去除回复中夹带的其他角色发言
   for (const name of allNames) {
     if (name === INTERVIEWER_NAMES[currentRole]) continue;
     cleaned = cleaned.replace(new RegExp(`\\s*\\[${name}\\][:：][^\\n]*`, 'g'), '');
   }
 
-  cleaned = cleaned.replace(/^["「](.+)["」]$/, '$1');
+  cleaned = cleaned.replace(/^["「""\u201C](.+)["」""\u201D]$/, '$1');
   cleaned = cleaned.trim();
 
   if (cleaned.length < 2 || cleaned === '...' || cleaned === '……') {
