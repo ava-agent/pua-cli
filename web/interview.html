@@ -432,7 +432,7 @@
 
         <!-- Interviewer Selection -->
         <div class="setup-section">
-          <div class="setup-label">选择面试官（2-4 人，点击选择）</div>
+          <div class="setup-label" id="interviewerLabel">选择面试官（已选 0/4，至少 2 人）</div>
           <div class="interviewer-grid" id="interviewerGrid">
             <div class="interviewer-card" data-role="techlead">
               <div class="emoji">💻</div>
@@ -467,6 +467,7 @@
           </div>
         </div>
 
+        <div class="start-hint" id="startHint" style="color:#ff6644;font-size:11px;text-align:center;margin-bottom:8px;">请选择面试岗位，并选择至少 2 位面试官</div>
         <button class="start-btn" id="startBtn" disabled>开始面试</button>
         <div style="text-align:center;margin-top:10px;">
           <a href="/" style="color:#666;font-size:11px;text-decoration:none;">← 返回首页</a>
@@ -627,6 +628,8 @@
         card.classList.add('selected');
         selectedInterviewers.push(role);
       }
+      document.getElementById('interviewerLabel').textContent =
+        `选择面试官（已选 ${selectedInterviewers.length}/4，至少 2 人）`;
       updateStartBtn();
     });
 
@@ -641,7 +644,19 @@
     });
 
     function updateStartBtn() {
-      startBtn.disabled = !selectedPosition || selectedInterviewers.length < 2;
+      const hint = document.getElementById('startHint');
+      const missing = [];
+      if (!selectedPosition) missing.push('选择面试岗位');
+      if (selectedInterviewers.length < 2) missing.push(`再选 ${2 - selectedInterviewers.length} 位面试官`);
+
+      if (missing.length > 0) {
+        hint.textContent = '还需: ' + missing.join('，');
+        hint.style.display = 'block';
+        startBtn.disabled = true;
+      } else {
+        hint.style.display = 'none';
+        startBtn.disabled = false;
+      }
     }
 
     // ═══ Start Interview ═══
