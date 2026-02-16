@@ -28,14 +28,14 @@
     .terminal {
       width: 90%;
       max-width: 900px;
-      margin: 40px auto;
+      margin: 30px auto 40px;
       background: #0a0a0a;
       border: 1px solid #333;
       border-radius: 8px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
       display: flex;
       flex-direction: column;
-      height: calc(100vh - 80px);
+      height: calc(100vh - 120px);
       overflow: hidden;
     }
 
@@ -73,35 +73,36 @@
 
     /* === Nav Bar === */
     .nav-bar {
-      display: flex;
-      gap: 6px;
-      padding: 10px 0 16px;
-      flex-wrap: wrap;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: #111;
       border-bottom: 1px solid #222;
-      margin-bottom: 20px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
-
+    .nav-bar::-webkit-scrollbar { height: 0; }
     .nav-link {
       color: #666;
       text-decoration: none;
-      font-size: 11px;
-      padding: 5px 10px;
-      border: 1px solid #333;
-      border-radius: 4px;
-      transition: all 0.2s;
+      font-size: 12px;
+      padding: 10px 14px;
       white-space: nowrap;
+      transition: all 0.2s;
+      border-bottom: 2px solid transparent;
+      flex-shrink: 0;
     }
-
     .nav-link:hover {
-      color: #00ccff;
-      border-color: #00ccff;
-      background: #0a1a2a;
+      color: #ccc;
+      background: #1a1a1a;
     }
-
     .nav-link.active {
       color: #00ccff;
-      border-color: #00ccff;
-      background: #0a1a2a;
+      border-bottom-color: #00ccff;
     }
 
     /* === Setup Area === */
@@ -578,12 +579,7 @@
         grid-template-columns: repeat(2, 1fr);
       }
 
-      .nav-bar { gap: 4px; }
-
-      .nav-link {
-        font-size: 10px;
-        padding: 4px 7px;
-      }
+      .nav-link { font-size: 11px; padding: 8px 10px; }
 
       .page-title { font-size: 18px; }
 
@@ -601,8 +597,20 @@
       }
     }
   </style>
+  <!-- Vercel Web Analytics -->
+  <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+  <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
+  <nav class="nav-bar">
+    <a class="nav-link" href="index.html">首页</a>
+    <a class="nav-link" href="jargon.html">黑话生成</a>
+    <a class="nav-link" href="weekly.html">周报生成</a>
+    <a class="nav-link" href="email.html">邮件转换</a>
+    <a class="nav-link active" href="meeting-suggest.html">会议发言</a>
+    <a class="nav-link" href="meeting.html">会议室</a>
+    <a class="nav-link" href="interview.html">压力面试</a>
+  </nav>
   <div class="terminal">
     <!-- Terminal Header -->
     <div class="terminal-header">
@@ -616,17 +624,6 @@
 
     <!-- Terminal Body -->
     <div class="terminal-body" id="terminalBody">
-      <!-- Nav Bar -->
-      <nav class="nav-bar">
-        <a class="nav-link" href="index.html">首页</a>
-        <a class="nav-link" href="jargon.html">黑话生成</a>
-        <a class="nav-link" href="weekly.html">周报生成</a>
-        <a class="nav-link" href="email.html">邮件转换</a>
-        <a class="nav-link active" href="meeting-suggest.html">会议发言</a>
-        <a class="nav-link" href="meeting.html">会议室</a>
-        <a class="nav-link" href="interview.html">压力面试</a>
-      </nav>
-
       <!-- Setup Area -->
       <div class="setup-area">
         <div class="page-title">🎤 会议发言建议</div>
@@ -681,7 +678,21 @@
         <span><span class="status-dot"></span>pua-cli meeting-suggest</span>
         <span id="statusInfo">等待输入...</span>
       </div>
-      <span id="statusRight">v0.8.0</span>
+      <div style="display:flex;align-items:center;gap:0;font-size:11px;">
+        <a href="index.html">首页</a>
+        <span class="sep" style="color:#444;margin:0 6px;">|</span>
+        <a href="jargon.html">黑话</a>
+        <span class="sep" style="color:#444;margin:0 6px;">|</span>
+        <a href="weekly.html">周报</a>
+        <span class="sep" style="color:#444;margin:0 6px;">|</span>
+        <a href="email.html">邮件</a>
+        <span class="sep" style="color:#444;margin:0 6px;">|</span>
+        <a href="meeting.html">会议室</a>
+        <span class="sep" style="color:#444;margin:0 6px;">|</span>
+        <a href="interview.html">面试</a>
+        <span class="sep" style="color:#444;margin:0 6px;">|</span>
+        <a href="https://github.com/ava-agent/pua-cli" target="_blank" rel="noopener">GitHub</a>
+      </div>
     </div>
   </div>
 
@@ -706,224 +717,6 @@
       retro:     { name: '回顾会议',   description: '总结经验教训和改进点',     duration: '60分钟',    emoji: '🔄' },
       planning:  { name: '规划会议',   description: '迭代规划和任务分配',       duration: '60分钟',    emoji: '📅' }
     };
-
-    const ROLE_MEETING_TEMPLATES = {
-      boss: {
-        standup: [
-          '大家抓紧时间，我简单说几点',
-          '{X}，你的进度怎么样？要抓紧啊',
-          '这个项目时间很紧，大家要有紧迫感',
-          '辛苦辛苦，但结果才是最重要的'
-        ],
-        review: [
-          '这个方案我看了，还需要再完善',
-          '我认为可以从以下角度优化',
-          '我的建议是{X}，大家参考',
-          '这个方向是对的，但执行要到位'
-        ],
-        brainstorm: [
-          '我想听一下大家的想法，不要怕说错',
-          '我们要开放心态，多提意见',
-          '这个想法不错，可以深入一下',
-          '我补充一点'
-        ],
-        retro: [
-          '这个迭代整体还行，但还有改进空间',
-          '我觉得{X}做得不错，{Y}需要加强',
-          '下次我们要注意{X}',
-          '大家可以畅所欲言，不要有顾虑'
-        ],
-        planning: [
-          '这个迭代我们要确保{X}目标的达成',
-          '大家要对自己的任务负责',
-          '时间节点不能拖延',
-          '有问题及时沟通，不要等最后才说'
-        ]
-      },
-      employee: {
-        standup: [
-          '昨天我完成了{X}',
-          '今天计划{X}',
-          '目前遇到{X}问题，正在排查',
-          '可能需要{support}支持一下'
-        ],
-        review: [
-          '我觉得这个方案可行',
-          '技术上应该可以实现',
-          '我可能需要{X}天时间',
-          '可以参考{X}方案'
-        ],
-        brainstorm: [
-          '我觉得可以从{X}角度考虑',
-          '我的想法是{X}',
-          '可以尝试{X}方案',
-          '我补充一点'
-        ],
-        retro: [
-          '我觉得这次{X}做得不错',
-          '{Y}方面可能需要改进',
-          '下次可以{X}',
-          '我也分享一下我的感受'
-        ],
-        planning: [
-          '我可以负责{X}任务',
-          '预计需要{X}天完成',
-          '可能需要{support}支持',
-          '我会尽力按时完成'
-        ]
-      },
-      pm: {
-        standup: [
-          '今天对齐{X}个事项',
-          '{X}个项目需要{action}',
-          '用户反馈需要{review}',
-          '下周要上线{X}个功能'
-        ],
-        review: [
-          '从产品角度看{X}',
-          '用户价值{X}',
-          '建议{action}后再确认',
-          '这个方案对齐用户需求了吗'
-        ],
-        brainstorm: [
-          '我们可以从用户场景考虑',
-          '核心诉求是{X}',
-          '我的想法是{X}',
-          '这个思路有创新性'
-        ],
-        retro: [
-          '这次迭代{X}方面做得不错',
-          '{Y}需要继续优化',
-          '用户反馈{X}',
-          '下次可以{X}'
-        ],
-        planning: [
-          '这次迭代聚焦{X}功能',
-          '时间节点{X}',
-          '资源分配{X}',
-          '上线目标{X}'
-        ]
-      },
-      hr: {
-        standup: [
-          '大家今天状态怎么样',
-          '有什么需要支持的',
-          '团队氛围{X}',
-          '要注意劳逸结合'
-        ],
-        review: [
-          '从团队角度{X}',
-          '资源配置{X}',
-          '大家觉得呢',
-          '有什么困难可以提出来'
-        ],
-        brainstorm: [
-          '我们可以多角度思考',
-          '大家畅所欲言',
-          '团队的意见很重要',
-          '我补充一点企业文化相关'
-        ],
-        retro: [
-          '团队协作{X}',
-          '{Y}有待提升',
-          '文化建设{X}',
-          '下次活动{X}'
-        ],
-        planning: [
-          '团建计划{X}',
-          '培训安排{X}',
-          '文化建设{X}',
-          '团队发展{X}'
-        ]
-      },
-      techlead: {
-        standup: [
-          '{X}，你的代码需要review',
-          '这个模块性能有问题',
-          '架构需要优化',
-          '技术债务要处理'
-        ],
-        review: [
-          '这个方案{X}有问题',
-          '架构上不够清晰',
-          '性能考虑不足',
-          '需要重构'
-        ],
-        brainstorm: [
-          '从技术角度看{X}',
-          '可以用{X}方案',
-          '架构层面{X}',
-          '技术选型{X}'
-        ],
-        retro: [
-          '代码质量{X}',
-          '{Y}需要改进',
-          '技术分享{X}',
-          '下次重构{X}'
-        ],
-        planning: [
-          '技术预研{X}',
-          '重构计划{X}',
-          '性能优化{X}',
-          '代码审查{X}'
-        ]
-      },
-      intern: {
-        standup: [
-          '昨天我学习了{X}',
-          '今天计划{X}',
-          '遇到{X}问题，请教了一下',
-          '正在学习中'
-        ],
-        review: [
-          '我学到了{X}',
-          '这个方案好像可行',
-          '我可能需要指导',
-          '可以尝试实现'
-        ],
-        brainstorm: [
-          '我想到了一个想法',
-          '可以从{X}角度考虑',
-          '请问{X}这样行吗',
-          '我补充一下'
-        ],
-        retro: [
-          '我学到了很多',
-          '{X}做得很好',
-          '{Y}对我来说有点难',
-          '下次希望能多学学'
-        ],
-        planning: [
-          '我想参与{X}任务',
-          '可能需要指导',
-          '我会努力学习',
-          '有不懂的及时请教'
-        ]
-      }
-    };
-
-    // ============================================================
-    // PLACEHOLDER LOGIC
-    // ============================================================
-
-    function getRandomPlaceholder() {
-      const placeholders = [
-        '相关需求', '核心功能', '业务问题', '技术方案',
-        '项目进展', '团队协作', '用户体验', '性能优化'
-      ];
-      return placeholders[Math.floor(Math.random() * placeholders.length)];
-    }
-
-    function fillTemplate(template) {
-      const actions = ['处理', '跟进', '完善', 'review', '实现', '优化'];
-      const supports = ['协助', '指导', '帮助', '支持'];
-      return template
-        .replace(/{X}/g, () => getRandomPlaceholder())
-        .replace(/{Y}/g, () => getRandomPlaceholder())
-        .replace(/{review}/g, 'review')
-        .replace(/{action}/g, () => actions[Math.floor(Math.random() * actions.length)])
-        .replace(/{support}/g, () => supports[Math.floor(Math.random() * supports.length)]);
-    }
 
     // ============================================================
     // STATE
@@ -1001,22 +794,50 @@
     // GENERATION
     // ============================================================
 
-    function generateSuggestions() {
+    async function generateSuggestions() {
       if (!selectedRole || !selectedScenario) return;
 
-      var templates = ROLE_MEETING_TEMPLATES[selectedRole][selectedScenario];
-      if (!templates || templates.length === 0) return;
+      // Loading state
+      var btn = document.getElementById('generateBtn');
+      var originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = '生成中...';
 
-      // Pick 1-3 random templates (no duplicates)
-      var count = Math.min(Math.floor(Math.random() * 3) + 1, templates.length);
-      var shuffled = templates.slice().sort(function() { return Math.random() - 0.5; });
-      var picked = shuffled.slice(0, count);
+      try {
+        var response = await fetch('/api/meeting-suggest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            role: selectedRole,
+            scenario: selectedScenario
+          })
+        });
 
-      // Fill placeholders
-      var suggestions = picked.map(function(t) { return fillTemplate(t); });
+        if (!response.ok) {
+          var errorData = await response.json().catch(function() { return {}; });
+          throw new Error(errorData.error || '请求失败，请稍后重试');
+        }
 
-      // Render
-      renderResult(suggestions);
+        var data = await response.json();
+        var suggestions = data.suggestions;
+
+        if (!suggestions || suggestions.length === 0) {
+          throw new Error('未能生成建议，请重试');
+        }
+
+        renderResult(suggestions);
+      } catch (error) {
+        // Show error in result area
+        var resultArea = document.getElementById('resultArea');
+        var speechCards = document.getElementById('speechCards');
+        speechCards.innerHTML = '<div style="color:#ff5f56;text-align:center;padding:20px;">' +
+          escapeHtml(error.message || '生成失败，请稍后重试') + '</div>';
+        resultArea.classList.add('visible');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+        updateButtonState(); // re-check if should be disabled
+      }
     }
 
     function renderResult(suggestions) {

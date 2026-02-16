@@ -24,18 +24,52 @@
       color: #e0e0e0;
     }
 
+    /* === Nav Bar === */
+    .nav-bar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: #111;
+      border-bottom: 1px solid #222;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .nav-bar::-webkit-scrollbar { height: 0; }
+    .nav-link {
+      color: #666;
+      text-decoration: none;
+      font-size: 12px;
+      padding: 10px 14px;
+      white-space: nowrap;
+      transition: all 0.2s;
+      border-bottom: 2px solid transparent;
+      flex-shrink: 0;
+    }
+    .nav-link:hover {
+      color: #ccc;
+      background: #1a1a1a;
+    }
+    .nav-link.active {
+      color: #00ccff;
+      border-bottom-color: #00ccff;
+    }
+
     /* === Terminal Shell === */
     .terminal {
       width: 94%;
       max-width: 960px;
-      margin: 20px auto;
+      margin: 30px auto 40px;
       background: #0a0a0a;
       border: 1px solid #333;
       border-radius: 8px;
       box-shadow: 0 4px 24px rgba(0,0,0,0.6);
       display: flex;
       flex-direction: column;
-      height: calc(100vh - 40px);
+      height: calc(100vh - 120px);
       overflow: hidden;
     }
 
@@ -680,6 +714,7 @@
 
     .status-bar a { color: #00aa00; text-decoration: none; }
     .status-bar a:hover { text-decoration: underline; }
+    .status-bar .sep { color: #444; margin: 0 6px; }
 
     .meeting-timer {
       color: #666;
@@ -688,15 +723,29 @@
 
     /* Responsive */
     @media (max-width: 600px) {
-      .terminal { width: 100%; margin: 0; height: 100vh; border-radius: 0; border: none; }
+      .nav-link { font-size: 11px; padding: 8px 10px; }
+      .terminal { width: 100%; margin: 0; height: calc(100vh - 40px); border-radius: 0; border: none; }
       .char-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
       #setupView { padding: 16px; }
       .char-avatar { width: 56px; height: 56px; font-size: 26px; }
       .msg-bubble { max-width: 92%; }
     }
   </style>
+  <!-- Vercel Web Analytics -->
+  <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+  <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
+
+<nav class="nav-bar">
+  <a class="nav-link" href="index.html">首页</a>
+  <a class="nav-link" href="jargon.html">黑话生成</a>
+  <a class="nav-link" href="weekly.html">周报生成</a>
+  <a class="nav-link" href="email.html">邮件转换</a>
+  <a class="nav-link" href="meeting-suggest.html">会议发言</a>
+  <a class="nav-link active" href="meeting.html">会议室</a>
+  <a class="nav-link" href="interview.html">压力面试</a>
+</nav>
 
 <div class="terminal">
   <div class="terminal-header">
@@ -807,15 +856,22 @@
     <div class="status-bar">
       <span id="meetingInfo">--</span>
       <span class="meeting-timer" id="meetingTimer">00:00</span>
-      <span>
-        <a href="#" onclick="showScoreCard(); return false;">/score</a> |
-        <a href="/index.html">首页</a> |
-        <a href="/jargon.html">黑话</a> |
-        <a href="/weekly.html">周报</a> |
-        <a href="/email.html">邮件</a> |
-        <a href="/meeting-suggest.html">发言</a> |
-        <a href="/interview.html">面试</a> |
-        <a href="https://github.com/ava-agent/pua-cli" target="_blank">GitHub</a>
+      <span style="display:flex;align-items:center;gap:0;font-size:11px;">
+        <a href="#" onclick="showScoreCard(); return false;">/score</a>
+        <span class="sep">|</span>
+        <a href="index.html">首页</a>
+        <span class="sep">|</span>
+        <a href="jargon.html">黑话</a>
+        <span class="sep">|</span>
+        <a href="weekly.html">周报</a>
+        <span class="sep">|</span>
+        <a href="email.html">邮件</a>
+        <span class="sep">|</span>
+        <a href="meeting-suggest.html">发言</a>
+        <span class="sep">|</span>
+        <a href="interview.html">面试</a>
+        <span class="sep">|</span>
+        <a href="https://github.com/ava-agent/pua-cli" target="_blank" rel="noopener">GitHub</a>
       </span>
     </div>
   </div>

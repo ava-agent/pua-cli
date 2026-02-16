@@ -26,50 +26,50 @@
 
     /* === Nav Bar === */
     .nav-bar {
-      width: 94%;
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 10px 0 0;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: #111;
+      border-bottom: 1px solid #222;
+      padding: 0 16px;
       display: flex;
-      gap: 4px;
-      flex-wrap: wrap;
-      font-size: 11px;
+      align-items: center;
+      gap: 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
-
-    .nav-bar a {
+    .nav-bar::-webkit-scrollbar { height: 0; }
+    .nav-link {
       color: #666;
       text-decoration: none;
-      padding: 5px 10px;
-      border: 1px solid transparent;
-      border-radius: 4px 4px 0 0;
+      font-size: 12px;
+      padding: 10px 14px;
+      white-space: nowrap;
       transition: all 0.2s;
+      border-bottom: 2px solid transparent;
+      flex-shrink: 0;
     }
-
-    .nav-bar a:hover {
-      color: #00ccff;
-      border-color: #333;
-      background: #111;
+    .nav-link:hover {
+      color: #ccc;
+      background: #1a1a1a;
     }
-
-    .nav-bar a.active {
+    .nav-link.active {
       color: #00ccff;
-      border-color: #333;
-      border-bottom-color: #0a0a0a;
-      background: #0a0a0a;
+      border-bottom-color: #00ccff;
     }
 
     /* === Terminal Shell === */
     .terminal {
-      width: 94%;
-      max-width: 960px;
-      margin: 0 auto 20px;
+      width: 90%;
+      max-width: 900px;
+      margin: 30px auto 40px;
       background: #0a0a0a;
       border: 1px solid #333;
-      border-radius: 0 8px 8px 8px;
+      border-radius: 8px;
       box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
       display: flex;
       flex-direction: column;
-      min-height: calc(100vh - 80px);
+      min-height: calc(100vh - 120px);
       overflow: hidden;
     }
 
@@ -520,8 +520,7 @@
 
     /* === Responsive === */
     @media (max-width: 700px) {
-      .nav-bar { font-size: 10px; gap: 2px; }
-      .nav-bar a { padding: 4px 6px; }
+      .nav-link { font-size: 11px; padding: 8px 10px; }
 
       .terminal-body { padding: 16px 12px; }
 
@@ -563,18 +562,21 @@
       }
     }
   </style>
+  <!-- Vercel Web Analytics -->
+  <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+  <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
 
   <!-- Navigation Bar -->
   <nav class="nav-bar">
-    <a href="index.html">首页</a>
-    <a href="jargon.html">黑话生成</a>
-    <a href="weekly.html">周报生成</a>
-    <a href="email.html" class="active">邮件转换</a>
-    <a href="meeting-suggest.html">会议发言</a>
-    <a href="meeting.html">会议室</a>
-    <a href="interview.html">压力面试</a>
+    <a class="nav-link" href="index.html">首页</a>
+    <a class="nav-link" href="jargon.html">黑话生成</a>
+    <a class="nav-link" href="weekly.html">周报生成</a>
+    <a class="nav-link active" href="email.html">邮件转换</a>
+    <a class="nav-link" href="meeting-suggest.html">会议发言</a>
+    <a class="nav-link" href="meeting.html">会议室</a>
+    <a class="nav-link" href="interview.html">压力面试</a>
   </nav>
 
   <div class="terminal">
@@ -753,6 +755,12 @@
       <div class="right">
         <a href="index.html">首页</a>
         <span class="sep">|</span>
+        <a href="jargon.html">黑话</a>
+        <span class="sep">|</span>
+        <a href="weekly.html">周报</a>
+        <span class="sep">|</span>
+        <a href="meeting-suggest.html">发言</a>
+        <span class="sep">|</span>
         <a href="meeting.html">会议室</a>
         <span class="sep">|</span>
         <a href="interview.html">面试</a>
@@ -764,121 +772,11 @@
 
   <script>
     // ============================================
-    // Data: Email Templates (from CLI source)
+    // Data: Role & Tone Info
     // ============================================
 
-    const EMAIL_TEMPLATES = {
-      'pm-employee': {
-        polite: [
-          '辛苦处理一下{content}，谢谢',
-          '麻烦处理并跟进，祝好',
-          '团队好，请处理{content}'
-        ],
-        urgent: [
-          '【紧急】请立即处理{content}',
-          '请尽快处理，这个很紧急',
-          '这个今天要处理完，辛苦一下'
-        ],
-        casual: [
-          '{content}，麻烦搞一下',
-          '帮我看下{content}，谢啦',
-          '{content}搞完跟我说声'
-        ],
-        passive: [
-          '如果方便的话，请处理{content}',
-          '不好意思打扰，想处理一下{content}',
-          '什么时候有时间处理一下{content}'
-        ]
-      },
-      'employee-pm': {
-        polite: [
-          '{content}已处理，请review',
-          '附件已上传，请review',
-          '{content}已完成，请确认'
-        ],
-        urgent: [
-          '{content}可能需要支持，请确认',
-          '这个{content}有点复杂，需要讨论',
-          '时间可能延期，请调整'
-        ],
-        casual: [
-          '{content}OK了，你看看',
-          '{content}搞定，你review一下',
-          '{content}没问题了'
-        ],
-        passive: [
-          '{content}应该处理完了，请确认',
-          '我觉得{content}这样行，你觉得呢',
-          '{content}暂时这样，有问题讨论'
-        ]
-      },
-      'hr-employee': {
-        polite: [
-          '{content}（收到请回复）',
-          '请查收{content}，祝好',
-          '麻烦处理一下{content}'
-        ],
-        urgent: [
-          '【重要】请及时处理{content}',
-          '请务必处理，后果自负',
-          '今天下班前请处理'
-        ],
-        casual: [
-          '{content}啊',
-          '{content}哈，有空处理一下',
-          '{content}~'
-        ],
-        passive: [
-          '如果方便的话请处理{content}',
-          '不好意思，想处理一下{content}',
-          '请问什么时候方便处理{content}'
-        ]
-      },
-      'employee-hr': {
-        polite: [
-          '好的，我马上处理',
-          '收到，我会尽快处理',
-          '{content}，我明白了'
-        ],
-        urgent: [
-          '立即处理',
-          '马上处理',
-          '处理中'
-        ],
-        casual: [
-          'OK',
-          '行',
-          '好的'
-        ],
-        passive: [
-          '我看看时间安排处理',
-          '应该可以处理吧',
-          '我尽量处理'
-        ]
-      }
-    };
-
-    const TONE_MODIFIERS = {
-      polite: {
-        prefix: ['麻烦', '辛苦', '劳烦', '望'],
-        suffix: ['谢谢', '为盼', '顺颂商祺', '祝好']
-      },
-      urgent: {
-        prefix: ['请立即', '请尽快', '请务必', '【紧急】', '【重要】'],
-        suffix: ['谢谢配合', '辛苦了', '请支持']
-      },
-      casual: {
-        prefix: ['嘿', '哈', '啦', '呗'],
-        suffix: ['谢啦', 'OK', '搞定']
-      },
-      passive: {
-        prefix: ['如果方便', '有空的话', '什么时候', '可能的话'],
-        suffix: ['你觉得呢', '吧', '看看', '考虑一下']
-      }
-    };
-
     // Role display info
-    const ROLE_INFO = {
+    var ROLE_INFO = {
       boss:     { name: '老板', emoji: '👔' },
       employee: { name: '员工', emoji: '😓' },
       pm:       { name: '产品经理', emoji: '📋' },
@@ -887,7 +785,7 @@
       intern:   { name: '实习生', emoji: '🌱' }
     };
 
-    const TONE_INFO = {
+    var TONE_INFO = {
       polite:  { name: '礼貌', desc: '正式商务' },
       urgent:  { name: '紧急', desc: '催促施压' },
       casual:  { name: '随意', desc: '轻松自在' },
@@ -895,7 +793,7 @@
     };
 
     // Role aliases (dev/developer/team -> employee, manager -> pm, lead -> techlead)
-    const ROLE_ALIASES = {
+    var ROLE_ALIASES = {
       dev: 'employee',
       developer: 'employee',
       team: 'employee',
@@ -903,99 +801,58 @@
       lead: 'techlead'
     };
 
-    // Supported directions
-    const SUPPORTED_DIRECTIONS = [
-      'pm-employee',
-      'employee-pm',
-      'hr-employee',
-      'employee-hr'
-    ];
+    // Direction labels
+    var DIRECTION_LABELS = {
+      upward: '向上级',
+      downward: '向下级',
+      cross: '平级同事',
+      external: '对外商务'
+    };
 
     // ============================================
     // State
     // ============================================
 
-    let selectedFrom = null;
-    let selectedTo = null;
-    let selectedTone = 'polite';
-    let lastResult = null;
+    var selectedFrom = null;
+    var selectedTo = null;
+    var selectedTone = 'polite';
+    var lastResult = null;
+    var isConverting = false;
 
     // ============================================
     // DOM Elements
     // ============================================
 
-    const fromGrid = document.getElementById('fromGrid');
-    const toGrid = document.getElementById('toGrid');
-    const toneGrid = document.getElementById('toneGrid');
-    const contentInput = document.getElementById('contentInput');
-    const convertBtn = document.getElementById('convertBtn');
-    const resultArea = document.getElementById('resultArea');
-    const resultInfo = document.getElementById('resultInfo');
-    const resultContent = document.getElementById('resultContent');
-    const resultActions = document.getElementById('resultActions');
-    const copyBtn = document.getElementById('copyBtn');
-    const regenerateBtn = document.getElementById('regenerateBtn');
-    const directionDisplay = document.getElementById('directionDisplay');
+    var fromGrid = document.getElementById('fromGrid');
+    var toGrid = document.getElementById('toGrid');
+    var toneGrid = document.getElementById('toneGrid');
+    var contentInput = document.getElementById('contentInput');
+    var convertBtn = document.getElementById('convertBtn');
+    var resultArea = document.getElementById('resultArea');
+    var resultInfo = document.getElementById('resultInfo');
+    var resultContent = document.getElementById('resultContent');
+    var resultActions = document.getElementById('resultActions');
+    var copyBtn = document.getElementById('copyBtn');
+    var regenerateBtn = document.getElementById('regenerateBtn');
+    var directionDisplay = document.getElementById('directionDisplay');
 
     // ============================================
     // Utility
     // ============================================
 
-    function randomPick(arr) {
-      return arr[Math.floor(Math.random() * arr.length)];
+    function escapeHtml(text) {
+      var div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
     }
 
-    function resolveRole(role) {
-      return ROLE_ALIASES[role] || role;
-    }
-
-    function getDirectionKey(from, to) {
-      const resolvedFrom = resolveRole(from);
-      const resolvedTo = resolveRole(to);
-      return resolvedFrom + '-' + resolvedTo;
-    }
-
-    function isDirectionSupported(from, to) {
-      const key = getDirectionKey(from, to);
-      return SUPPORTED_DIRECTIONS.includes(key);
-    }
-
-    // ============================================
-    // Transformation Logic
-    // ============================================
-
-    function transformEmail(content, from, to, tone) {
-      const directionKey = getDirectionKey(from, to);
-      const templates = EMAIL_TEMPLATES[directionKey];
-
-      if (!templates) {
-        return { success: false, directionKey: directionKey };
-      }
-
-      const toneTemplates = templates[tone] || templates.polite;
-      const template = randomPick(toneTemplates);
-
-      // Replace {content} placeholder
-      let transformed = template.replace(/{content}/g, content);
-
-      // Add tone modifiers
-      const modifier = TONE_MODIFIERS[tone] || TONE_MODIFIERS.polite;
-
-      if (modifier.prefix && modifier.prefix.length > 0) {
-        const prefix = randomPick(modifier.prefix);
-        transformed = prefix + '，' + transformed;
-      }
-
-      if (modifier.suffix && modifier.suffix.length > 0) {
-        const suffix = randomPick(modifier.suffix);
-        transformed = transformed + suffix;
-      }
-
-      return {
-        success: true,
-        transformed: transformed,
-        directionKey: directionKey
-      };
+    function deriveDirection(from, to) {
+      var hierarchy = { boss: 4, techlead: 4, pm: 3, hr: 3, employee: 2, intern: 1 };
+      var fromLevel = hierarchy[from] || 2;
+      var toLevel = hierarchy[to] || 2;
+      if (fromLevel < toLevel) return 'upward';
+      if (fromLevel > toLevel) return 'downward';
+      return 'cross';
     }
 
     // ============================================
@@ -1008,10 +865,10 @@
         return;
       }
 
-      let html = '';
+      var html = '';
 
       if (selectedFrom) {
-        const fromInfo = ROLE_INFO[selectedFrom];
+        var fromInfo = ROLE_INFO[selectedFrom];
         html += '<span class="from-name">' + fromInfo.emoji + ' ' + fromInfo.name + '</span>';
       } else {
         html += '<span style="color:#444;">???</span>';
@@ -1020,71 +877,65 @@
       html += '<span class="arrow"> → </span>';
 
       if (selectedTo) {
-        const toInfo = ROLE_INFO[selectedTo];
+        var toInfo = ROLE_INFO[selectedTo];
         html += '<span class="to-name">' + toInfo.emoji + ' ' + toInfo.name + '</span>';
       } else {
         html += '<span style="color:#444;">???</span>';
       }
 
       if (selectedFrom && selectedTo) {
-        if (isDirectionSupported(selectedFrom, selectedTo)) {
-          html += ' <span style="color:#00ff00;font-size:10px;margin-left:8px;">✓ 支持</span>';
-        } else {
-          html += ' <span class="unsupported" style="margin-left:8px;">✗ 暂不支持</span>';
-        }
+        var direction = deriveDirection(selectedFrom, selectedTo);
+        var dirLabel = DIRECTION_LABELS[direction] || direction;
+        html += ' <span style="color:#00ccff;font-size:10px;margin-left:8px;">(' + dirLabel + ')</span>';
       }
 
       directionDisplay.innerHTML = html;
     }
 
     function updateConvertButton() {
-      const hasContent = contentInput.value.trim().length > 0;
-      const hasFrom = selectedFrom !== null;
-      const hasTo = selectedTo !== null;
-      convertBtn.disabled = !(hasContent && hasFrom && hasTo);
+      var hasContent = contentInput.value.trim().length > 0;
+      var hasFrom = selectedFrom !== null;
+      var hasTo = selectedTo !== null;
+      convertBtn.disabled = !(hasContent && hasFrom && hasTo) || isConverting;
     }
 
-    function showResult(content, from, to, tone) {
-      const result = transformEmail(content, from, to, tone);
-      lastResult = { content: content, from: from, to: to, tone: tone, result: result };
+    function showResult(originalContent, transformedText, from, to, tone) {
+      var fromInfo = ROLE_INFO[from] || { name: from, emoji: '' };
+      var toInfo = ROLE_INFO[to] || { name: to, emoji: '' };
+      var toneInfo = TONE_INFO[tone] || { name: tone, desc: '' };
+      var direction = deriveDirection(from, to);
+      var dirLabel = DIRECTION_LABELS[direction] || direction;
 
-      const fromInfo = ROLE_INFO[resolveRole(from)] || { name: from, emoji: '' };
-      const toInfo = ROLE_INFO[resolveRole(to)] || { name: to, emoji: '' };
-      const toneInfo = TONE_INFO[tone] || { name: tone, desc: '' };
+      lastResult = {
+        content: originalContent,
+        from: from,
+        to: to,
+        tone: tone,
+        transformed: transformedText
+      };
 
       // Show info bar
       resultInfo.innerHTML =
         '<span><span class="info-label">方向: </span><span class="info-value">' +
         fromInfo.emoji + ' ' + fromInfo.name + ' → ' + toInfo.emoji + ' ' + toInfo.name +
+        ' (' + dirLabel + ')' +
         '</span></span>' +
         '<span><span class="info-label">语气: </span><span class="info-value">' +
         toneInfo.name + ' (' + toneInfo.desc + ')' +
         '</span></span>';
 
-      if (result.success) {
-        resultContent.innerHTML =
-          '<div class="result-boxes">' +
-            '<div class="result-box result-box-original">' +
-              '<div class="result-box-label">📝 原文</div>' +
-              '<div class="result-box-content">' + escapeHtml(content) + '</div>' +
-            '</div>' +
-            '<div class="result-box result-box-transformed">' +
-              '<div class="result-box-label">✨ 转换后</div>' +
-              '<div class="result-box-content">' + escapeHtml(result.transformed) + '</div>' +
-            '</div>' +
-          '</div>';
-        resultActions.style.display = 'flex';
-      } else {
-        resultContent.innerHTML =
-          '<div class="result-unsupported">' +
-            '暂不支持 ' + fromInfo.emoji + ' ' + fromInfo.name +
-            ' → ' + toInfo.emoji + ' ' + toInfo.name + ' 的邮件转换' +
-            '<div class="supported-list">' +
-              '目前支持: <span>PM ↔ 员工</span>, <span>HR ↔ 员工</span>' +
-            '</div>' +
-          '</div>';
-        resultActions.style.display = 'none';
-      }
+      resultContent.innerHTML =
+        '<div class="result-boxes">' +
+          '<div class="result-box result-box-original">' +
+            '<div class="result-box-label">📝 原文</div>' +
+            '<div class="result-box-content">' + escapeHtml(originalContent) + '</div>' +
+          '</div>' +
+          '<div class="result-box result-box-transformed">' +
+            '<div class="result-box-label">✨ AI 转换</div>' +
+            '<div class="result-box-content">' + escapeHtml(transformedText) + '</div>' +
+          '</div>' +
+        '</div>';
+      resultActions.style.display = 'flex';
 
       resultArea.classList.add('visible');
 
@@ -1094,10 +945,66 @@
       });
     }
 
-    function escapeHtml(text) {
-      var div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
+    function showError(message) {
+      resultInfo.innerHTML = '';
+      resultContent.innerHTML =
+        '<div class="result-unsupported">' +
+          escapeHtml(message) +
+        '</div>';
+      resultActions.style.display = 'none';
+      resultArea.classList.add('visible');
+
+      requestAnimationFrame(function() {
+        resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    }
+
+    // ============================================
+    // API Call
+    // ============================================
+
+    function convertEmail() {
+      var content = contentInput.value.trim();
+      if (!content || !selectedFrom || !selectedTo) return;
+
+      var direction = deriveDirection(selectedFrom, selectedTo);
+
+      // Set loading state
+      isConverting = true;
+      convertBtn.disabled = true;
+      convertBtn.textContent = '转换中...';
+      resultArea.classList.remove('visible');
+
+      fetch('/api/email-transform', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: content,
+          direction: direction,
+          role: selectedFrom
+        })
+      })
+      .then(function(response) {
+        if (!response.ok) {
+          throw new Error('服务请求失败 (' + response.status + ')');
+        }
+        return response.json();
+      })
+      .then(function(data) {
+        if (data && data.result) {
+          showResult(content, data.result, selectedFrom, selectedTo, selectedTone);
+        } else {
+          showError('服务返回数据格式异常，请稍后重试');
+        }
+      })
+      .catch(function(err) {
+        showError('转换失败: ' + (err.message || '网络错误，请检查连接后重试'));
+      })
+      .finally(function() {
+        isConverting = false;
+        convertBtn.textContent = '转换语气';
+        updateConvertButton();
+      });
     }
 
     // ============================================
@@ -1169,26 +1076,25 @@
 
     // Convert button
     convertBtn.addEventListener('click', function() {
-      var content = contentInput.value.trim();
-      if (!content || !selectedFrom || !selectedTo) return;
-      showResult(content, selectedFrom, selectedTo, selectedTone);
+      if (isConverting) return;
+      convertEmail();
     });
 
     // Allow Ctrl+Enter to submit
     contentInput.addEventListener('keydown', function(e) {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
-        if (!convertBtn.disabled) {
-          convertBtn.click();
+        if (!convertBtn.disabled && !isConverting) {
+          convertEmail();
         }
       }
     });
 
     // Copy button
     copyBtn.addEventListener('click', function() {
-      if (!lastResult || !lastResult.result.success) return;
+      if (!lastResult || !lastResult.transformed) return;
 
-      var text = lastResult.result.transformed;
+      var text = lastResult.transformed;
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(function() {
@@ -1228,13 +1134,8 @@
 
     // Regenerate button
     regenerateBtn.addEventListener('click', function() {
-      if (!lastResult) return;
-      showResult(
-        lastResult.content,
-        lastResult.from,
-        lastResult.to,
-        lastResult.tone
-      );
+      if (!lastResult || isConverting) return;
+      convertEmail();
     });
 
   </script>

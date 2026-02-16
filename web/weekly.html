@@ -433,6 +433,36 @@
     .status-bar a:hover { color: #00ffff; }
     .status-bar .sep { color: #444; margin: 0 6px; }
 
+    /* === Work Items Textarea === */
+    .work-items-input {
+      width: 100%;
+      min-height: 80px;
+      max-height: 160px;
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 12px 14px;
+      color: #e0e0e0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+      margin-bottom: 28px;
+    }
+    .work-items-input:focus { border-color: #00ccff; }
+    .work-items-input::placeholder { color: #444; }
+
+    /* === Report Body (AI response) === */
+    .report-body {
+      color: #b8b8b8;
+      font-size: 13px;
+      line-height: 1.8;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
     /* === Responsive === */
     @media (max-width: 600px) {
       .terminal {
@@ -468,6 +498,9 @@
       }
     }
   </style>
+  <!-- Vercel Web Analytics -->
+  <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+  <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
 
@@ -549,9 +582,13 @@
       <button class="week-btn" id="weekPlus" title="下一周">+</button>
     </div>
 
+    <!-- Work Items Input -->
+    <span class="section-label">本周工作内容</span>
+    <textarea id="workItemsInput" class="work-items-input" placeholder="描述你本周做了什么，例如：&#10;完成了用户模块开发&#10;参加了3次需求评审&#10;修复了5个线上bug" rows="4" maxlength="500"></textarea>
+
     <!-- Generate Button -->
     <button class="generate-btn" id="generateBtn" disabled>生成周报</button>
-    <div class="generate-hint" id="generateHint">请先选择一个角色</div>
+    <div class="generate-hint" id="generateHint">请先选择一个角色并填写工作内容</div>
 
     <!-- Report Result -->
     <div class="report-container" id="reportContainer">
@@ -573,9 +610,15 @@
     <div class="right">
       <a href="index.html">首页</a>
       <span class="sep">|</span>
+      <a href="jargon.html">黑话</a>
+      <span class="sep">|</span>
+      <a href="email.html">邮件</a>
+      <span class="sep">|</span>
+      <a href="meeting-suggest.html">发言</a>
+      <span class="sep">|</span>
       <a href="meeting.html">会议室</a>
       <span class="sep">|</span>
-      <a href="interview.html">压力面试</a>
+      <a href="interview.html">面试</a>
       <span class="sep">|</span>
       <a href="https://github.com/ava-agent/pua-cli" target="_blank" rel="noopener">GitHub</a>
     </div>
@@ -584,165 +627,6 @@
 
 <script>
 // ==================== DATA ====================
-const WEEKLY_TEMPLATES = {
-  boss: {
-    highlights: [
-      '本周对{X}个下属的工作进行了指导和监督',
-      '与{X}位员工进行了1对1沟通',
-      '参加了{X}场管理层会议',
-      '对团队工作状态进行了{X}次检查'
-    ],
-    plans: [
-      '下周计划重点关注{X}个项目的推进',
-      '计划进行{X}次团队培训',
-      '准备与{X}位核心员工进行深入沟通',
-      '计划召开{X}场部门协调会'
-    ],
-    risks: [
-      '可能存在{X}个项目进度风险',
-      '需要注意{X}位员工的绩效问题',
-      '资源可能存在{X}%的缺口',
-      '可能面临{X}个外部挑战'
-    ],
-    data: [
-      '本周团队产出提升{X}%',
-      '完成{X}个关键里程碑',
-      '团队加班时长{X}小时',
-      '客户满意度{X}%'
-    ]
-  },
-  employee: {
-    highlights: [
-      '完成了{X}个分配任务',
-      '参与了{X}个项目会议',
-      '处理了{X}个工单/问题',
-      '学习了{X}项新技术/业务知识'
-    ],
-    plans: [
-      '下周计划完成{X}个待办任务',
-      '准备{X}个文档/报告',
-      '计划学习{X}项新技能',
-      '跟进{X}个问题处理进度'
-    ],
-    risks: [
-      '可能存在{X}个技术难点',
-      '{X}个任务可能时间紧张',
-      '需要等待{X}个依赖/支持',
-      '个人技能可能存在{X}个不足'
-    ],
-    data: [
-      '完成任务{X}个',
-      '代码提交{X}次',
-      '修复Bug{X}个',
-      '参加培训{X}小时'
-    ]
-  },
-  pm: {
-    highlights: [
-      '完成了{X}个需求的评审和确认',
-      '与{X}个干系人对齐了产品方向',
-      '进行了{X}场用户调研/数据分析',
-      '输出了{X}份产品文档/原型'
-    ],
-    plans: [
-      '下周计划上线{X}个新功能',
-      '准备进行{X}场产品宣讲',
-      '计划优化{X}个核心流程',
-      '准备{X}个版本的迭代规划'
-    ],
-    risks: [
-      '{X}个需求可能存在变更风险',
-      '开发资源可能存在{X}%的缺口',
-      '{X}个功能可能延期上线',
-      '用户反馈可能存在{X}个不确定性'
-    ],
-    data: [
-      '需求完成率{X}%',
-      '需求评审{X}场',
-      '文档输出{X}份',
-      '干系人对齐{X}次'
-    ]
-  },
-  hr: {
-    highlights: [
-      '组织了{X}场团队建设活动',
-      '完成了{X}位员工的入职/离职手续',
-      '处理了{X}个员工关系/问题',
-      '推进了{X}项企业文化建设工作'
-    ],
-    plans: [
-      '下周计划组织{X}场培训活动',
-      '准备进行{X}次员工访谈',
-      '计划优化{X}项HR流程制度',
-      '准备{X}场团建/文化活动'
-    ],
-    risks: [
-      '员工满意度可能存在{X}%的波动',
-      '{X}位核心员工可能存在离职风险',
-      '招聘计划可能存在{X}%的缺口',
-      '文化建设可能存在{X}个阻力'
-    ],
-    data: [
-      '新入职员工{X}人',
-      '离职员工{X}人',
-      '培训覆盖率{X}%',
-      '员工满意度{X}%'
-    ]
-  },
-  techlead: {
-    highlights: [
-      '完成了{X}次代码审查',
-      '处理了{X}个技术债务',
-      '进行了{X}场技术分享会',
-      '重构了{X}个核心模块'
-    ],
-    plans: [
-      '下周计划优化{X}个性能瓶颈',
-      '准备进行{X}项技术调研',
-      '计划重构{X}个遗留模块',
-      '准备输出{X}份技术文档'
-    ],
-    risks: [
-      '{X}个系统可能存在稳定性风险',
-      '{X}个技术债务可能影响交付',
-      '团队技能可能存在{X}个短板',
-      '{X}个依赖项可能存在兼容性问题'
-    ],
-    data: [
-      '代码审查{X}次',
-      'Bug修复{X}个',
-      '性能优化{X}项',
-      '技术分享{X}场'
-    ]
-  },
-  intern: {
-    highlights: [
-      '完成了{X}个分配的学习任务',
-      '参与了{X}个项目会议',
-      '向{X}位同事请教了问题',
-      '学习了{X}项新技能'
-    ],
-    plans: [
-      '下周计划学习{X}项新内容',
-      '准备参与{X}个项目',
-      '计划请教{X}位资深同事',
-      '计划阅读{X}篇技术文档'
-    ],
-    risks: [
-      '可能存在{X}个知识盲区',
-      '{X}个任务可能超出能力范围',
-      '需要依赖{X}位同事的指导',
-      '学习曲线可能存在{X}个挑战'
-    ],
-    data: [
-      '学习时长{X}小时',
-      '完成任务{X}个',
-      '提问{X}次',
-      '文档阅读{X}篇'
-    ]
-  }
-};
-
 const ROLE_NAMES = {
   boss: '老板',
   employee: '员工',
@@ -757,6 +641,8 @@ const CHINESE_ORDINALS = ['一', '二', '三', '四', '五'];
 // ==================== STATE ====================
 let selectedRole = null;
 let currentWeek = getWeekNumber(new Date());
+let isGenerating = false;
+let lastReportText = '';
 
 // ==================== WEEK CALCULATION ====================
 function getWeekNumber(date) {
@@ -766,91 +652,83 @@ function getWeekNumber(date) {
 }
 
 // ==================== HELPERS ====================
-function randomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function fillPlaceholder(template) {
-  return template.replace(/\{X\}/g, () => String(randomInt(1, 5)));
-}
-
-function shuffleArray(arr) {
-  const copy = [...arr];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
-
-function pickRandom(arr, min, max) {
-  const count = randomInt(min, max);
-  const shuffled = shuffleArray(arr);
-  return shuffled.slice(0, Math.min(count, arr.length));
-}
-
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
 }
 
-// ==================== GENERATION ====================
-function generateReport(role, week) {
-  const template = WEEKLY_TEMPLATES[role];
-  if (!template) return null;
+// ==================== API CALL ====================
+async function callWeeklyApi(role, workItems, weekNumber) {
+  const response = await fetch('/api/weekly', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ role, workItems, weekNumber })
+  });
 
-  const highlights = pickRandom(template.highlights, 3, 5).map(fillPlaceholder);
-  const plans = pickRandom(template.plans, 2, 4).map(fillPlaceholder);
-  const risks = pickRandom(template.risks, 1, 2).map(fillPlaceholder);
-  const data = template.data.map(fillPlaceholder);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    const message = (errorData && errorData.error) || `请求失败 (${response.status})`;
+    throw new Error(message);
+  }
 
-  return {
-    role,
-    roleName: ROLE_NAMES[role],
-    week,
-    highlights,
-    plans,
-    risks,
-    data
-  };
+  const data = await response.json();
+  return data.result;
 }
 
-function renderReport(report) {
-  const reportBox = document.getElementById('reportBox');
+// ==================== GENERATION ====================
+async function handleGenerate() {
+  if (!selectedRole || isGenerating) return;
 
-  const buildItems = (items) => {
-    return items.map((item, i) => {
-      const ordinal = CHINESE_ORDINALS[i] || String(i + 1);
-      return `<div class="report-item"><span class="ordinal">${escapeHtml(ordinal)}、</span>${escapeHtml(item)}</div>`;
-    }).join('');
-  };
+  const workItemsInput = document.getElementById('workItemsInput');
+  const workItems = workItemsInput.value.trim();
+  if (!workItems) return;
+
+  const generateBtn = document.getElementById('generateBtn');
+  const regenerateBtn = document.getElementById('regenerateBtn');
+
+  // Set loading state
+  isGenerating = true;
+  generateBtn.disabled = true;
+  generateBtn.textContent = '生成中...';
+  regenerateBtn.disabled = true;
+
+  try {
+    const resultText = await callWeeklyApi(selectedRole, workItems, currentWeek);
+    lastReportText = resultText;
+    renderReport(selectedRole, currentWeek, resultText);
+  } catch (err) {
+    showError(err.message || '生成失败，请稍后重试');
+  } finally {
+    isGenerating = false;
+    generateBtn.textContent = '生成周报';
+    regenerateBtn.disabled = false;
+    updateGenerateButton();
+  }
+}
+
+function showError(message) {
+  const errorDiv = document.createElement('div');
+  errorDiv.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#331111;border:1px solid #ff4444;color:#ff6666;padding:12px 24px;border-radius:8px;font-family:inherit;font-size:13px;z-index:9999;animation:fadeSlideIn 0.3s ease-out;';
+  errorDiv.textContent = message;
+  document.body.appendChild(errorDiv);
+  setTimeout(() => {
+    errorDiv.style.opacity = '0';
+    errorDiv.style.transition = 'opacity 0.3s';
+    setTimeout(() => document.body.removeChild(errorDiv), 300);
+  }, 3000);
+}
+
+function renderReport(role, week, text) {
+  const reportBox = document.getElementById('reportBox');
+  const roleName = ROLE_NAMES[role] || role;
 
   reportBox.innerHTML = `
     <div class="report-header">
-      <div class="report-title">周报 - ${escapeHtml(report.roleName)} - 第${report.week}周</div>
+      <div class="report-title">周报 - ${escapeHtml(roleName)} - 第${week}周</div>
       <div class="report-meta">生成时间: ${new Date().toLocaleString('zh-CN')}</div>
     </div>
-
-    <div class="report-section">
-      <div class="report-section-title highlights">📌 本周工作</div>
-      ${buildItems(report.highlights)}
-    </div>
-
-    <div class="report-section">
-      <div class="report-section-title plans">📅 下周计划</div>
-      ${buildItems(report.plans)}
-    </div>
-
-    <div class="report-section">
-      <div class="report-section-title risks">⚠️ 风险与问题</div>
-      ${buildItems(report.risks)}
-    </div>
-
-    <div class="report-section">
-      <div class="report-section-title data">📊 数据统计</div>
-      ${buildItems(report.data)}
-    </div>
+    <div class="report-body">${escapeHtml(text)}</div>
   `;
 
   const container = document.getElementById('reportContainer');
@@ -868,24 +746,15 @@ function renderReport(report) {
 // ==================== COPY TO CLIPBOARD ====================
 function getReportPlainText() {
   const reportBox = document.getElementById('reportBox');
+  const titleEl = reportBox.querySelector('.report-title');
+  const bodyEl = reportBox.querySelector('.report-body');
 
-  const title = reportBox.querySelector('.report-title').textContent;
-  const sections = reportBox.querySelectorAll('.report-section');
+  if (!titleEl || !bodyEl) return '';
 
+  const title = titleEl.textContent;
   let text = title + '\n';
   text += '='.repeat(title.length * 2) + '\n\n';
-
-  sections.forEach(section => {
-    const sectionTitle = section.querySelector('.report-section-title').textContent;
-    text += sectionTitle + '\n';
-
-    const items = section.querySelectorAll('.report-item');
-    items.forEach(item => {
-      text += item.textContent + '\n';
-    });
-
-    text += '\n';
-  });
+  text += bodyEl.textContent;
 
   return text.trim();
 }
@@ -894,6 +763,8 @@ function getReportPlainText() {
 function init() {
   // Set week display
   updateWeekDisplay();
+
+  const workItemsInput = document.getElementById('workItemsInput');
 
   // Role selection
   const roleGrid = document.getElementById('roleGrid');
@@ -904,6 +775,11 @@ function init() {
     document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
     card.classList.add('selected');
     selectedRole = card.dataset.role;
+    updateGenerateButton();
+  });
+
+  // Work items input - update button state on input
+  workItemsInput.addEventListener('input', () => {
     updateGenerateButton();
   });
 
@@ -924,11 +800,7 @@ function init() {
 
   // Generate button
   document.getElementById('generateBtn').addEventListener('click', () => {
-    if (!selectedRole) return;
-    const report = generateReport(selectedRole, currentWeek);
-    if (report) {
-      renderReport(report);
-    }
+    handleGenerate();
   });
 
   // Copy button
@@ -968,11 +840,7 @@ function init() {
 
   // Regenerate button
   document.getElementById('regenerateBtn').addEventListener('click', () => {
-    if (!selectedRole) return;
-    const report = generateReport(selectedRole, currentWeek);
-    if (report) {
-      renderReport(report);
-    }
+    handleGenerate();
   });
 }
 
@@ -983,13 +851,23 @@ function updateWeekDisplay() {
 function updateGenerateButton() {
   const btn = document.getElementById('generateBtn');
   const hint = document.getElementById('generateHint');
+  const workItemsInput = document.getElementById('workItemsInput');
+  const hasWorkItems = workItemsInput.value.trim().length > 0;
 
-  if (selectedRole) {
+  if (selectedRole && hasWorkItems && !isGenerating) {
     btn.disabled = false;
     hint.textContent = `当前角色: ${ROLE_NAMES[selectedRole]}`;
   } else {
     btn.disabled = true;
-    hint.textContent = '请先选择一个角色';
+    if (!selectedRole && !hasWorkItems) {
+      hint.textContent = '请先选择一个角色并填写工作内容';
+    } else if (!selectedRole) {
+      hint.textContent = '请先选择一个角色';
+    } else if (!hasWorkItems) {
+      hint.textContent = '请填写本周工作内容';
+    } else {
+      hint.textContent = '生成中...';
+    }
   }
 }
 

@@ -159,29 +159,43 @@ program.addCommand(createInterviewCommand());
 program.action(() => {
   console.log();
   console.log(chalk.cyan.bold('╔═══════════════════════════════════════════════════════════╗'));
-  console.log(chalk.cyan.bold('║') + '          ' + chalk.white.bold('PUA CLI') + ' - 趣味 AI 职场角色扮演工具' + '        ' + chalk.cyan.bold('║'));
+  console.log(chalk.cyan.bold('║') + '          ' + chalk.white.bold('PUA CLI v0.8.0') + ' - 趣味 AI 职场角色扮演工具' + '   ' + chalk.cyan.bold('║'));
   console.log(chalk.cyan.bold('╚═══════════════════════════════════════════════════════════╝'));
   console.log();
-  console.log(chalk.gray('这是一个趣味性的 AI CLI 工具，提供六种职场角色模式：'));
+
+  // === 互动场景 ===
+  console.log(chalk.green.bold('  互动场景'));
+  console.log(chalk.gray('  ─────────────────────────────────────────────────────'));
+  console.log('  ' + chalk.white('pua chat')                + chalk.gray('              💬 交互聊天 - 选角色，开始PUA对话'));
+  console.log('  ' + chalk.white('pua meeting-room')        + chalk.gray('      🏢 会议室 - 多角色同时参会模拟'));
+  console.log('  ' + chalk.white('pua interview')           + chalk.gray('         🎯 压力面试 - 10轮问答挑战'));
   console.log();
-  console.log('  ' + chalk.red.bold('👔 老板')     + '       - 喜欢 PUA 员工，画饼大师');
-  console.log('  ' + chalk.yellow.bold('😓 员工')   + '       - 被 PUA 的打工人');
-  console.log('  ' + chalk.blue.bold('📋 产品经理') + '   - 需求变更专家，善用黑话');
-  console.log('  ' + chalk.green.bold('💼 HR')      + '         - 公司就是家，打感情牌');
-  console.log('  ' + chalk.magenta.bold('💻 技术主管') + '   - 指点江山，质疑代码');
-  console.log('  ' + chalk.cyan.bold('🌱 实习生')   + '     - 谦虚好学，求带求教');
+
+  // === AI 工具 ===
+  console.log(chalk.yellow.bold('  AI 工具'));
+  console.log(chalk.gray('  ─────────────────────────────────────────────────────'));
+  console.log('  ' + chalk.white('pua jargon')              + chalk.gray('            🗣️  黑话生成 - 生成/翻译职场黑话'));
+  console.log('  ' + chalk.white('pua weekly')              + chalk.gray('            📋 周报生成 - AI 生成角色风格周报'));
+  console.log('  ' + chalk.white('pua email')               + chalk.gray('             📧 邮件转换 - AI 转换邮件语气'));
+  console.log('  ' + chalk.white('pua meeting')             + chalk.gray('           🎤 会议发言 - AI 生成发言建议'));
+  console.log('  ' + chalk.white('pua prompt "你好"')     + chalk.gray('     ⚡ 单次提问 - 快速获取一次回复'));
   console.log();
-  console.log(chalk.gray('─────────────────────────────────────────────────────────────'));
+
+  // === 配置 ===
+  console.log(chalk.blue.bold('  配置'));
+  console.log(chalk.gray('  ─────────────────────────────────────────────────────'));
+  console.log('  ' + chalk.white('pua config')              + chalk.gray('            🔧 配置 API Key 和默认选项'));
+  console.log('  ' + chalk.white('pua config --show')       + chalk.gray('       📄 查看当前配置'));
   console.log();
-  console.log('使用示例:');
-  console.log();
-  console.log('  ' + chalk.white('pua chat') + chalk.gray('                          # 启动交互模式'));
-  console.log('  ' + chalk.white('pua config') + chalk.gray('                        # 配置 API Key'));
-  console.log('  ' + chalk.white('pua prompt --role boss "你好"') + chalk.gray('   # 单次提示'));
-  console.log();
-  console.log(chalk.gray('─────────────────────────────────────────────────────────────'));
-  console.log();
-  console.log(chalk.gray('运行 ') + chalk.white('pua --help') + chalk.gray(' 查看更多选项'));
+
+  // === 角色 ===
+  console.log(chalk.gray('  支持角色: ')
+    + chalk.red('👔老板') + ' '
+    + chalk.yellow('😓员工') + ' '
+    + chalk.blue('📋产品经理') + ' '
+    + chalk.green('💼HR') + ' '
+    + chalk.magenta('💻技术主管') + ' '
+    + chalk.cyan('🌱实习生'));
   console.log();
 });
 

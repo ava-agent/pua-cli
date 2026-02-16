@@ -22,12 +22,46 @@
       overflow-x: hidden;
     }
 
+    /* === Nav Bar === */
+    .nav-bar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: #111;
+      border-bottom: 1px solid #222;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .nav-bar::-webkit-scrollbar { height: 0; }
+    .nav-link {
+      color: #666;
+      text-decoration: none;
+      font-size: 12px;
+      padding: 10px 14px;
+      white-space: nowrap;
+      transition: all 0.2s;
+      border-bottom: 2px solid transparent;
+      flex-shrink: 0;
+    }
+    .nav-link:hover {
+      color: #ccc;
+      background: #1a1a1a;
+    }
+    .nav-link.active {
+      color: #00ccff;
+      border-bottom-color: #00ccff;
+    }
+
     .terminal {
-      width: 90%; max-width: 900px; margin: 40px auto;
+      width: 90%; max-width: 900px; margin: 30px auto 40px;
       background: #0a0a0a; border: 1px solid #333; border-radius: 8px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.5);
       display: flex; flex-direction: column;
-      height: calc(100vh - 80px); overflow: hidden;
+      height: calc(100vh - 120px); overflow: hidden;
     }
 
     .terminal-header {
@@ -376,7 +410,8 @@
     .status-bar .sep { color: #444; margin: 0 6px; }
 
     @media (max-width: 600px) {
-      .terminal { width: 95%; margin: 10px auto; height: calc(100vh - 20px); }
+      .nav-link { font-size: 11px; padding: 8px 10px; }
+      .terminal { width: 95%; margin: 10px auto; height: calc(100vh - 60px); }
       .terminal-body { padding: 12px; }
       .position-grid, .interviewer-grid { grid-template-columns: 1fr; }
       .severity-options { flex-direction: column; }
@@ -386,8 +421,20 @@
       .status-bar { flex-direction: column; gap: 4px; align-items: flex-start; }
     }
   </style>
+  <!-- Vercel Web Analytics -->
+  <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+  <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
+  <nav class="nav-bar">
+    <a class="nav-link" href="index.html">首页</a>
+    <a class="nav-link" href="jargon.html">黑话生成</a>
+    <a class="nav-link" href="weekly.html">周报生成</a>
+    <a class="nav-link" href="email.html">邮件转换</a>
+    <a class="nav-link" href="meeting-suggest.html">会议发言</a>
+    <a class="nav-link" href="meeting.html">会议室</a>
+    <a class="nav-link active" href="interview.html">压力面试</a>
+  </nav>
   <div class="terminal">
     <div class="terminal-header">
       <div class="terminal-buttons">
@@ -511,19 +558,6 @@
 
         <div class="start-hint" id="startHint" style="color:#ff6644;font-size:11px;text-align:center;margin-bottom:8px;">请选择面试岗位，并选择至少 2 位面试官</div>
         <button class="start-btn" id="startBtn" disabled>开始面试</button>
-        <div style="text-align:center;margin-top:10px;">
-          <a href="/" style="color:#666;font-size:11px;text-decoration:none;">首页</a>
-          <span style="color:#333;margin:0 8px;">|</span>
-          <a href="/jargon.html" style="color:#666;font-size:11px;text-decoration:none;">黑话</a>
-          <span style="color:#333;margin:0 8px;">|</span>
-          <a href="/weekly.html" style="color:#666;font-size:11px;text-decoration:none;">周报</a>
-          <span style="color:#333;margin:0 8px;">|</span>
-          <a href="/email.html" style="color:#666;font-size:11px;text-decoration:none;">邮件</a>
-          <span style="color:#333;margin:0 8px;">|</span>
-          <a href="/meeting-suggest.html" style="color:#666;font-size:11px;text-decoration:none;">发言</a>
-          <span style="color:#333;margin:0 8px;">|</span>
-          <a href="/meeting.html" style="color:#666;font-size:11px;text-decoration:none;">会议室</a>
-        </div>
       </div>
 
       <!-- ═══ Interview View ═══ -->
@@ -580,17 +614,17 @@
         <span id="statusLabel">🎯 压力面试</span>
       </div>
       <div class="right">
-        <a href="/">首页</a>
+        <a href="index.html">首页</a>
         <span class="sep">|</span>
-        <a href="/jargon.html">黑话</a>
+        <a href="jargon.html">黑话</a>
         <span class="sep">|</span>
-        <a href="/weekly.html">周报</a>
+        <a href="weekly.html">周报</a>
         <span class="sep">|</span>
-        <a href="/email.html">邮件</a>
+        <a href="email.html">邮件</a>
         <span class="sep">|</span>
-        <a href="/meeting-suggest.html">发言</a>
+        <a href="meeting-suggest.html">发言</a>
         <span class="sep">|</span>
-        <a href="/meeting.html">会议室</a>
+        <a href="meeting.html">会议室</a>
         <span class="sep">|</span>
         <a href="https://github.com/ava-agent/pua-cli" target="_blank" rel="noopener">GitHub</a>
       </div>
@@ -619,7 +653,7 @@
       </div>
       <div class="ending-actions">
         <button class="retry-btn" id="retryBtn">重新面试</button>
-        <a class="home-btn" href="/">返回首页</a>
+        <a class="home-btn" href="index.html">返回首页</a>
       </div>
     </div>
   </div>

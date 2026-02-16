@@ -36,14 +36,14 @@
     .terminal {
       width: 90%;
       max-width: 900px;
-      margin: 40px auto;
+      margin: 30px auto 40px;
       background: #0a0a0a;
       border: 1px solid #333;
       border-radius: 8px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
       display: flex;
       flex-direction: column;
-      height: calc(100vh - 80px);
+      height: calc(100vh - 120px);
       overflow: hidden;
     }
 
@@ -403,7 +403,7 @@
       color: #ccc;
     }
 
-    .status-bar .separator {
+    .status-bar .sep {
       color: #444;
       margin: 0 6px;
     }
@@ -595,6 +595,40 @@
       font-weight: 700;
     }
 
+    /* === Nav Bar === */
+    .nav-bar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: #111;
+      border-bottom: 1px solid #222;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .nav-bar::-webkit-scrollbar { height: 0; }
+    .nav-link {
+      color: #666;
+      text-decoration: none;
+      font-size: 12px;
+      padding: 10px 14px;
+      white-space: nowrap;
+      transition: all 0.2s;
+      border-bottom: 2px solid transparent;
+      flex-shrink: 0;
+    }
+    .nav-link:hover {
+      color: #ccc;
+      background: #1a1a1a;
+    }
+    .nav-link.active {
+      color: #00ccff;
+      border-bottom-color: #00ccff;
+    }
+
     @media (max-width: 600px) {
       .terminal-body {
         padding: 10px;
@@ -640,10 +674,24 @@
         flex-wrap: wrap;
         gap: 8px;
       }
+
+      .nav-link { font-size: 11px; padding: 8px 10px; }
     }
   </style>
+  <!-- Vercel Web Analytics -->
+  <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+  <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
+  <nav class="nav-bar">
+    <a class="nav-link active" href="index.html">首页</a>
+    <a class="nav-link" href="jargon.html">黑话生成</a>
+    <a class="nav-link" href="weekly.html">周报生成</a>
+    <a class="nav-link" href="email.html">邮件转换</a>
+    <a class="nav-link" href="meeting-suggest.html">会议发言</a>
+    <a class="nav-link" href="meeting.html">会议室</a>
+    <a class="nav-link" href="interview.html">压力面试</a>
+  </nav>
   <div class="terminal">
     <!-- Terminal Header -->
     <div class="terminal-header">
@@ -697,7 +745,7 @@
       </div>
 
       <!-- Meeting Room Banner -->
-      <a class="meeting-banner" href="/meeting.html">
+      <a class="meeting-banner" href="meeting.html">
         <span class="meeting-banner-icon">🏢</span>
         <div class="meeting-banner-body">
           <div class="meeting-banner-title">会议室模式 - 多角色同时参会</div>
@@ -707,7 +755,7 @@
       </a>
 
       <!-- Interview Banner -->
-      <a class="meeting-banner" href="/interview.html" style="background:linear-gradient(135deg,#1a1111,#2a1111);border-color:#441111;">
+      <a class="meeting-banner" href="interview.html" style="background:linear-gradient(135deg,#1a1111,#2a1111);border-color:#441111;">
         <span class="meeting-banner-icon">🎯</span>
         <div class="meeting-banner-body">
           <div class="meeting-banner-title" style="color:#ff4444;">压力面试 - 10轮问答挑战</div>
@@ -718,28 +766,28 @@
 
       <!-- Tool Banners -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-        <a class="meeting-banner" href="/jargon.html" style="background:linear-gradient(135deg,#0a1a2a,#112233);border-color:#1a3355;margin:0;padding:10px 14px;">
+        <a class="meeting-banner" href="jargon.html" style="background:linear-gradient(135deg,#0a1a2a,#112233);border-color:#1a3355;margin:0;padding:10px 14px;">
           <span class="meeting-banner-icon" style="font-size:20px;">🗣️</span>
           <div class="meeting-banner-body">
             <div class="meeting-banner-title" style="color:#00ccff;font-size:12px;">职场黑话生成</div>
             <div class="meeting-banner-desc" style="font-size:10px;">生成黑话词汇、翻译普通文本</div>
           </div>
         </a>
-        <a class="meeting-banner" href="/weekly.html" style="background:linear-gradient(135deg,#0a1a1a,#112222);border-color:#1a3333;margin:0;padding:10px 14px;">
+        <a class="meeting-banner" href="weekly.html" style="background:linear-gradient(135deg,#0a1a1a,#112222);border-color:#1a3333;margin:0;padding:10px 14px;">
           <span class="meeting-banner-icon" style="font-size:20px;">📋</span>
           <div class="meeting-banner-body">
             <div class="meeting-banner-title" style="color:#00ff88;font-size:12px;">周报生成器</div>
             <div class="meeting-banner-desc" style="font-size:10px;">一键生成各角色风格周报</div>
           </div>
         </a>
-        <a class="meeting-banner" href="/email.html" style="background:linear-gradient(135deg,#1a0a2a,#221133);border-color:#331a55;margin:0;padding:10px 14px;">
+        <a class="meeting-banner" href="email.html" style="background:linear-gradient(135deg,#1a0a2a,#221133);border-color:#331a55;margin:0;padding:10px 14px;">
           <span class="meeting-banner-icon" style="font-size:20px;">📧</span>
           <div class="meeting-banner-body">
             <div class="meeting-banner-title" style="color:#aa44ff;font-size:12px;">邮件语气转换</div>
             <div class="meeting-banner-desc" style="font-size:10px;">转换职场邮件的语气风格</div>
           </div>
         </a>
-        <a class="meeting-banner" href="/meeting-suggest.html" style="background:linear-gradient(135deg,#1a1a0a,#222211);border-color:#333311;margin:0;padding:10px 14px;">
+        <a class="meeting-banner" href="meeting-suggest.html" style="background:linear-gradient(135deg,#1a1a0a,#222211);border-color:#333311;margin:0;padding:10px 14px;">
           <span class="meeting-banner-icon" style="font-size:20px;">🎤</span>
           <div class="meeting-banner-body">
             <div class="meeting-banner-title" style="color:#ffcc00;font-size:12px;">会议发言建议</div>
@@ -849,20 +897,20 @@
       <div class="right">
         <span class="key">POS</span>
         <span class="value" id="cursorPos">1:1</span>
-        <span class="separator">|</span>
-        <a href="/jargon.html" title="黑话">黑话</a>
-        <span class="separator">|</span>
-        <a href="/weekly.html" title="周报">周报</a>
-        <span class="separator">|</span>
-        <a href="/email.html" title="邮件">邮件</a>
-        <span class="separator">|</span>
-        <a href="/meeting-suggest.html" title="发言">发言</a>
-        <span class="separator">|</span>
-        <a href="/meeting.html" title="会议室">会议室</a>
-        <span class="separator">|</span>
-        <a href="/interview.html" title="面试">面试</a>
-        <span class="separator">|</span>
-        <a href="https://github.com/ava-agent/pua-cli" target="_blank" rel="noopener" title="GitHub">GitHub</a>
+        <span class="sep">|</span>
+        <a href="jargon.html">黑话</a>
+        <span class="sep">|</span>
+        <a href="weekly.html">周报</a>
+        <span class="sep">|</span>
+        <a href="email.html">邮件</a>
+        <span class="sep">|</span>
+        <a href="meeting-suggest.html">发言</a>
+        <span class="sep">|</span>
+        <a href="meeting.html">会议室</a>
+        <span class="sep">|</span>
+        <a href="interview.html">面试</a>
+        <span class="sep">|</span>
+        <a href="https://github.com/ava-agent/pua-cli" target="_blank" rel="noopener">GitHub</a>
       </div>
     </div>
   </div>

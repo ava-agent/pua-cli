@@ -27,14 +27,14 @@
     .terminal {
       width: 90%;
       max-width: 900px;
-      margin: 40px auto;
+      margin: 30px auto 40px;
       background: #0a0a0a;
       border: 1px solid #333;
       border-radius: 8px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
       display: flex;
       flex-direction: column;
-      height: calc(100vh - 80px);
+      height: calc(100vh - 120px);
       overflow: hidden;
     }
 
@@ -72,35 +72,36 @@
 
     /* === Nav Bar === */
     .nav-bar {
-      display: flex;
-      gap: 6px;
-      padding: 10px 0 16px;
-      flex-wrap: wrap;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: #111;
       border-bottom: 1px solid #222;
-      margin-bottom: 20px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
-
+    .nav-bar::-webkit-scrollbar { height: 0; }
     .nav-link {
       color: #666;
       text-decoration: none;
-      font-size: 11px;
-      padding: 5px 10px;
-      border: 1px solid #333;
-      border-radius: 4px;
-      transition: all 0.2s;
+      font-size: 12px;
+      padding: 10px 14px;
       white-space: nowrap;
+      transition: all 0.2s;
+      border-bottom: 2px solid transparent;
+      flex-shrink: 0;
     }
-
     .nav-link:hover {
-      color: #00ccff;
-      border-color: #00ccff;
-      background: #0a1a2a;
+      color: #ccc;
+      background: #1a1a1a;
     }
-
     .nav-link.active {
       color: #00ccff;
-      border-color: #00ccff;
-      background: #0a1a2a;
+      border-bottom-color: #00ccff;
     }
 
     /* === Setup Area === */
@@ -535,12 +536,7 @@
         grid-template-columns: 1fr;
       }
 
-      .nav-bar { gap: 4px; }
-
-      .nav-link {
-        font-size: 10px;
-        padding: 4px 7px;
-      }
+      .nav-link { font-size: 11px; padding: 8px 10px; }
 
       .status-bar {
         flex-direction: column;
@@ -551,8 +547,20 @@
       .page-title { font-size: 18px; }
     }
   </style>
+  <!-- Vercel Web Analytics -->
+  <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+  <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
+  <nav class="nav-bar">
+    <a class="nav-link" href="index.html">首页</a>
+    <a class="nav-link active" href="jargon.html">黑话生成</a>
+    <a class="nav-link" href="weekly.html">周报生成</a>
+    <a class="nav-link" href="email.html">邮件转换</a>
+    <a class="nav-link" href="meeting-suggest.html">会议发言</a>
+    <a class="nav-link" href="meeting.html">会议室</a>
+    <a class="nav-link" href="interview.html">压力面试</a>
+  </nav>
   <div class="terminal">
     <!-- Terminal Header -->
     <div class="terminal-header">
@@ -566,17 +574,6 @@
 
     <!-- Terminal Body -->
     <div class="terminal-body" id="terminalBody">
-      <!-- Nav Bar -->
-      <nav class="nav-bar">
-        <a class="nav-link" href="index.html">首页</a>
-        <a class="nav-link active" href="jargon.html">黑话生成</a>
-        <a class="nav-link" href="weekly.html">周报生成</a>
-        <a class="nav-link" href="email.html">邮件转换</a>
-        <a class="nav-link" href="meeting-suggest.html">会议发言</a>
-        <a class="nav-link" href="meeting.html">会议室</a>
-        <a class="nav-link" href="interview.html">压力面试</a>
-      </nav>
-
       <!-- Setup Area -->
       <div class="setup-area">
         <div class="page-title">🗣️ 职场黑话生成器</div>
@@ -695,6 +692,12 @@
       <div class="right">
         <a href="index.html">首页</a>
         <span class="sep">|</span>
+        <a href="weekly.html">周报</a>
+        <span class="sep">|</span>
+        <a href="email.html">邮件</a>
+        <span class="sep">|</span>
+        <a href="meeting-suggest.html">发言</a>
+        <span class="sep">|</span>
         <a href="meeting.html">会议室</a>
         <span class="sep">|</span>
         <a href="interview.html">面试</a>
@@ -747,85 +750,6 @@
       email: '邮件',
       chat: '聊天'
     };
-
-    const SENTENCE_TEMPLATES = {
-      meeting: [
-        '我们来{action}一下{topic}的{aspect}',
-        '需要{action}一下{topic}',
-        '今天主要{action}关于{topic}的{aspect}',
-        '这个事情需要大家一起来{action}一下{topic}',
-        '请各团队{action}一下{topic}的{aspect}'
-      ],
-      report: [
-        '本周{action}了{number}个{topic}',
-        '完成了{number}个{topic}的{action}',
-        '下周将继续{action}{number}个{topic}的{aspect}',
-        '在{topic}方面已经{action}了{number}个{aspect}'
-      ],
-      email: [
-        '辛苦{action}一下{topic}',
-        '麻烦{action}一下{topic}',
-        '请{action}一下关于{topic}的事项，为盼',
-        '劳烦{action}一下{topic}，顺颂商祺'
-      ],
-      chat: [
-        '需要在{topic}方面{action}',
-        '关于{topic}的{aspect}',
-        '{topic}的{aspect}需要进一步{action}',
-        '我们在{topic}赛道上需要{action}一下{aspect}'
-      ]
-    };
-
-    const TEMPLATE_VARS = {
-      action: ['对齐', '拉通', '赋能', '沉淀', '复盘', '迭代', '闭环', '落地'],
-      number: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      topic: ['业务', '产品', '项目', '需求', '用户增长', '商业化', '技术债', '组织架构'],
-      aspect: ['颗粒度', '护城河', '闭环', '抓手', '链路', '打法', '方法论', '底层逻辑']
-    };
-
-    // Translation replacement map
-    const TRANSLATION_MAP = [
-      { pattern: /讨论/g, replacements: ['对齐', '拉通'] },
-      { pattern: /做/g, replacements: ['赋能', '落地', '交付'] },
-      { pattern: /想想/g, replacements: ['沉淀', '复盘', '深挖'] },
-      { pattern: /想一想/g, replacements: ['沉淀一下', '复盘一下'] },
-      { pattern: /连接/g, replacements: ['打通', '拉通', '联动'] },
-      { pattern: /改进/g, replacements: ['迭代', '优化升级'] },
-      { pattern: /问题/g, replacements: ['痛点', '卡点', '瓶颈'] },
-      { pattern: /优点/g, replacements: ['护城河', '核心竞争力'] },
-      { pattern: /方法/g, replacements: ['打法', '方法论', '最佳实践'] },
-      { pattern: /帮忙/g, replacements: ['赋能', '支持', '协同'] },
-      { pattern: /目标/g, replacements: ['北极星指标', 'OKR'] },
-      { pattern: /用户/g, replacements: ['C端用户', '目标人群'] },
-      { pattern: /数据/g, replacements: ['数据维度', '数据抓手'] },
-      { pattern: /合作/g, replacements: ['协同', '联动', '共振'] },
-      { pattern: /分析/g, replacements: ['拆解', '深挖', '洞察'] },
-      { pattern: /计划/g, replacements: ['规划', '路线图', 'Roadmap'] },
-      { pattern: /开始/g, replacements: ['启动', 'Kick Off'] },
-      { pattern: /结束/g, replacements: ['收口', '闭环'] },
-      { pattern: /完成/g, replacements: ['交付', '落地', '闭环'] },
-      { pattern: /报告/g, replacements: ['输出', '交付物'] },
-      { pattern: /能力/g, replacements: ['抓手', '核心能力'] },
-      { pattern: /结果/g, replacements: ['产出', '成果物'] },
-      { pattern: /需要/g, replacements: ['需要从底层逻辑上', '需要从方法论上'] },
-      { pattern: /进展/g, replacements: ['进度', '里程碑'] },
-      { pattern: /范围/g, replacements: ['边界', '颗粒度'] },
-      { pattern: /影响/g, replacements: ['辐射', '渗透', '触达'] },
-      { pattern: /提高/g, replacements: ['拉升', '提振', '赋能'] },
-      { pattern: /减少/g, replacements: ['降本增效', '收敛'] }
-    ];
-
-    const JARGON_SUFFIXES = [
-      '{jargon}到位', '把{jargon}打透', '{jargon}要做到极致',
-      '从{jargon}的维度来看', '以{jargon}为抓手',
-      '在{jargon}层面实现闭环', '用{jargon}赋能整个链路'
-    ];
-
-    const ALL_JARGON_WORDS = [
-      '对齐', '拉通', '赋能', '沉淀', '闭环', '抓手',
-      '颗粒度', '底层逻辑', '顶层设计', '方法论', '组合拳',
-      '护城河', '全链路', '端到端', '降本增效'
-    ];
 
     // ================================================
     // State
@@ -917,7 +841,7 @@
     generateBtn.addEventListener('click', generateDictionary);
     document.getElementById('regenerateDict').addEventListener('click', generateDictionary);
 
-    function generateDictionary() {
+    async function generateDictionary() {
       if (!selectedType) return;
 
       const allWords = JARGON_DICT[selectedType];
@@ -946,36 +870,55 @@
         jargonTags.appendChild(tag);
       });
 
-      // Generate example sentence
-      const sentence = generateSentence(selectedType);
-      exampleText.textContent = sentence;
-
-      // Store result for copy
-      lastDictResult = {
-        type: TYPE_NAMES[selectedType],
-        words: selectedWords,
-        sentence: sentence
-      };
-
-      // Show result
+      // Show result area with loading state for the sentence
+      exampleText.textContent = '生成中...';
       dictResult.classList.add('visible');
+
+      // Set loading state on buttons
+      const regenerateDict = document.getElementById('regenerateDict');
+      generateBtn.disabled = true;
+      regenerateDict.disabled = true;
+      const prevBtnText = generateBtn.textContent;
+      generateBtn.textContent = '生成中...';
+
+      try {
+        const response = await fetch('/api/jargon', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mode: 'generate',
+            input: selectedType,
+            scene: selectedType
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          throw new Error(errorData?.error || `请求失败 (${response.status})`);
+        }
+
+        const data = await response.json();
+        const sentence = data.result || '';
+        exampleText.textContent = sentence;
+
+        // Store result for copy
+        lastDictResult = {
+          type: TYPE_NAMES[selectedType],
+          words: selectedWords,
+          sentence: sentence
+        };
+      } catch (error) {
+        exampleText.textContent = '生成失败，请重试';
+        showToast(error.message || '网络错误，请稍后重试');
+      } finally {
+        generateBtn.disabled = false;
+        regenerateDict.disabled = false;
+        generateBtn.textContent = prevBtnText;
+      }
 
       // Scroll to result
       requestAnimationFrame(() => {
         dictResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      });
-    }
-
-    function generateSentence(type) {
-      const templates = SENTENCE_TEMPLATES[type];
-      if (!templates || templates.length === 0) return '';
-
-      const template = templates[Math.floor(Math.random() * templates.length)];
-
-      return template.replace(/\{(\w+)\}/g, (match, key) => {
-        const options = TEMPLATE_VARS[key];
-        if (!options || options.length === 0) return match;
-        return String(options[Math.floor(Math.random() * options.length)]);
       });
     }
 
@@ -985,63 +928,58 @@
     translateBtn.addEventListener('click', translateText);
     document.getElementById('regenerateTranslate').addEventListener('click', translateText);
 
-    function translateText() {
+    async function translateText() {
       const input = translateInput.value.trim();
       if (!input) {
         showToast('请先输入要翻译的文本');
         return;
       }
 
-      let result = input;
+      // Set loading state
+      const regenerateTranslate = document.getElementById('regenerateTranslate');
+      translateBtn.disabled = true;
+      regenerateTranslate.disabled = true;
+      const prevBtnText = translateBtn.textContent;
+      translateBtn.textContent = '翻译中...';
 
-      // Determine replacement intensity
-      let replacementChance;
-      switch (translateIntensity) {
-        case 'light': replacementChance = 0.4; break;
-        case 'medium': replacementChance = 0.7; break;
-        case 'heavy': replacementChance = 1.0; break;
-        default: replacementChance = 0.7;
-      }
+      try {
+        const response = await fetch('/api/jargon', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mode: 'translate',
+            input: input
+          })
+        });
 
-      // Apply replacements
-      for (const rule of TRANSLATION_MAP) {
-        if (Math.random() < replacementChance) {
-          const replacement = rule.replacements[Math.floor(Math.random() * rule.replacements.length)];
-          result = result.replace(rule.pattern, replacement);
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          throw new Error(errorData?.error || `请求失败 (${response.status})`);
         }
+
+        const data = await response.json();
+        const result = data.result || '';
+
+        // Display result
+        originalText.textContent = input;
+        translatedText.textContent = result;
+
+        lastTranslateResult = result;
+
+        // Show result
+        translateResult.classList.add('visible');
+
+        // Scroll to result
+        requestAnimationFrame(() => {
+          translateResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+      } catch (error) {
+        showToast(error.message || '网络错误，请稍后重试');
+      } finally {
+        translateBtn.disabled = false;
+        regenerateTranslate.disabled = false;
+        translateBtn.textContent = prevBtnText;
       }
-
-      // Append jargon phrase based on intensity
-      const suffixCount = translateIntensity === 'light' ? 1
-        : translateIntensity === 'medium' ? 2 : 3;
-
-      const usedSuffixes = [];
-      for (let i = 0; i < suffixCount; i++) {
-        const suffix = JARGON_SUFFIXES[Math.floor(Math.random() * JARGON_SUFFIXES.length)];
-        const jargon = ALL_JARGON_WORDS[Math.floor(Math.random() * ALL_JARGON_WORDS.length)];
-        const rendered = suffix.replace('{jargon}', jargon);
-        if (!usedSuffixes.includes(rendered)) {
-          usedSuffixes.push(rendered);
-        }
-      }
-
-      if (usedSuffixes.length > 0) {
-        result = result + '，' + usedSuffixes.join('，') + '。';
-      }
-
-      // Display result
-      originalText.textContent = input;
-      translatedText.textContent = result;
-
-      lastTranslateResult = result;
-
-      // Show result
-      translateResult.classList.add('visible');
-
-      // Scroll to result
-      requestAnimationFrame(() => {
-        translateResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      });
     }
 
     // ================================================

@@ -1,10 +1,14 @@
 /**
  * 职场黑话生成器
- * 功能：生成各种类型的职场黑话，或将普通文本转换为黑话版本
+ * 功能：使用 AI 生成各种类型的职场黑话，或将普通文本转换为黑话版本
  */
 
 import { Command } from 'commander';
 import chalk from 'chalk';
+import ora from 'ora';
+import { createLLM } from '../llm/factory';
+import { loadConfig } from '../config/settings';
+import { getProviderBaseUrl } from '../config/settings';
 import type { RoleType } from '../prompts';
 
 export interface JargonOptions {
@@ -14,103 +18,77 @@ export interface JargonOptions {
 }
 
 /**
- * 职场黑话词典
+ * 使用 AI 生成黑话词典
  */
-const JARGON_DICT: Record<string, string[]> = {
-  meeting: [
-    '对齐', '拉通', '沉淀', '赋能', '闭环', '抓手', '打法',
-    '组合拳', '矩阵', '协同', '联动', '共振', '裂变',
-    '渗透', '击穿', '落地', '复盘', '迭代', '敏捷',
-    '颗粒度', '链路', '痛点', '痒点', '抓手', '底座',
-    '中台', '前端', '后端', '全链路', '端到端', '生命周期'
-  ],
-  report: [
-    '复盘', '迭代', '裂变', '矩阵', '组合拳', '深挖',
-    '赋能', '加持', '维度', '视角', '赛道', '锚点', '支点', '杠杆', '撬动', '辐射', '覆盖',
-    '渗透', '下沉', '上行', '输出', '交付', '闭环',
-    '认知', '心智', '感知', '体感', '触点', '路径', '打法', '模型', '范式', '体系', '方法论'
-  ],
-  email: [
-    '望', '谢谢', '辛苦了', '辛苦了', '劳烦', '敬请', '谢谢',
-    '妥否', '收到', '请回复', '为盼', '顺颂', '商祺',
-    '尽快', '方便', '麻烦', '协助', '支持', '配合',
-    '推进', '落实', '完成', '跟进', '反馈', '确认',
-    '抄送', '呈报', '汇报', '同步', '对齐', '拉通'
-  ],
-  chat: [
-    '颗粒度', '护城河', '降本增效', '天花板', '瓶颈',
-    '赋能', '迭代', '敏捷', '瀑布', 'Scrum', 'Daily',
-    'OKR', 'KPI', 'GMV', 'DAU', 'MAU',
-    '转化', '留存', '促活', '召回', '裂变', '传播',
-    '痛点', '爽点', '场景', '案例', '方法论', '最佳实践'
-  ]
-};
+async function generateWithAI(
+  type: string,
+  config: { apiKey: string; provider: any; model: string }
+): Promise<string> {
+  const llm = createLLM(config.provider, {
+    apiKey: config.apiKey,
+    model: config.model,
+    baseUrl: getProviderBaseUrl(config.provider),
+  });
 
-/**
- * 获取指定类型的黑话列表
- */
-function getJargonByType(type: string): string[] {
-  if (type === 'all') {
-    return [...JARGON_DICT.meeting, ...JARGON_DICT.report, ...JARGON_DICT.email, ...JARGON_DICT.chat];
-  }
-  return JARGON_DICT[type as keyof typeof JARGON_DICT] || JARGON_DICT.meeting;
-}
-
-/**
- * 根据强度过滤黑话
- */
-function filterByIntensity(jargon: string[], intensity: string): string[] {
-  if (intensity === 'light') {
-    return jargon.slice(0, 5);
-  } else if (intensity === 'medium') {
-    return jargon.slice(0, 10);
-  } else {
-    return jargon;
-  }
-}
-
-/**
- * 将普通文本转换为黑话版本
- */
-export function translateToJargon(text: string, intensity: string = 'medium'): string {
-  let result = text;
-  const replacementCount = intensity === 'light' ? 3 : intensity === 'medium' ? 6 : 10;
-
-  // 随机选择并替换 3-10 个词
-  const rules = ['做', '想想', '讨论', '连接'];
-  const shuffledRules = rules.sort(() => Math.random() - 0.5).slice(0, replacementCount);
-
-  for (const rule of shuffledRules) {
-    const regex = new RegExp(`(${rule})`, 'g');
-    result = result.replace(regex, '对$1');
-  }
-
-  // 添加随机黑话
-  const jargonList = JARGON_DICT.chat.sort(() => Math.random() - 0.5);
-  result = `${result}，${jargonList[Math.floor(Math.random() * jargonList.length)]}到位`;
-
-  return result as string;
-}
-
-/**
- * 生成黑话示例句子
- */
-export function generateJargonSentence(type: string, intensity: string): string {
-  const templates: Record<string, string[]> = {
-    meeting: ['我们来{action}一下{topic}的{aspect}', '需要{action}一下{topic}'],
-    report: ['本周{action}了{number}个{topic}', '完成了{number}个{topic}的{action}'],
-    email: ['辛苦{action}一下{topic}', '麻烦{action}一下{topic}'],
-    chat: ['需要在{topic}方面{action}', '关于{topic}的{aspect}']
+  const sceneMap: Record<string, string> = {
+    meeting: '会议场景',
+    report: '汇报/报告场景',
+    email: '邮件场景',
+    chat: '日常聊天场景',
+    all: '各种职场场景',
   };
 
-  const selectedTemplates = templates[type] || templates.meeting;
-  const template = selectedTemplates[Math.floor(Math.random() * selectedTemplates.length)];
+  const scene = sceneMap[type] || '各种职场场景';
 
-  return template
-    .replace(/{action}/g, () => ['对齐', '拉通', '赋能', '沉淀'][Math.floor(Math.random() * 4)])
-    .replace(/{number}/g, () => String(Math.floor(Math.random() * 10) + 1))
-    .replace(/{topic}/g, () => ['业务', '产品', '项目', '需求'][Math.floor(Math.random() * 4)])
-    .replace(/{aspect}/g, () => ['颗粒度', '护城河', '闭环', '抓手'][Math.floor(Math.random() * 4)]);
+  const result = await llm.chat([
+    {
+      role: 'system',
+      content: `你是一个职场黑话专家。请生成${scene}下常用的职场黑话词汇和例句。
+要求：
+1. 列出 8-12 个黑话词汇，每个附带简短解释
+2. 用这些黑话造 3 个完整的例句
+3. 风格要搞笑、夸张，带有讽刺感
+4. 格式清晰，使用编号列表`,
+    },
+    {
+      role: 'user',
+      content: `请生成"${scene}"的职场黑话词汇和例句。`,
+    },
+  ]);
+
+  return result;
+}
+
+/**
+ * 使用 AI 翻译文本为黑话
+ */
+async function translateWithAI(
+  text: string,
+  config: { apiKey: string; provider: any; model: string }
+): Promise<string> {
+  const llm = createLLM(config.provider, {
+    apiKey: config.apiKey,
+    model: config.model,
+    baseUrl: getProviderBaseUrl(config.provider),
+  });
+
+  const result = await llm.chat([
+    {
+      role: 'system',
+      content: `你是职场黑话翻译器。将用户输入的普通文本翻译成充满职场黑话的版本。
+要求：
+1. 尽量用"赋能""对齐""闭环""抓手""颗粒度""拉通""沉淀""赛道""打法""底层逻辑"等黑话替换普通表达
+2. 保持原文含义但让句子变得"高大上"
+3. 风格夸张搞笑
+4. 先输出翻译结果，再用一行简短解释翻译了哪些词`,
+    },
+    {
+      role: 'user',
+      content: text,
+    },
+  ]);
+
+  return result;
 }
 
 /**
@@ -118,50 +96,53 @@ export function generateJargonSentence(type: string, intensity: string): string 
  */
 export function createJargonCommand(): Command {
   const command = new Command('jargon')
-    .description('职场黑话生成器 - 生成各种类型的职场黑话')
+    .description('职场黑话生成器 - AI 生成各种类型的职场黑话')
     .option('-t, --type <type>', '黑话类型: meeting(会议), report(报告), email(邮件), chat(聊天), all(全部)', 'meeting')
     .option('-i, --intensity <level>', '强度: light(轻度), medium(中度), heavy(重度)', 'medium')
+    .option('-p, --provider <zhipu|openai>', 'AI 服务提供商')
+    .option('-m, --model <model>', '模型名称')
     .argument('[text...]', '要翻译的普通文本（输入文本则进入翻译模式）');
 
   command.action(async (textArgs, options) => {
     const type = options.type || 'meeting';
-    const intensity = options.intensity || 'medium';
+    const spinner = ora({ text: 'AI 生成中...', color: 'cyan' });
 
-    // 当用户输入文本时，进入翻译模式
-    if (textArgs.length > 0) {
-      // 翻译模式
-      if (textArgs.length === 0) {
-        console.log('❌ 请提供要翻译的文本');
-        console.log('\n示例:');
-        console.log('  pua jargon "帮我做个功能"');
-        console.log('  pua jargon "我们一起讨论这个问题"');
-        return;
+    try {
+      const config = loadConfig(options);
+
+      if (textArgs.length > 0) {
+        // 翻译模式
+        const input = textArgs.join(' ');
+        console.log();
+        console.log(chalk.gray('📝 原文: ') + input);
+        spinner.start();
+
+        const result = await translateWithAI(input, config);
+        spinner.stop();
+
+        console.log(chalk.cyan('🎯 黑话版本:'));
+        console.log();
+        console.log(result);
+        console.log();
+      } else {
+        // 生成模式
+        console.log();
+        console.log(chalk.cyan.bold(`🎯 职场黑话生成器 [${type.toUpperCase()}]`));
+        console.log(chalk.gray('─'.repeat(50)));
+        spinner.start();
+
+        const result = await generateWithAI(type, config);
+        spinner.stop();
+
+        console.log();
+        console.log(result);
+        console.log();
       }
-
-      const input = textArgs.join(' ');
-      const translated = translateToJargon(input, intensity);
-
-      console.log();
-      console.log('📝 原文:', input);
-      console.log('🎯 黑话:', translated);
-      console.log();
-    } else {
-      // 生成模式
-      const jargonList = getJargonByType(type);
-      const filteredJargon = filterByIntensity(jargonList, intensity);
-
-      console.log();
-      console.log(`🎯 职场黑话生成器 [${type.toUpperCase()} - ${intensity.toUpperCase()}]`);
-      console.log(chalk.gray('─'.repeat(50)));
-      console.log();
-      filteredJargon.forEach((word, index) => {
-        console.log(`  ${index + 1}. ${chalk.cyan(word)}`);
-      });
-
-      console.log();
-      console.log('💡 示例句子:');
-      console.log(chalk.gray(generateJargonSentence(type, intensity)));
-      console.log();
+    } catch (error) {
+      spinner.stop();
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error(chalk.red('✗ ') + msg);
+      process.exit(1);
     }
   });
 

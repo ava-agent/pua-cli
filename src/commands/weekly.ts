@@ -1,10 +1,13 @@
 /**
  * 周报生成器
- * 功能：根据不同角色自动生成职场周报
+ * 功能：使用 AI 根据不同角色自动生成职场周报
  */
 
 import { Command } from 'commander';
 import chalk from 'chalk';
+import ora from 'ora';
+import { createLLM } from '../llm/factory';
+import { loadConfig, getProviderBaseUrl } from '../config/settings';
 import type { RoleType } from '../prompts';
 
 /**
@@ -22,273 +25,70 @@ export interface WeeklyReportOptions {
   highlights?: number;
 }
 
-/**
- * 周报模板配置
- */
-const WEEKLY_TEMPLATES = {
-  boss: {
-    highlights: [
-      '本周{X}个下属的工作进行了指导和监督',
-      '与{X}位员工进行了1对1沟通',
-      '参加了{X}场管理层会议',
-      '对团队工作状态进行了{X}次检查'
-    ],
-    plans: [
-      '下周计划重点关注{X}个项目的推进',
-      '计划进行{X}次团队培训',
-      '准备与{X}位核心员工进行深入沟通',
-      '计划召开{X}场部门协调会'
-    ],
-    risks: [
-      '可能存在{X}个项目进度风险',
-      '需要注意{X}位员工的绩效问题',
-      '资源可能存在{X}%的缺口',
-      '可能面临{X}个外部挑战'
-    ],
-    data: [
-      '本周团队产出提升{X}%',
-      '完成{X}个关键里程碑',
-      '团队加班时长{X}小时',
-      '客户满意度{X}%'
-    ]
-  },
-  employee: {
-    highlights: [
-      '完成了{X}个分配任务',
-      '参与了{X}个项目会议',
-      '处理了{X}个工单/问题',
-      '学习了{X}项新技术/业务知识'
-    ],
-    plans: [
-      '下周计划完成{X}个待办任务',
-      '准备{X}个文档/报告',
-      '计划学习{X}项新技能',
-      '跟进{X}个问题处理进度'
-    ],
-    risks: [
-      '可能存在{X}个技术难点',
-      '{X}个任务可能时间紧张',
-      '需要等待{X}个依赖/支持',
-      '个人技能可能存在{X}个不足'
-    ],
-    data: [
-      '完成任务{X}个',
-      '代码提交{X}次',
-      '修复Bug{X}个',
-      '参加培训{X}小时'
-    ]
-  },
-  pm: {
-    highlights: [
-      '完成了{X}个需求的评审和确认',
-      '与{X}个干系人对齐了产品方向',
-      '进行了{X}场用户调研/数据分析',
-      '输出了{X}份产品文档/原型'
-    ],
-    plans: [
-      '下周计划上线{X}个新功能',
-      '准备进行{X}场产品宣讲',
-      '计划优化{X}个核心流程',
-      '准备{X}个版本的迭代规划'
-    ],
-    risks: [
-      '{X}个需求可能存在变更风险',
-      '开发资源可能存在{X}%的缺口',
-      '{X}个功能可能延期上线',
-      '用户反馈可能存在{X}个不确定性'
-    ],
-    data: [
-      '需求完成率{X}%',
-      '需求评审{X}场',
-      '文档输出{X}份',
-      '干系人对齐{X}次'
-    ]
-  },
-  hr: {
-    highlights: [
-      '组织了{X}场团队建设活动',
-      '完成了{X}位员工的入职/离职手续',
-      '处理了{X}个员工关系/问题',
-      '推进了{X}项企业文化建设工作'
-    ],
-    plans: [
-      '下周计划组织{X}场培训活动',
-      '准备进行{X}次员工访谈',
-      '计划优化{X}项HR流程制度',
-      '准备{X}场团建/文化活动'
-    ],
-    risks: [
-      '员工满意度可能存在{X}%的波动',
-      '{X}位核心员工可能存在离职风险',
-      '招聘计划可能存在{X}%的缺口',
-      '文化建设可能存在{X}个阻力'
-    ],
-    data: [
-      '新入职员工{X}人',
-      '离职员工{X}人',
-      '培训覆盖率{X}%',
-      '员工满意度{X}%'
-    ]
-  },
-  techlead: {
-    highlights: [
-      '完成了{X}次代码审查',
-      '处理了{X}个技术债务',
-      '进行了{X}场技术分享会',
-      '重构了{X}个核心模块'
-    ],
-    plans: [
-      '下周计划优化{X}个性能瓶颈',
-      '准备进行{X}项技术调研',
-      '计划重构{X}个遗留模块',
-      '准备输出{X}份技术文档'
-    ],
-    risks: [
-      '{X}个系统可能存在稳定性风险',
-      '{X}个技术债务可能影响交付',
-      '团队技能可能存在{X}个短板',
-      '{X}个依赖项可能存在兼容性问题'
-    ],
-    data: [
-      '代码审查{X}次',
-      'Bug修复{X}个',
-      '性能优化{X}项',
-      '技术分享{X}场'
-    ]
-  },
-  intern: {
-    highlights: [
-      '完成了{X}个分配的学习任务',
-      '参与了{X}个项目会议',
-      '向{X}位同事请教了问题',
-      '学习了{X}项新技能'
-    ],
-    plans: [
-      '下周计划学习{X}项新内容',
-      '准备参与{X}个项目',
-      '计划请教{X}位资深同事',
-      '计划阅读{X}篇技术文档'
-    ],
-    risks: [
-      '可能存在{X}个知识盲区',
-      '{X}个任务可能超出能力范围',
-      '需要依赖{X}位同事的指导',
-      '学习曲线可能存在{X}个挑战'
-    ],
-    data: [
-      '学习时长{X}小时',
-      '完成任务{X}个',
-      '提问{X}次',
-      '文档阅读{X}篇'
-    ]
-  }
+const ROLE_NAMES: Record<string, string> = {
+  boss: '老板',
+  employee: '员工',
+  pm: '产品经理',
+  hr: 'HR',
+  techlead: '技术主管',
+  intern: '实习生',
+};
+
+const ROLE_PROMPTS: Record<string, string> = {
+  boss: '你是一个喜欢画饼、PUA下属的老板。周报风格：强调团队管理成果，暗示自己功劳最大，用"赋能""格局""战略"等词。对下属的工作轻描淡写，把困难说成"成长机会"。',
+  employee: '你是一个被PUA的打工人。周报风格：把简单工作写得很复杂，把加班美化成"主动学习"，把被骂说成"收到领导指导"。充满卑微感但又要体现自己很努力。',
+  pm: '你是一个需求变更专家产品经理。周报风格：大量使用"对齐""闭环""赋能""抓手""颗粒度"等黑话。把改需求说成"优化用户体验"，把砍功能说成"聚焦核心价值"。',
+  hr: '你是一个打感情牌的HR。周报风格：强调企业文化建设和员工关怀，把裁员说成"组织优化"，把降薪说成"薪酬结构调整"。充满正能量但细看全是套路。',
+  techlead: '你是一个喜欢质疑别人代码的技术主管。周报风格：强调技术债务和架构问题，把别人的代码说得一文不值，暗示只有自己能拯救项目。大量使用技术术语。',
+  intern: '你是一个卑微的实习生。周报风格：把所有事情都写成学习心得，疯狂感谢各位前辈。把被使唤说成"获得锻炼机会"，把不懂的说成"待深入学习的领域"。',
 };
 
 /**
- * 生成随机数
+ * 使用 AI 生成周报
  */
-function randomCount(min: number = 1, max: number = 5): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
+async function generateWithAI(
+  role: RoleType,
+  week: number,
+  workItems: string,
+  config: { apiKey: string; provider: any; model: string }
+): Promise<string> {
+  const llm = createLLM(config.provider, {
+    apiKey: config.apiKey,
+    model: config.model,
+    baseUrl: getProviderBaseUrl(config.provider),
+  });
 
-/**
- * 填充模板中的占位符
- */
-function fillTemplate(template: string, role: RoleType): string {
-  const roleTemplate = WEEKLY_TEMPLATES[role] || WEEKLY_TEMPLATES.boss;
+  const rolePrompt = ROLE_PROMPTS[role] || ROLE_PROMPTS.boss;
+  const roleName = ROLE_NAMES[role] || '老板';
 
-  return template.replace(/{X}/g, () => randomCount().toString());
-}
+  const userContent = workItems
+    ? `请根据以下工作内容，以"${roleName}"的风格生成第${week}周的周报：\n\n工作内容：${workItems}`
+    : `请以"${roleName}"的风格，生成第${week}周的周报。可以虚构合理的工作内容。`;
 
-/**
- * 生成完整周报
- */
-export function generateWeeklyReport(options: WeeklyReportOptions): string {
-  const role = options.role || 'boss';
-  const week = options.week || getWeekNumber(new Date());
-  const roleTemplate = WEEKLY_TEMPLATES[role];
+  const result = await llm.chat([
+    {
+      role: 'system',
+      content: `${rolePrompt}
 
-  // 生成内容
-  const highlightsCount = randomCount(3, 5);
-  const plansCount = randomCount(2, 4);
-  const risksCount = randomCount(1, 2);
+请生成一份完整的周报，格式如下：
+【本周工作】
+- 列出 3-5 项工作内容
 
-  const highlights: string[] = [];
-  const plans: string[] = [];
-  const risks: string[] = [];
-  const data: string[] = [];
+【下周计划】
+- 列出 2-3 项计划
 
-  for (let i = 0; i < highlightsCount; i++) {
-    const template = roleTemplate.highlights[i % roleTemplate.highlights.length];
-    highlights.push(`  ${['一', '二', '三', '四', '五'][i]}、${fillTemplate(template, role)}`);
-  }
+【风险与问题】
+- 列出 1-2 项（用该角色的风格描述）
 
-  for (let i = 0; i < plansCount; i++) {
-    const template = roleTemplate.plans[i % roleTemplate.plans.length];
-    plans.push(`  ${['一', '二', '三', '四'][i]}、${fillTemplate(template, role)}`);
-  }
+要求：搞笑、夸张、充满PUA风格，但格式要像正经周报。每项控制在一句话。`,
+    },
+    {
+      role: 'user',
+      content: userContent,
+    },
+  ]);
 
-  for (let i = 0; i < risksCount; i++) {
-    const template = roleTemplate.risks[i % roleTemplate.risks.length];
-    risks.push(`  ${['一', '二'][i]}、${fillTemplate(template, role)}`);
-  }
-
-  // 生成数据部分（如果模板有）
-  if (roleTemplate.data) {
-    for (let i = 0; i < roleTemplate.data.length; i++) {
-      const template = roleTemplate.data[i];
-      data.push(`  • ${fillTemplate(template, role)}`);
-    }
-  }
-
-  // 组装报告
-  const roleNames = {
-    boss: '老板',
-    employee: '员工',
-    pm: '产品经理',
-    hr: 'HR',
-    techlead: '技术主管',
-    intern: '实习生'
-  };
-
-  const report: string[] = [];
-  report.push(chalk.cyan('╔══════════════════════════════════════════════════════════════╗'));
-  report.push(chalk.cyan('║') + chalk.bold.white(`              周报生成器 - ${roleNames[role]}                 `) + chalk.cyan('║'));
-  report.push(chalk.cyan('╠══════════════════════════════════════════════════════════════╣'));
-  report.push(chalk.cyan('║') + `  第 ${week} 周                                                  ` + chalk.cyan('║'));
-  report.push(chalk.cyan('╠══════════════════════════════════════════════════════════════╣'));
-
-  // 本周工作
-  report.push(chalk.cyan('║') + '  ' + chalk.bold.green('本周工作:') + '                                               '.padEnd(38) + chalk.cyan('║'));
-  report.push(chalk.cyan('║'));
-  highlights.forEach(h => report.push(chalk.cyan('║') + h.padEnd(68) + chalk.cyan('║')));
-  report.push(chalk.cyan('║'));
-
-  // 下周计划
-  report.push(chalk.cyan('║') + '  ' + chalk.bold.yellow('下周计划:') + '                                               '.padEnd(38) + chalk.cyan('║'));
-  report.push(chalk.cyan('║'));
-  plans.forEach(p => report.push(chalk.cyan('║') + p.padEnd(68) + chalk.cyan('║')));
-  report.push(chalk.cyan('║'));
-
-  // 风险与问题
-  if (risks.length > 0) {
-    report.push(chalk.cyan('║') + '  ' + chalk.bold.red('风险与问题:') + '                                             '.padEnd(38) + chalk.cyan('║'));
-    report.push(chalk.cyan('║'));
-    risks.forEach(r => report.push(chalk.cyan('║') + r.padEnd(68) + chalk.cyan('║')));
-    report.push(chalk.cyan('║'));
-  }
-
-  // 数据统计（如果有）
-  if (data.length > 0) {
-    report.push(chalk.cyan('║') + '  ' + chalk.bold.blue('数据统计:') + '                                               '.padEnd(38) + chalk.cyan('║'));
-    report.push(chalk.cyan('║'));
-    data.forEach(d => report.push(chalk.cyan('║') + d.padEnd(68) + chalk.cyan('║')));
-    report.push(chalk.cyan('║'));
-  }
-
-  report.push(chalk.cyan('╚══════════════════════════════════════════════════════════════════╝'));
-
-  return report.join('\n');
+  return result;
 }
 
 /**
@@ -296,33 +96,50 @@ export function generateWeeklyReport(options: WeeklyReportOptions): string {
  */
 export function createWeeklyCommand(): Command {
   const command = new Command('weekly')
-    .description('周报生成器 - 根据角色自动生成职场周报')
+    .description('周报生成器 - AI 生成角色风格职场周报')
     .option('-r, --role <role>', '角色: boss, employee, pm, hr, techlead, intern', 'boss')
     .option('-w, --week <number>', '周数（默认当前周）')
-    .option('-H, --highlights <number>', '亮点数量（默认随机3-5个）')
-    .option('-o, --output <file>', '输出到文件（可选）');
+    .option('-p, --provider <zhipu|openai>', 'AI 服务提供商')
+    .option('-m, --model <model>', '模型名称')
+    .option('-o, --output <file>', '输出到文件（可选）')
+    .argument('[items...]', '工作内容（可选，用于让 AI 基于实际工作生成）');
 
-  command.action(async (options) => {
-    const role = options.role || 'boss' as RoleType;
+  command.action(async (itemArgs, options) => {
+    const role = (options.role || 'boss') as RoleType;
     const week = options.week ? parseInt(options.week) : getWeekNumber(new Date());
-
-    const report = generateWeeklyReport({
-      role,
-      week,
-      highlights: options.highlights
-    });
+    const workItems = itemArgs.join(' ');
+    const roleName = ROLE_NAMES[role] || role;
 
     console.log();
-    console.log(report);
-    console.log();
+    console.log(chalk.cyan.bold('╔══════════════════════════════════════════════════════╗'));
+    console.log(chalk.cyan.bold('║') + chalk.bold.white(`          周报生成器 - ${roleName}`) + '                          ' + chalk.cyan.bold('║'));
+    console.log(chalk.cyan.bold('║') + chalk.gray(`          第 ${week} 周`) + '                                        ' + chalk.cyan.bold('║'));
+    console.log(chalk.cyan.bold('╚══════════════════════════════════════════════════════╝'));
 
-    if (options.output) {
-      const { writeFile } = require('fs').promises;
-      const { join } = require('path');
+    const spinner = ora({ text: 'AI 生成周报中...', color: 'cyan' });
+    spinner.start();
 
-      const outputPath = join(process.cwd(), options.output);
-      await writeFile(outputPath, report.replace(/[\u001b-\u001b-\u001c-\u001d-\u001e-\u001f]/g, ''), 'utf-8');
-      console.log(chalk.green('✓') + ' 周报已保存到: ' + outputPath);
+    try {
+      const config = loadConfig(options);
+      const report = await generateWithAI(role, week, workItems, config);
+      spinner.stop();
+
+      console.log();
+      console.log(report);
+      console.log();
+
+      if (options.output) {
+        const { writeFile } = await import('fs/promises');
+        const { join } = await import('path');
+        const outputPath = join(process.cwd(), options.output);
+        await writeFile(outputPath, report, 'utf-8');
+        console.log(chalk.green('✓') + ' 周报已保存到: ' + outputPath);
+      }
+    } catch (error) {
+      spinner.stop();
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error(chalk.red('✗ ') + msg);
+      process.exit(1);
     }
   });
 
