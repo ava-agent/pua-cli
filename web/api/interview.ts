@@ -13,7 +13,7 @@ const VALID_BUILTIN_INTERVIEWERS = ['techlead', 'boss', 'hr', 'pm'];
 const VALID_POSITIONS = ['frontend', 'backend', 'product', 'design'];
 
 // CORS 允许的域名
-const ALLOWED_ORIGINS = ['https://pua-cli.vercel.app', 'http://localhost:3000', 'http://localhost:5173'];
+const ALLOWED_ORIGINS = ['https://pua.rxcloud.group', 'https://pua-cli.vercel.app', 'http://localhost:3000', 'http://localhost:5173'];
 
 // 速率限制
 const interviewRateLimitMap = new Map<string, { count: number; resetTime: number }>();

@@ -13,7 +13,7 @@ const VALID_ROLES = ['boss', 'employee', 'pm', 'hr', 'techlead', 'intern'];
 const VALID_MEETING_TYPES = ['standup', 'brainstorm', 'review', 'retro', 'planning', 'emergency'];
 
 // CORS 允许的域名
-const ALLOWED_ORIGINS = ['https://pua-cli.vercel.app', 'http://localhost:3000', 'http://localhost:5173'];
+const ALLOWED_ORIGINS = ['https://pua.rxcloud.group', 'https://pua-cli.vercel.app', 'http://localhost:3000', 'http://localhost:5173'];
 
 // 速率限制 - 内存中，Vercel serverless 冷启动会重置
 // 生产环境建议使用 Upstash Redis

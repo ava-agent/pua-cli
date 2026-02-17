@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/npm/l/workplace-pua-cli.svg)](https://github.com/ava-agent/pua-cli/blob/main/LICENSE)
 [![Downloads](https://img.shields.io/npm/dm/workplace-pua-cli.svg)](https://www.npmjs.com/package/workplace-pua-cli)
 
-[Online Demo](https://pua-cli.vercel.app)•
+[Online Demo](https://pua.rxcloud.group)•
 [Web 源码](web/) •
 [CLI 安装](#-一键安装推荐)
 
@@ -154,7 +154,7 @@ pua-cli/
 
 > 💡 Web 版本的 API Key 存储在服务器端，安全且无需自己配置！
 >
-> 🔗 在线体验：[Workplace PUA CLI](https://pua-cli.vercel.app)
+> 🔗 在线体验：[Workplace PUA CLI](https://pua.rxcloud.group)
 
 ### 一键安装（推荐）
 
@@ -367,7 +367,7 @@ pua meeting --role intern --scenario brainstorm
 pua meeting-room
 
 # Web 版本
-# 访问 https://pua-cli.vercel.app/meeting.html
+# 访问 https://pua.rxcloud.group/meeting.html
 ```
 
 **会议室特色功能：**
@@ -400,7 +400,7 @@ pua interview
 pua interview --resume ./my-resume.pdf
 
 # Web 版本
-# 访问 https://pua-cli.vercel.app/interview.html
+# 访问 https://pua.rxcloud.group/interview.html
 ```
 
 **面试特色功能：**

@@ -11,7 +11,7 @@ const MAX_REQUESTS_PER_MINUTE = 10;
 const FORBIDDEN_WORDS = ['<script>', 'javascript:', 'onerror=', 'onload=', 'eval(', 'document.cookie'];
 
 // CORS 允许的域名
-const ALLOWED_ORIGINS = ['https://pua-cli.vercel.app', 'http://localhost:3000', 'http://localhost:5173'];
+const ALLOWED_ORIGINS = ['https://pua.rxcloud.group', 'https://pua-cli.vercel.app', 'http://localhost:3000', 'http://localhost:5173'];
 
 // 有效的模式和场景
 const VALID_MODES = ['translate', 'generate'];

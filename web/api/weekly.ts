@@ -12,7 +12,7 @@ const FORBIDDEN_WORDS = ['<script>', 'javascript:', 'onerror=', 'onload=', 'eval
 const VALID_ROLES = ['boss', 'employee', 'pm', 'hr', 'techlead', 'intern'];
 
 // CORS 允许的域名
-const ALLOWED_ORIGINS = ['https://pua-cli.vercel.app', 'http://localhost:3000', 'http://localhost:5173'];
+const ALLOWED_ORIGINS = ['https://pua.rxcloud.group', 'https://pua-cli.vercel.app', 'http://localhost:3000', 'http://localhost:5173'];
 
 // 速率限制 - 内存中，Vercel serverless 冷启动会重置
 // 生产环境建议使用 Upstash Redis
