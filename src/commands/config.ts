@@ -32,6 +32,7 @@ export async function configWizard(options: ConfigWizardOptions = {}): Promise<G
 
   // Load existing config if available
   let existingConfig = loadGlobalConfig();
+  const defaultProvider = normalizeProvider(existingConfig?.currentProvider || initialProvider || 'ark');
 
   // Step 1: Select Provider
   const providerAnswer = await select({
@@ -48,7 +49,7 @@ export async function configWizard(options: ConfigWizardOptions = {}): Promise<G
         description: '国际通用，支持 GPT-4o、GPT-4o-mini 等模型',
       },
     ],
-    default: normalizeProvider(existingConfig?.currentProvider || initialProvider || 'ark'),
+    default: defaultProvider,
   });
 
   const provider = providerAnswer as ProviderType;

@@ -9,14 +9,13 @@ describe('config/settings', () => {
   });
 
   describe('loadConfig', () => {
-    it('should return defaults when no config exists', () => {
-      process.env.ARK_API_KEY = 'test-key';
-
-      const config = loadConfig({});
+    it('should return defaults when an api key is provided', () => {
+      const config = loadConfig({ apiKey: 'test-key' });
 
       expect(config.provider).toBe(DEFAULTS.provider);
       expect(config.model).toBe(DEFAULTS.model);
       expect(config.role).toBe(DEFAULTS.role);
+      expect(config.apiKey).toBe('test-key');
     });
 
     it('should prioritize CLI options over env vars', () => {
