@@ -4,5 +4,9 @@
   "description": "Web version of PUA CLI - Secure backend with API key hidden",
   "scripts": {
     "vercel-build": "echo 'No build needed'"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.6",
+    "typescript": "^5.7.2"
   }
 }
