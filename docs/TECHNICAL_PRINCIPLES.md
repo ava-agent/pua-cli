@@ -71,7 +71,7 @@ PUA CLI 采用经典的分层架构设计：
 │  └────┼────┼──────────────┼───────┘         │
 │       │    │              │    │              │
 │  ┌─────┴─┐ ┌────┴────┐ ┌────┴─────┐        │
-│  │ZhipuLLM│ │OpenAILLM │ │(扩展)   │        │
+│  │ArkLLM│ │OpenAILLM │ │(扩展)   │        │
 │  └────────┘ └───────────┘ └──────────┘        │
 │                                             │
 └───────────────────────────────────────────────────────┘
@@ -79,7 +79,7 @@ PUA CLI 采用经典的分层架构设计：
                    ▼
          ┌─────────────────────┐
          │  AI 服务提供商      │
-         │  - 智谱 AI       │
+         │  - 火山引擎 Ark       │
          │  - OpenAI        │
          └─────────────────────┘
 ```
@@ -172,8 +172,8 @@ const answer = await select({
   message: '选择 AI 服务提供商:',
   choices: [
     {
-      name: '智谱 AI (国产，推荐)',
-      value: 'zhipu',
+      name: '火山引擎 Ark (国产，推荐)',
+      value: 'ark',
       description: '国产大模型，稳定可靠，响应快速'
     },
     {
@@ -182,7 +182,7 @@ const answer = await select({
       description: '国际通用，支持 GPT-4o、GPT-4o-mini 等模型'
     }
   ],
-  default: 'zhipu'
+  default: 'ark'
 });
 ```
 
@@ -253,8 +253,8 @@ export abstract class LLMBase {
 // src/llm/factory.ts
 export function createLLM(provider: ProviderType, options: LLMOptions): LLMBase {
   switch (provider) {
-    case 'zhipu':
-      return new ZhipuLLM(options);
+    case 'ark':
+      return new ArkLLM(options);
     case 'openai':
       return new OpenAILLM(options);
     default:
@@ -266,8 +266,8 @@ export function createLLM(provider: ProviderType, options: LLMOptions): LLMBase 
 #### 具体实现
 
 ```typescript
-// src/llm/zhipu.ts
-export class ZhipuLLM extends LLMBase {
+// src/llm/ark.ts
+export class ArkLLM extends LLMBase {
   async chatStream(messages: Message[], onChunk: (chunk: StreamChunk) => void): Promise<void> {
     const response = await fetch(this.baseUrl, {
       method: 'POST',
@@ -356,7 +356,7 @@ export class StreamPrinter {
    pua chat --role boss --severity extreme
 
 2. 环境变量
-   export ZHIPUAI_API_KEY="xxx"
+   export ARK_API_KEY="xxx"
 
 3. 项目配置文件
    ./.pua.json
@@ -594,7 +594,7 @@ try {
 ```typescript
 // 1. 使用类型守卫
 function isProviderType(value: string): value is ProviderType {
-  return ['zhipu', 'openai'].includes(value);
+  return ['ark', 'openai'].includes(value);
 }
 
 // 2. 使用联合类型

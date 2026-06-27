@@ -3,7 +3,7 @@
  * 接收候选人回答，返回面试官追问 + 状态更新
  */
 
-const ZHIPU_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+import { callArkChat, getArkApiKey } from '../lib/ark';
 
 // 安全配置
 const MAX_MESSAGE_LENGTH = 500;
@@ -277,8 +277,7 @@ ${stressHint}${candidateHint}
 8. 不要复述或转述上下文中的格式，只输出你自己的话`;
 }
 
-// 调用 Zhipu API
-async function callZhipuAPI(
+async function callArkAPI(
   apiKey: string,
   systemPrompt: string,
   contextMessages: Array<{ role: string; content: string }>
@@ -288,43 +287,12 @@ async function callZhipuAPI(
     ...contextMessages.slice(-8),
   ];
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  const content = await callArkChat(apiKey, messages, {
+    temperature: 0.85,
+    maxTokens: 120,
+    topP: 0.9,
+  });
 
-  let response: Response;
-  try {
-    response = await fetch(ZHIPU_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'glm-4-flash',
-        messages,
-        temperature: 0.85,
-        max_tokens: 120,
-        top_p: 0.9,
-      }),
-      signal: controller.signal,
-    });
-  } finally {
-    clearTimeout(timeoutId);
-  }
-
-  if (!response.ok) {
-    const errorData = await response.text();
-    console.error('Zhipu API error:', errorData);
-    // 内容安全过滤
-    if (response.status === 400 && errorData.includes('sensitive')) {
-      throw new Error('CONTENT_FILTERED');
-    }
-    throw new Error('AI 服务暂时不可用');
-  }
-
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content || '';
-  // Zhipu 有时返回空内容表示过滤
   if (!content || content.trim().length === 0) {
     throw new Error('CONTENT_FILTERED');
   }
@@ -569,9 +537,9 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: validation.error });
     }
 
-    const apiKey = process.env.ZHIPU_API_KEY;
+    const apiKey = getArkApiKey();
     if (!apiKey) {
-      console.error('ZHIPU_API_KEY not configured');
+      console.error('ARK_API_KEY not configured');
       return res.status(500).json({ error: '服务器配置错误' });
     }
 
@@ -649,7 +617,7 @@ export default async function handler(req: any, res: any) {
       ];
 
       try {
-        const rawContent = await callZhipuAPI(apiKey, systemPrompt, currentContext);
+        const rawContent = await callArkAPI(apiKey, systemPrompt, currentContext);
         const content = cleanResponse(rawContent, role, safeCustomInterviewers);
         const mood = analyzeInterviewerMood(content);
 

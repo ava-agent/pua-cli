@@ -3,7 +3,7 @@
  * 支持多角色顺序调用 + 上下文链（Context Chaining）
  */
 
-const ZHIPU_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+import { callArkChat, getArkApiKey } from '../lib/ark';
 
 // 安全配置
 const MAX_MESSAGE_LENGTH = 500;
@@ -311,8 +311,7 @@ ${chaosModifier}
 7. 如果上下文中有其他人的发言，你可以针对性回应，但只说你自己的话`;
 }
 
-// 调用 Zhipu API（带 15s 超时）
-async function callZhipuAPI(
+async function callArkAPI(
   apiKey: string,
   systemPrompt: string,
   contextMessages: Array<{ role: string; content: string }>
@@ -322,38 +321,12 @@ async function callZhipuAPI(
     ...contextMessages.slice(-8),
   ];
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-  let response: Response;
-  try {
-    response = await fetch(ZHIPU_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'glm-4-flash',
-        messages,
-        temperature: 0.8,
-        max_tokens: 100,
-        top_p: 0.9,
-      }),
-      signal: controller.signal,
-    });
-  } finally {
-    clearTimeout(timeoutId);
-  }
-
-  if (!response.ok) {
-    const errorData = await response.text();
-    console.error('Zhipu API error:', errorData);
-    throw new Error('AI 服务暂时不可用');
-  }
-
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content || '...';
+  return callArkChat(apiKey, messages, {
+    temperature: 0.8,
+    maxTokens: 100,
+    topP: 0.9,
+    fallback: '...',
+  });
 }
 
 // 清理 AI 回复 - 去除泄漏的上下文格式
@@ -433,9 +406,9 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: validation.error });
     }
 
-    const apiKey = process.env.ZHIPU_API_KEY;
+    const apiKey = getArkApiKey();
     if (!apiKey) {
-      console.error('ZHIPU_API_KEY not configured');
+      console.error('ARK_API_KEY not configured');
       return res.status(500).json({ error: '服务器配置错误' });
     }
 
@@ -475,7 +448,7 @@ export default async function handler(req: any, res: any) {
       ];
 
       try {
-        const rawContent = await callZhipuAPI(apiKey, systemPrompt, currentContext);
+        const rawContent = await callArkAPI(apiKey, systemPrompt, currentContext);
         const content = cleanResponse(rawContent, respondentRole);
         const mood = detectMood(content);
 

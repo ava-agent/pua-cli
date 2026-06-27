@@ -99,7 +99,7 @@ export function createJargonCommand(): Command {
     .description('职场黑话生成器 - AI 生成各种类型的职场黑话')
     .option('-t, --type <type>', '黑话类型: meeting(会议), report(报告), email(邮件), chat(聊天), all(全部)', 'meeting')
     .option('-i, --intensity <level>', '强度: light(轻度), medium(中度), heavy(重度)', 'medium')
-    .option('-p, --provider <zhipu|openai>', 'AI 服务提供商')
+    .option('-p, --provider <ark|openai>', 'AI 服务提供商')
     .option('-m, --model <model>', '模型名称')
     .argument('[text...]', '要翻译的普通文本（输入文本则进入翻译模式）');
 

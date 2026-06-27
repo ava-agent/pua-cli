@@ -5,7 +5,7 @@
 ## 🔐 安全架构
 
 ```
-用户浏览器 → Vercel API → 智谱 AI
+用户浏览器 → Vercel API → 火山引擎 Ark
              ↑
         API Key 在这里（安全）
 ```
@@ -49,8 +49,8 @@ vercel
 2. 选择你的项目
 3. 进入 **Settings** → **Environment Variables**
 4. 添加以下变量：
-   - Name: `ZHIPU_API_KEY`
-   - Value: 你的智谱 AI API Key
+   - Name: `ARK_API_KEY`
+   - Value: 你的火山引擎 Ark API Key
 5. 保存后重新部署项目
 
 ```bash
@@ -90,8 +90,8 @@ async function checkDailyLimit(ip: string) {
   - 无限请求
   - 自动 HTTPS
 
-- **智谱 AI API**：
-  - glm-4-flash: 免费/低价
+- **火山引擎 Ark API**：
+  - doubao-seed-2-0-code-preview-260215: 免费/低价
   - 按实际调用计费
 
 ## 🛠️ 本地开发
@@ -101,7 +101,7 @@ cd web
 npm install
 
 # 创建 .env 文件
-echo "ZHIPU_API_KEY=your_key_here" > .env
+echo "ARK_API_KEY=your_key_here" > .env
 
 # 运行开发服务器
 npm run dev

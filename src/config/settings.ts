@@ -9,7 +9,14 @@ import {
   type GlobalConfig,
   type ProjectConfig,
 } from './storage';
-import { getProvider, validateApiKey, getApiKeyFromEnv, type ProviderType } from './providers';
+import {
+  DEFAULT_ARK_CHAT_MODEL,
+  getProvider,
+  getApiKeyFromEnv,
+  normalizeProvider,
+  validateApiKey,
+  type ProviderType,
+} from './providers';
 
 // Load environment variables
 dotenv.config();
@@ -23,8 +30,8 @@ export interface RuntimeConfig {
 }
 
 export const DEFAULTS = {
-  provider: 'zhipu' as ProviderType,
-  model: 'glm-4.7',
+  provider: 'ark' as ProviderType,
+  model: DEFAULT_ARK_CHAT_MODEL,
   role: 'boss' as 'boss' | 'employee',
   severity: 'medium' as 'mild' | 'medium' | 'extreme',
 };
@@ -59,16 +66,19 @@ export function loadConfig(options?: {
 
   // Apply global config
   if (globalConfig) {
-    provider = globalConfig.defaults.provider as ProviderType || provider;
-    model = globalConfig.defaults.model || model;
+    provider = normalizeProvider(globalConfig.defaults.provider) || provider;
+    model = globalConfig.defaults.provider === 'openai'
+      ? globalConfig.defaults.model || model
+      : DEFAULT_ARK_CHAT_MODEL;
     role = globalConfig.defaults.role as 'boss' | 'employee' || role;
     severity = globalConfig.defaults.severity as 'mild' | 'medium' | 'extreme' || severity;
-    apiKey = globalConfig.providers[globalConfig.currentProvider]?.apiKey || '';
+    const currentProvider = normalizeProvider(globalConfig.currentProvider);
+    apiKey = globalConfig.providers[currentProvider]?.apiKey || '';
   }
 
   // Apply project config
   if (projectConfig) {
-    if (projectConfig.provider) provider = projectConfig.provider as ProviderType;
+    if (projectConfig.provider) provider = normalizeProvider(projectConfig.provider);
     if (projectConfig.model) model = projectConfig.model;
     if (projectConfig.role) role = projectConfig.role as 'boss' | 'employee';
     if (projectConfig.severity) severity = projectConfig.severity as 'mild' | 'medium' | 'extreme';
@@ -82,11 +92,20 @@ export function loadConfig(options?: {
 
   // Apply command line options (highest priority)
   if (options) {
-    if (options.provider) provider = options.provider;
+    if (options.provider) provider = normalizeProvider(options.provider);
     if (options.model) model = options.model;
     if (options.role) role = options.role;
     if (options.severity) severity = options.severity;
     if (options.apiKey) apiKey = options.apiKey;
+  }
+
+  const selectedProviderDef = getProvider(provider);
+  if (
+    provider === 'ark' &&
+    selectedProviderDef &&
+    !selectedProviderDef.defaultModels.includes(model)
+  ) {
+    model = DEFAULT_ARK_CHAT_MODEL;
   }
 
   // Ensure API key is available

@@ -26,14 +26,14 @@
 │  │  └──────────┬──────────────────────────┘│         │
 │  │             │                            │         │
 │  │  ┌─────────┴────────┐              │         │
-│  │  │ ZhipuLLM  │  OpenAI     │         │
+│  │  │ ArkLLM  │  OpenAI     │         │
 │  │  └──────────┬─────────┘              │         │
 │  │             │                            │         │
 └─────────────┼─────────────────┼──────────────┘         │
               │                   │
          ┌─────────┴─────────┐         │
          │  AI 服务提供商          │         │
-         │  - 智谱 AI (zhipu)   │         │
+         │  - 火山引擎 Ark (ark)   │         │
          │  - OpenAI              │         │
          └───────────────────────┘         │
 └─────────────────────────────────────────────────────────────┘
@@ -213,7 +213,7 @@ import { z } from 'zod';
 
 export const ConfigSchema = z.object({
   // Provider 验证
-  provider: z.enum(['zhipu', 'openai'], {
+  provider: z.enum(['ark', 'openai'], {
     errorMap: {
       invalid_type_error: '不支持的 AI 服务商',
     },
@@ -227,7 +227,7 @@ export const ConfigSchema = z.object({
   }),
 
   // 模型验证
-  model: z.string().default('glm-4.7', {
+  model: z.string().default('doubao-seed-2-0-code-preview-260215', {
     errorMap: {
       invalid_model: '模型名称无效',
     },
@@ -522,9 +522,9 @@ export class TokenTracker {
 
   // 定价（示例）
   private pricing = {
-    zhipu: {
-      'glm-4.7': 0.0005,  // 每千 tokens 价格
-      'glm-4.7-flash': 0.0001,
+    ark: {
+      'doubao-seed-2-0-code-preview-260215': 0.0005,  // 每千 tokens 价格
+      'doubao-seed-2-0-code-preview-260215': 0.0001,
     },
     openai: {
       'gpt-4o': 0.005,

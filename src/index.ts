@@ -85,7 +85,7 @@ program
   .option('-r, --role <role>', '角色模式: boss(老板), employee(员工), pm(产品经理), hr(HR), techlead(技术主管), intern(实习生)')
   .option('-m, --model <model>', '模型名称')
   .option('-s, --severity <mild|medium|extreme>', 'PUA 强度')
-  .option('-p, --provider <zhipu|openai>', 'AI 服务提供商')
+  .option('-p, --provider <ark|openai>', 'AI 服务提供商')
   .action(async (options) => {
     await withOnboardingCheck(async () => {
       try {
@@ -112,7 +112,7 @@ program
   .option('-r, --role <role>', '角色模式: boss(老板), employee(员工), pm(产品经理), hr(HR), techlead(技术主管), intern(实习生)')
   .option('-m, --model <model>', '模型名称')
   .option('-s, --severity <mild|medium|extreme>', 'PUA 强度')
-  .option('-p, --provider <zhipu|openai>', 'AI 服务提供商')
+  .option('-p, --provider <ark|openai>', 'AI 服务提供商')
   .option('-f, --format <text|markdown|json>', '输出格式: text (文本), markdown (Markdown), json (JSON)')
   .argument('[input...]', '输入内容（可选，也支持管道输入）')
   .action(async (inputArgs, options) => {

@@ -61,7 +61,7 @@
 | **Memory** | 对话记忆 | 自动记住最近 50 条对话历史 |
 | **Resume** | 简历解析 | 上传 PDF 简历，AI 针对性提问 |
 | **Security** | API 安全 | 速率限制 + 输入验证 + XSS 防护 |
-| **Multi-AI** | 多供应商 | 智谱 AI / OpenAI 双引擎支持 |
+| **Multi-AI** | 多供应商 | 火山引擎 Ark / OpenAI 双引擎支持 |
 | **Cross-platform** | 跨平台 | Windows / macOS / Linux |
 
 ---
@@ -169,7 +169,7 @@ npm install -g .
 
 </details>
 
-配置向导会引导你选择 AI 服务提供商（智谱 AI / OpenAI）、输入 API Key、设置默认角色。
+配置向导会引导你选择 AI 服务提供商（火山引擎 Ark / OpenAI）、输入 API Key、设置默认角色。
 
 ### Try It Now
 
@@ -231,7 +231,7 @@ echo "加班" | pua prompt --role employee
 ### CLI Options
 
 ```
---provider <zhipu|openai>                    AI 服务提供商
+--provider <ark|openai>                    AI 服务提供商
 --role <boss|employee|pm|hr|techlead|intern> 角色模式
 --model <model>                              模型名称
 --severity <mild|medium|extreme>             PUA 强度
@@ -323,14 +323,14 @@ pua interview --resume ./my-resume.pdf
 
 | Provider | Code | Default Model | Note |
 |----------|------|---------------|------|
-| 智谱 AI | `zhipu` | `glm-4.7` | 国产，稳定，推荐 |
+| 火山引擎 Ark | `ark` | `doubao-seed-2-0-code-preview-260215` | 国产，稳定，推荐 |
 | OpenAI | `openai` | `gpt-4o` | 国际通用 |
 
 <details>
 <summary><b>Getting API Keys</b></summary>
 
-**智谱 AI（推荐）**
-- 访问 [bigmodel.cn](https://bigmodel.cn/)
+**火山引擎 Ark（推荐）**
+- 访问火山引擎 Ark 控制台
 - 完成实名认证后免费获取 2000 万 tokens
 - 在控制台复制 API Key
 
@@ -347,7 +347,7 @@ pua interview --resume ./my-resume.pdf
 | Layer | Technology |
 |-------|-----------|
 | Runtime | Node.js 18+ (TypeScript) |
-| AI Models | 智谱 AI GLM-4 / OpenAI GPT-4 |
+| AI Models | 火山引擎 Ark Doubao CodingPlan / OpenAI GPT-4 |
 | CLI Framework | Commander.js + Inquirer.js |
 | Web Deploy | Vercel Serverless |
 | Testing | Vitest |
@@ -362,7 +362,7 @@ pua-cli/
 │   ├── commands/        # 9 CLI commands (chat, prompt, interview, meeting-room, etc.)
 │   ├── prompts/         # Role system prompts & interview/meeting templates
 │   ├── config/          # Multi-level configuration management
-│   ├── llm/             # LLM abstraction layer (Zhipu AI / OpenAI)
+│   ├── llm/             # LLM abstraction layer (Ark / OpenAI)
 │   ├── utils/           # Helpers (resume parser, stream, theme, box rendering)
 │   ├── history/         # Session management
 │   └── index.ts         # CLI entry point

@@ -226,8 +226,8 @@ async function handleSaveCommand(args: string[], rl: readline.Interface): Promis
       metadata: {
         role: rl['role'] || 'boss',
         severity: rl['severity'] || 'medium',
-        provider: rl['provider'] || 'zhipu',
-        model: rl['model'] || 'glm-4.7'
+        provider: rl['provider'] || 'ark',
+        model: rl['model'] || 'doubao-seed-2-0-code-preview-260215'
       }
     });
 

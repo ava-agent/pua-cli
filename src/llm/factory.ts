@@ -1,5 +1,5 @@
 import { LLMBase, LLMOptions } from './base';
-import { ZhipuLLM } from './zhipu';
+import { ArkLLM } from './ark';
 import { OpenAILLM } from './openai';
 import { type ProviderType } from '../config/providers';
 
@@ -8,8 +8,8 @@ import { type ProviderType } from '../config/providers';
  */
 export function createLLM(provider: ProviderType, options: LLMOptions): LLMBase {
   switch (provider) {
-    case 'zhipu':
-      return new ZhipuLLM(options);
+    case 'ark':
+      return new ArkLLM(options);
     case 'openai':
       return new OpenAILLM(options);
     default:
@@ -20,5 +20,5 @@ export function createLLM(provider: ProviderType, options: LLMOptions): LLMBase 
 /**
  * Re-export LLM classes
  */
-export { ZhipuLLM } from './zhipu';
+export { ArkLLM } from './ark';
 export { OpenAILLM } from './openai';

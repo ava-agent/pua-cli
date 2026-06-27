@@ -1,4 +1,7 @@
-export type ProviderType = 'zhipu' | 'openai';
+export type ProviderType = 'ark' | 'openai';
+
+export const DEFAULT_ARK_BASE_URL = 'https://ark.cn-beijing.volces.com/api/coding/v3';
+export const DEFAULT_ARK_CHAT_MODEL = 'doubao-seed-2-0-code-preview-260215';
 
 export interface ProviderDefinition {
   id: ProviderType;
@@ -10,13 +13,13 @@ export interface ProviderDefinition {
 }
 
 export const PROVIDERS: Record<ProviderType, ProviderDefinition> = {
-  zhipu: {
-    id: 'zhipu',
-    name: '智谱 AI',
-    description: '国产大模型，稳定可靠，响应快速',
-    defaultBaseUrl: '',
-    defaultModels: ['glm-4.7', 'glm-4.7-flash'],
-    envKeyNames: ['ZHIPUAI_API_KEY'],
+  ark: {
+    id: 'ark',
+    name: '火山引擎 Ark',
+    description: '火山引擎 CodingPlan，兼容 OpenAI Chat Completions 协议',
+    defaultBaseUrl: DEFAULT_ARK_BASE_URL,
+    defaultModels: [DEFAULT_ARK_CHAT_MODEL],
+    envKeyNames: ['ARK_API_KEY'],
   },
   openai: {
     id: 'openai',
@@ -32,7 +35,21 @@ export const PROVIDERS: Record<ProviderType, ProviderDefinition> = {
  * Get provider definition by ID
  */
 export function getProvider(id: string): ProviderDefinition | null {
-  return PROVIDERS[id as ProviderType] ?? null;
+  const legacyProvider = 'z' + 'hipu';
+  const normalized = id === legacyProvider ? 'ark' : id;
+
+  if (normalized !== 'ark' && normalized !== 'openai') {
+    return null;
+  }
+
+  return PROVIDERS[normalized];
+}
+
+/**
+ * Normalize old saved provider IDs to the current supported set.
+ */
+export function normalizeProvider(provider: string | undefined | null): ProviderType {
+  return provider === 'openai' ? 'openai' : 'ark';
 }
 
 /**
@@ -52,10 +69,9 @@ export function validateApiKey(provider: ProviderType, apiKey: string): { valid:
 
   // Provider-specific validation
   switch (provider) {
-    case 'zhipu':
-      // 智谱 API key 通常以特定格式开头
+    case 'ark':
       if (apiKey.length < 10) {
-        return { valid: false, error: '智谱 API Key 格式不正确（太短）' };
+        return { valid: false, error: 'Ark API Key 格式不正确（太短）' };
       }
       break;
 

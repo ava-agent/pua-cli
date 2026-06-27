@@ -74,7 +74,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - CLI 新增回答质量展示（强/一般/弱 + 分数变化）
   - CLI 新增面试官情绪 emoji 显示（😏🤨😐🥶）
   - CLI 新增输入长度验证（500 字限制）和安全词过滤
-  - CLI 新增内容安全过滤降级处理（Zhipu 过滤时返回通用回复）
+  - CLI 新增内容安全过滤降级处理（模型过滤时返回通用回复）
 - **Web 压力面试** (`web/interview.html`):
   - 独立 SPA，暗色终端主题
   - 面试设置视图：岗位/面试官/强度/候选人信息
@@ -345,7 +345,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 - 首次公开版本
 - CLI 框架 (Commander.js)
-- 多 Provider 支持 (智谱 AI、OpenAI)
+- 多 Provider 支持 (Ark、OpenAI)
 - 交互式聊天模式
 - 单次提示模式
 - 流式输出 (SSE)

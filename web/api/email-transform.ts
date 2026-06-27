@@ -3,7 +3,7 @@
  * 根据方向（向上/向下/平级/对外）和可选角色，改写邮件语气
  */
 
-const ZHIPU_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+import { callArkChat, getArkApiKey } from '../lib/ark';
 
 // 安全配置
 const MAX_MESSAGE_LENGTH = 500;
@@ -180,9 +180,9 @@ export default async function handler(req: any, res: any) {
     }
 
     // 获取 API Key（从环境变量中读取）
-    const apiKey = process.env.ZHIPU_API_KEY;
+    const apiKey = getArkApiKey();
     if (!apiKey) {
-      console.error('ZHIPU_API_KEY not configured');
+      console.error('ARK_API_KEY not configured');
       return res.status(500).json({ error: '服务器配置错误' });
     }
 
@@ -198,39 +198,12 @@ export default async function handler(req: any, res: any) {
       { role: 'user', content: safeContent },
     ];
 
-    // 调用智谱 AI API（带 15s 超时）
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-    let response: Response;
-    try {
-      response = await fetch(ZHIPU_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: 'glm-4-flash',
-          messages,
-          temperature: 0.7,
-          max_tokens: 400,
-          top_p: 0.9,
-        }),
-        signal: controller.signal,
-      });
-    } finally {
-      clearTimeout(timeoutId);
-    }
-
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error('Zhipu API error:', errorData);
-      return res.status(500).json({ error: 'AI 服务暂时不可用，请稍后重试' });
-    }
-
-    const data = await response.json();
-    const result = data.choices?.[0]?.message?.content || '邮件改写失败，请重试。';
+    const result = await callArkChat(apiKey, messages, {
+      temperature: 0.7,
+      maxTokens: 400,
+      topP: 0.9,
+      fallback: '邮件改写失败，请重试。',
+    });
 
     console.log(`Email transform response: direction=${direction}, role=${role || 'none'}, content="${safeContent.slice(0, 30)}..."`);
 

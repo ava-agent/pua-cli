@@ -3,7 +3,7 @@ import input from '@inquirer/input';
 import select from '@inquirer/select';
 import confirm from '@inquirer/confirm';
 import { saveGlobalConfig, loadGlobalConfig, ensureConfigDir, type GlobalConfig } from '../config/storage';
-import { PROVIDERS, getProvider, validateApiKey, validateBaseUrl, type ProviderType } from '../config/providers';
+import { getProvider, normalizeProvider, validateApiKey, validateBaseUrl, type ProviderType } from '../config/providers';
 import { logger } from '../utils/logger';
 import type { RoleType } from '../prompts';
 import { ROLE_NAMES, ROLE_EMOJIS } from '../prompts';
@@ -38,9 +38,9 @@ export async function configWizard(options: ConfigWizardOptions = {}): Promise<G
     message: '选择 AI 服务提供商:',
     choices: [
       {
-        name: `${chalk.green('1.')} 智谱 AI ${chalk.gray('(国产，推荐)')}`,
-        value: 'zhipu',
-        description: '国产大模型，稳定可靠，响应快速',
+        name: `${chalk.green('1.')} 火山引擎 Ark ${chalk.gray('(CodingPlan，推荐)')}`,
+        value: 'ark',
+        description: '兼容 OpenAI Chat Completions 协议，适合 CodingPlan 迁移',
       },
       {
         name: `${chalk.blue('2.')} OpenAI ${chalk.gray('(GPT-4o)')}`,
@@ -48,7 +48,7 @@ export async function configWizard(options: ConfigWizardOptions = {}): Promise<G
         description: '国际通用，支持 GPT-4o、GPT-4o-mini 等模型',
       },
     ],
-    default: existingConfig?.currentProvider || initialProvider || 'zhipu',
+    default: normalizeProvider(existingConfig?.currentProvider || initialProvider || 'ark'),
   });
 
   const provider = providerAnswer as ProviderType;
@@ -115,13 +115,17 @@ export async function configWizard(options: ConfigWizardOptions = {}): Promise<G
   console.log();
 
   // Step 4: Select Default Model
+  const existingDefaultModel = existingConfig?.defaults.model;
+  const defaultModel = existingDefaultModel && providerDef.defaultModels.includes(existingDefaultModel)
+    ? existingDefaultModel
+    : providerDef.defaultModels[0];
   const model = await select({
     message: '选择默认模型:',
     choices: providerDef.defaultModels.map((m) => ({
       name: m,
       value: m,
     })),
-    default: existingConfig?.defaults.model || providerDef.defaultModels[0],
+    default: defaultModel,
   });
 
   console.log();

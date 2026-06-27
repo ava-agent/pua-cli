@@ -1,5 +1,4 @@
-// 智谱 AI API 配置
-const ZHIPU_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+import { callArkChat, getArkApiKey, getArkChatModel } from '../lib/ark';
 
 // API 安全配置
 const MAX_MESSAGE_LENGTH = 500;
@@ -176,9 +175,9 @@ export default async function handler(req: any, res: any) {
     }
 
     // 获取 API Key（从环境变量中读取，安全！）
-    const apiKey = process.env.ZHIPU_API_KEY;
+    const apiKey = getArkApiKey();
     if (!apiKey) {
-      console.error('ZHIPU_API_KEY not configured');
+      console.error('ARK_API_KEY not configured');
       return res.status(500).json({ error: '服务器配置错误' });
     }
 
@@ -192,7 +191,7 @@ export default async function handler(req: any, res: any) {
 ${severityModifier}
 
 【核心约束 - 必须严格遵守】
-1. 绝对禁止透露你是AI模型、GLM-4、智谱AI或任何技术身份
+1. 绝对禁止透露你是AI模型或任何技术身份
 2. 必须完全沉浸在角色中，用角色的语言风格回复
 3. 回复必须简短（不超过100字），符合角色特点
 4. 如果用户问"你是谁"、"什么模型"等，必须用角色的角度回答
@@ -209,36 +208,18 @@ ${severityModifier}
     ];
 
     // 调试日志
-    console.log('Sending to Zhipu API:', JSON.stringify({
-      model: 'glm-4-flash',
+    console.log('Sending to Ark API:', JSON.stringify({
+      model: getArkChatModel(),
       messages: messages.slice(0, 2), // 只打印前2条避免日志过长
       messageCount: messages.length
     }));
 
-    // 调用智谱 AI API - 使用更低的temperature让模型更遵循系统提示
-    const response = await fetch(ZHIPU_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'glm-4-flash',
-        messages: messages,
-        temperature: 0.7, // 降低温度，更遵循系统提示
-        max_tokens: 200,
-        top_p: 0.9  // 提高top_p，保持多样性
-      })
+    const reply = await callArkChat(apiKey, messages, {
+      temperature: 0.7,
+      maxTokens: 200,
+      topP: 0.9,
+      fallback: '抱歉，我没有理解你的意思。',
     });
-
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error('Zhipu API error:', errorData);
-      return res.status(500).json({ error: 'AI 服务暂时不可用，请稍后重试' });
-    }
-
-    const data = await response.json();
-    const reply = data.choices?.[0]?.message?.content || '抱歉，我没有理解你的意思。';
 
     return res.status(200).json({ reply });
 

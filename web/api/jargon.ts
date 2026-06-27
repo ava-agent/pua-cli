@@ -3,7 +3,7 @@
  * 支持两种模式：翻译模式（普通话 -> 黑话）和生成模式（主题 -> 黑话发言）
  */
 
-const ZHIPU_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+import { callArkChat, getArkApiKey } from '../lib/ark';
 
 // 安全配置
 const MAX_MESSAGE_LENGTH = 500;
@@ -179,9 +179,9 @@ export default async function handler(req: any, res: any) {
     }
 
     // 获取 API Key（从环境变量中读取）
-    const apiKey = process.env.ZHIPU_API_KEY;
+    const apiKey = getArkApiKey();
     if (!apiKey) {
-      console.error('ZHIPU_API_KEY not configured');
+      console.error('ARK_API_KEY not configured');
       return res.status(500).json({ error: '服务器配置错误' });
     }
 
@@ -197,39 +197,12 @@ export default async function handler(req: any, res: any) {
       { role: 'user', content: safeInput },
     ];
 
-    // 调用智谱 AI API（带 15s 超时）
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-    let response: Response;
-    try {
-      response = await fetch(ZHIPU_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: 'glm-4-flash',
-          messages,
-          temperature: 0.7,
-          max_tokens: 300,
-          top_p: 0.9,
-        }),
-        signal: controller.signal,
-      });
-    } finally {
-      clearTimeout(timeoutId);
-    }
-
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error('Zhipu API error:', errorData);
-      return res.status(500).json({ error: 'AI 服务暂时不可用，请稍后重试' });
-    }
-
-    const data = await response.json();
-    const result = data.choices?.[0]?.message?.content || '黑话生成失败，请重试。';
+    const result = await callArkChat(apiKey, messages, {
+      temperature: 0.7,
+      maxTokens: 300,
+      topP: 0.9,
+      fallback: '黑话生成失败，请重试。',
+    });
 
     console.log(`Jargon response: mode=${mode}, scene=${scene || 'default'}, input="${safeInput.slice(0, 30)}..."`);
 

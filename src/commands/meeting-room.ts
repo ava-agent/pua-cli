@@ -210,7 +210,7 @@ function cleanMeetingResponse(raw: string, currentRole: RoleType): string {
 export function createMeetingRoomCommand(): Command {
   const command = new Command('meeting-room')
     .description('会议室 - 多角色同时参会的职场会议模拟')
-    .option('-p, --provider <zhipu|openai>', 'AI 服务提供商')
+    .option('-p, --provider <ark|openai>', 'AI 服务提供商')
     .option('-m, --model <model>', '模型名称');
 
   command.action(async (options) => {

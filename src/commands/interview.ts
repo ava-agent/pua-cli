@@ -298,7 +298,7 @@ function selectInterviewers(
 export function createInterviewCommand(): Command {
   const command = new Command('interview')
     .description('压力面试 - 10轮问答制，挺住压力拿到Offer')
-    .option('-p, --provider <zhipu|openai>', 'AI 服务提供商')
+    .option('-p, --provider <ark|openai>', 'AI 服务提供商')
     .option('-m, --model <model>', '模型名称')
     .option('--resume <path>', '简历PDF路径，解析后定制面试内容');
 

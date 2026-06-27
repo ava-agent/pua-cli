@@ -92,7 +92,7 @@ export function createMeetingCommand(): Command {
     .description('会议发言建议 - AI 生成角色化会议发言建议')
     .option('-r, --role <role>', '角色: boss, employee, pm, hr, techlead, intern', 'boss')
     .option('-s, --scenario <type>', '场景: standup(站会), review(评审), brainstorm(头脑风暴), retro(回顾), planning(规划)', 'standup')
-    .option('-p, --provider <zhipu|openai>', 'AI 服务提供商')
+    .option('-p, --provider <ark|openai>', 'AI 服务提供商')
     .option('-m, --model <model>', '模型名称')
     .argument('[context...]', '会议讨论主题/背景（可选）');
 

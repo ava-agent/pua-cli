@@ -97,7 +97,7 @@ export function createEmailCommand(): Command {
     .description('邮件语气转换器 - AI 转换邮件语气和风格')
     .option('-f, --from <role>', '发送者角色: boss, employee, pm, hr, techlead, intern', 'pm')
     .option('-t, --to <role>', '接收者角色: boss, employee, pm, hr, techlead, intern', 'employee')
-    .option('-p, --provider <zhipu|openai>', 'AI 服务提供商')
+    .option('-p, --provider <ark|openai>', 'AI 服务提供商')
     .option('-m, --model <model>', '模型名称')
     .argument('[content...]', '要转换的邮件内容');
 

@@ -99,7 +99,7 @@ export function createWeeklyCommand(): Command {
     .description('周报生成器 - AI 生成角色风格职场周报')
     .option('-r, --role <role>', '角色: boss, employee, pm, hr, techlead, intern', 'boss')
     .option('-w, --week <number>', '周数（默认当前周）')
-    .option('-p, --provider <zhipu|openai>', 'AI 服务提供商')
+    .option('-p, --provider <ark|openai>', 'AI 服务提供商')
     .option('-m, --model <model>', '模型名称')
     .option('-o, --output <file>', '输出到文件（可选）')
     .argument('[items...]', '工作内容（可选，用于让 AI 基于实际工作生成）');
