@@ -3,7 +3,7 @@ export type ArkMessage = {
   content: string;
 };
 
-export const DEFAULT_ARK_BASE_URL = 'https://ark.cn-beijing.volces.com/api/coding/v3';
+export const DEFAULT_ARK_BASE_URL = 'https://ark.cn-beijing.volces.com/api/plan/v3';
 export const DEFAULT_ARK_CHAT_MODEL = 'doubao-seed-2-0-code-preview-260215';
 
 export function getArkApiKey(): string | undefined {

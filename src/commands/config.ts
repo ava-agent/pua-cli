@@ -39,9 +39,9 @@ export async function configWizard(options: ConfigWizardOptions = {}): Promise<G
     message: '选择 AI 服务提供商:',
     choices: [
       {
-        name: `${chalk.green('1.')} 火山引擎 Ark ${chalk.gray('(CodingPlan，推荐)')}`,
+        name: `${chalk.green('1.')} 火山引擎 Ark ${chalk.gray('(Agent Plan，推荐)')}`,
         value: 'ark',
-        description: '兼容 OpenAI Chat Completions 协议，适合 CodingPlan 迁移',
+        description: '兼容 OpenAI Chat Completions 协议，使用 Agent Plan',
       },
       {
         name: `${chalk.blue('2.')} OpenAI ${chalk.gray('(GPT-4o)')}`,

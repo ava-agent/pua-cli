@@ -1,6 +1,6 @@
 export type ProviderType = 'ark' | 'openai';
 
-export const DEFAULT_ARK_BASE_URL = 'https://ark.cn-beijing.volces.com/api/coding/v3';
+export const DEFAULT_ARK_BASE_URL = 'https://ark.cn-beijing.volces.com/api/plan/v3';
 export const DEFAULT_ARK_CHAT_MODEL = 'doubao-seed-2-0-code-preview-260215';
 
 export interface ProviderDefinition {
@@ -16,7 +16,7 @@ export const PROVIDERS: Record<ProviderType, ProviderDefinition> = {
   ark: {
     id: 'ark',
     name: '火山引擎 Ark',
-    description: '火山引擎 CodingPlan，兼容 OpenAI Chat Completions 协议',
+    description: '火山引擎 Agent Plan，兼容 OpenAI Chat Completions 协议',
     defaultBaseUrl: DEFAULT_ARK_BASE_URL,
     defaultModels: [DEFAULT_ARK_CHAT_MODEL],
     envKeyNames: ['ARK_API_KEY'],

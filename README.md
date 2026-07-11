@@ -347,7 +347,7 @@ pua interview --resume ./my-resume.pdf
 | Layer | Technology |
 |-------|-----------|
 | Runtime | Node.js 18+ (TypeScript) |
-| AI Models | 火山引擎 Ark Doubao CodingPlan / OpenAI GPT-4 |
+| AI Models | 火山引擎 Ark Agent Plan / OpenAI GPT-4 |
 | CLI Framework | Commander.js + Inquirer.js |
 | Web Deploy | Vercel Serverless |
 | Testing | Vitest |

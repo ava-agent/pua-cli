@@ -14,7 +14,7 @@ This repository ships the `workplace-pua-cli` TypeScript CLI plus a static web d
 
 ## Environment
 
-Use `.env.example` for CLI provider credentials and `web/.env.example` for the hosted demo. The default provider is Volcengine Ark CodingPlan via `ARK_API_KEY`, `ARK_BASE_URL`, and `ARK_CHAT_MODEL`. Do not commit AI provider API keys.
+Use `.env.example` for CLI provider credentials and `web/.env.example` for the hosted demo. The default provider is Volcengine Ark Agent Plan via `ARK_API_KEY`, `ARK_BASE_URL`, and `ARK_CHAT_MODEL`. Do not commit AI provider API keys.
 
 ## Editing Rules
 
